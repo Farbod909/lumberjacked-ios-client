@@ -9,9 +9,18 @@ import SwiftUI
 
 @main
 struct LumberjackedApp: App {
+    @State var appModel = LumberjackedAppModel()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    appModel.evaluateAuthenticationStatus()
+                }
+                .sheet(isPresented: $appModel.isNotAuthenticated) {
+                    AuthView()
+                }
+                .environment(appModel)
         }
     }
 }
