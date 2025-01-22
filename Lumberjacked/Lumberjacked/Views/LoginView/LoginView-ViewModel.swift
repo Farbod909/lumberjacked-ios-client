@@ -33,6 +33,7 @@ extension LoginView {
                 isLoadingToolbarAction = false
                 return true
             }
+
             isLoadingToolbarAction = false
             return false
         }

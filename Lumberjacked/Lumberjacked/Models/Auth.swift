@@ -19,3 +19,8 @@ struct SignupRequest: Codable {
     var password1: String
     var password2: String
 }
+
+struct SignupResponse: Codable {
+    var key: String
+}
+
