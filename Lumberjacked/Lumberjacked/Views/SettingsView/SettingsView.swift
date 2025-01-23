@@ -9,14 +9,14 @@ import SwiftUI
 
 struct SettingsView: View {
     @State var viewModel = ViewModel()
-    @Environment(LumberjackedAppModel.self) var appModel
+    @EnvironmentObject var appEnvironment: LumberjackedAppEnvironment
 
     var body: some View {
         Form {
             Button("Log out") {
                 Task {
                     await viewModel.attemptLogout()
-                    appModel.evaluateAuthenticationStatus()
+                    appEnvironment.evaluateAuthenticationStatus()
                 }
             }
         }

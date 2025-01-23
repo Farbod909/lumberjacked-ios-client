@@ -7,10 +7,13 @@
 
 import SwiftUI
 
-@Observable
-class LumberjackedAppModel {
-    var isNotAuthenticated = Keychain.standard.read(
+
+class LumberjackedAppEnvironment: ObservableObject {
+    @Published var isNotAuthenticated = Keychain.standard.read(
         service: "accessToken", account: "lumberjacked") == nil
+    
+    @Published var showAlert = false
+    @Published var alertMessage = ""
     
     func evaluateAuthenticationStatus() {
         isNotAuthenticated = Keychain.standard.read(

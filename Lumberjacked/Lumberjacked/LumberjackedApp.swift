@@ -9,18 +9,21 @@ import SwiftUI
 
 @main
 struct LumberjackedApp: App {
-    @State var appModel = LumberjackedAppModel()
-    
+    @StateObject var appEnvironment = LumberjackedAppEnvironment()
+        
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .onAppear {
-                    appModel.evaluateAuthenticationStatus()
+                    appEnvironment.evaluateAuthenticationStatus()
                 }
-                .sheet(isPresented: $appModel.isNotAuthenticated) {
+                .sheet(isPresented: $appEnvironment.isNotAuthenticated) {
                     AuthView()
                 }
-                .environment(appModel)
+                .environmentObject(appEnvironment)
+                .alert(appEnvironment.alertMessage, isPresented: $appEnvironment.showAlert) {
+                    Button("OK") { }
+                }
         }
     }
 }
