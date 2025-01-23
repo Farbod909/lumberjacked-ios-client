@@ -1,5 +1,5 @@
 //
-//  CatalogView-ViewModel.swift
+//  WorkoutHistoryView-ViewModel.swift
 //  Lumberjacked
 //
 //  Created by Farbod Rafezy on 1/21/25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension CatalogView {
+extension WorkoutHistoryView {
     @Observable
     class ViewModel {
         

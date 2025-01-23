@@ -1,5 +1,5 @@
 //
-//  HistoryView.swift
+//  WorkoutHistoryView.swift
 //  Lumberjacked
 //
 //  Created by Farbod Rafezy on 1/21/25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct HistoryView: View {
+struct WorkoutHistoryView: View {
     @State var viewModel = ViewModel()
 
     var body: some View {
@@ -16,5 +16,5 @@ struct HistoryView: View {
 }
 
 #Preview {
-    HistoryView()
+    WorkoutHistoryView()
 }

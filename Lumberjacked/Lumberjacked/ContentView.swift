@@ -12,17 +12,17 @@ struct ContentView: View {
     
     var body: some View {
         TabView {
-            HomeView()
+            CurrentWorkoutView()
                 .tabItem {
                     Label("Home", systemImage: "list.clipboard")
                 }
-            CatalogView()
+            MovementCatalogView()
                 .tabItem {
-                    Label("Exercise Catalog", systemImage: "book.closed")
+                    Label("Catalog", systemImage: "book.closed")
                 }
-            HistoryView()
+            WorkoutHistoryView()
                 .tabItem {
-                    Label("Workout History", systemImage: "calendar")
+                    Label("History", systemImage: "calendar")
                 }
             SettingsView()
                 .tabItem {
