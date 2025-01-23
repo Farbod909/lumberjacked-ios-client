@@ -68,7 +68,7 @@ class Networking {
         var message: String
     }
     
-    static let host = "http://localhost:8000"
+    static let host = "http://192.168.0.145:8000"
     var sessionConfiguration: URLSessionConfiguration
     let decoder: JSONDecoder
                 
