@@ -10,8 +10,7 @@ import SwiftUI
 
 struct RemoteNetworkingError: Error {
     var statusCode: Int
-    var error: String
-    var messages: [String]
+    var body: [String: Any]?
 }
 
 struct NetworkingRequest {
@@ -53,19 +52,6 @@ class Networking {
         var body: Encodable?
         var method: HTTPMethod?
         var headers = [(String?, String)]()
-    }
-    
-    
-    struct ErrorResponseMultiMessage: Codable {
-        var statusCode: Int
-        var error: String
-        var message: [String]
-    }
-
-    struct ErrorResponseSingleMessage: Codable {
-        var statusCode: Int
-        var error: String
-        var message: String
     }
     
     static let host = "http://192.168.0.145:8000"
@@ -152,26 +138,14 @@ class Networking {
         }
                 
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode > 299 {
-            if let errorResponse = try? decoder.decode(
-                ErrorResponseMultiMessage.self, from: data
-            ) {
-                throw RemoteNetworkingError(
-                    statusCode: errorResponse.statusCode,
-                    error: errorResponse.error,
-                    messages: errorResponse.message)
-            } else if let errorResponse = try? decoder.decode(
-                ErrorResponseSingleMessage.self, from: data
-            ) {
-                throw RemoteNetworkingError(
-                    statusCode: errorResponse.statusCode,
-                    error: errorResponse.error,
-                    messages: [errorResponse.message])
+            
+            if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),
+               let jsonDict = jsonObject as? [String: Any] {
+                throw RemoteNetworkingError(statusCode: httpResponse.statusCode, body: jsonDict)
             } else {
-                throw RemoteNetworkingError(
-                    statusCode: httpResponse.statusCode,
-                    error: "Server error",
-                    messages: [])
+                throw RemoteNetworkingError(statusCode: httpResponse.statusCode, body: nil)
             }
+
         }
         return data
     }
@@ -184,7 +158,7 @@ class Networking {
             let decodedResponse = try decoder.decode(ResponseType.self, from: data)
             return decodedResponse
         } catch {
-            assertionFailure("Failed do decode data: \(error)")
+            assertionFailure("Failed to decode data: \(error)")
         }
         return nil
     }
