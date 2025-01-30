@@ -16,20 +16,11 @@ extension SignupView {
 
         var isLoadingToolbarAction = false
         
-        func attemptSignup() async -> Bool {
+        func attemptSignup(errors: Binding<LumberjackedClientErrors>) async -> Bool {
             isLoadingToolbarAction = true
-
-            let signupRequest = SignupRequest(
-                email: email, password1: password1, password2: password2)
-            if let response = await NetworkingRequest(
-                options: Networking.RequestOptions(
-                    url: "/auth/registration/",
-                    body: signupRequest,
-                    method: .POST,
-                    headers: [
-                        ("application/json", "Content-Type")
-                    ])
-            ).attempt(outputType: SignupResponse.self) {
+            
+            if let response = await LumberjackedClient(errors: errors)
+                .signup(email: email, password1: password1, password2: password2) {
                 Keychain.standard.save(
                     response.key, service: "accessToken", account: "lumberjacked")
                 isLoadingToolbarAction = false

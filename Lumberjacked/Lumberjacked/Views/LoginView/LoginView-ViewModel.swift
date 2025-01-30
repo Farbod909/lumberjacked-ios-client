@@ -15,19 +15,11 @@ extension LoginView {
         
         var isLoadingToolbarAction = false
         
-        func attemptLogin() async -> Bool {
+        func attemptLogin(errors: Binding<LumberjackedClientErrors>) async -> Bool {
             isLoadingToolbarAction = true
-
-            let loginRequest = LoginRequest(email: email, password: password)
-            if let response = await NetworkingRequest(
-                options: Networking.RequestOptions(
-                    url: "/auth/login/",
-                    body: loginRequest,
-                    method: .POST,
-                    headers: [
-                        ("application/json", "Content-Type")
-                    ])
-            ).attempt(outputType: LoginResponse.self) {
+            
+            if let response = await LumberjackedClient(errors: errors)
+                .login(email: email, password: password) {
                 Keychain.standard.save(
                     response.key, service: "accessToken", account: "lumberjacked")
                 isLoadingToolbarAction = false

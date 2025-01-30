@@ -10,34 +10,7 @@ import SwiftUI
 
 struct RemoteNetworkingError: Error {
     var statusCode: Int
-    var body: [String: Any]?
-}
-
-struct NetworkingRequest {
-    var options: Networking.RequestOptions
-    
-    func attempt() async -> Bool {
-        do {
-            try await Networking.shared.request(options: options)
-            return true
-        } catch let error as RemoteNetworkingError {
-            print(error)
-        } catch {
-            print("Unknown networking error")
-        }
-        return false
-    }
-    
-    func attempt<ResponseType: Decodable>(outputType: ResponseType.Type) async -> ResponseType? {
-        do {
-            return try await Networking.shared.request(options: options)
-        } catch let error as RemoteNetworkingError {
-            print(error)
-        } catch {
-            print("Unknown networking error")
-        }
-        return nil
-    }
+    var messages: [String: Any]?
 }
 
 class Networking {
@@ -141,9 +114,9 @@ class Networking {
             
             if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),
                let jsonDict = jsonObject as? [String: Any] {
-                throw RemoteNetworkingError(statusCode: httpResponse.statusCode, body: jsonDict)
+                throw RemoteNetworkingError(statusCode: httpResponse.statusCode, messages: jsonDict)
             } else {
-                throw RemoteNetworkingError(statusCode: httpResponse.statusCode, body: nil)
+                throw RemoteNetworkingError(statusCode: httpResponse.statusCode, messages: nil)
             }
 
         }

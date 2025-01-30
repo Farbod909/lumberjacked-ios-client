@@ -10,12 +10,9 @@ import SwiftUI
 extension SettingsView {
     @Observable
     class ViewModel {
-        func attemptLogout() async {
-            if await NetworkingRequest(
-                options: Networking.RequestOptions(url: "/auth/logout/", method: .POST)
-            ).attempt() {
-                Keychain.standard.delete(service: "accessToken", account: "lumberjacked")
-            }
+        func attemptLogout(errors: Binding<LumberjackedClientErrors>) async {
+            await LumberjackedClient(errors: errors).logout()
+            Keychain.standard.delete(service: "accessToken", account: "lumberjacked")
         }
     }
 }
