@@ -124,5 +124,43 @@ struct LumberjackedClient {
             errors.messages["detail"] = "Unknown error"
         }
     }
+    
+    func getCurrentWorkout() async -> Workout? {
+        errors.messages = [:]
+        
+        let options = Networking.RequestOptions(url: "/api/workouts/current/", method: .GET)
+        do {
+            return try await Networking.shared.request(options: options)
+        } catch let error as RemoteNetworkingError {
+            if let messages = error.messages {
+                errors.messages = messages
+            } else {
+                errors.messages["detail"] = "Unknown error"
+            }
+        } catch {
+            errors.messages["detail"] = "Unknown error"
+        }
+        return nil
+    }
+    
+    func endWorkout(id: UInt64) async -> Bool {
+        errors.messages = [:]
+        
+        let options = Networking.RequestOptions(url: "/api/workouts/\(id)/end/", method: .GET)
+        do {
+            try await Networking.shared.request(options: options)
+        } catch let error as RemoteNetworkingError {
+            if let messages = error.messages {
+                errors.messages = messages
+            } else {
+                errors.messages["detail"] = "Unknown error"
+            }
+            return false
+        } catch {
+            errors.messages["detail"] = "Unknown error"
+            return false
+        }
+        return true
+    }
 
 }

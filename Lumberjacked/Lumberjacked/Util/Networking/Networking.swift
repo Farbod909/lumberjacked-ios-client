@@ -33,13 +33,32 @@ class Networking {
                 
     init(sessionConfiguration: URLSessionConfiguration = URLSessionConfiguration.default) {
         
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
-
         self.sessionConfiguration = sessionConfiguration
         self.decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+            
+            let formats = [
+                "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXXXX", // With microseconds
+                "yyyy-MM-dd'T'HH:mm:ssXXXXX",        // Without microseconds
+            ]
+            
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            
+            for format in formats {
+                formatter.dateFormat = format
+                if let date = formatter.date(from: dateString) {
+                    return date
+                }
+            }
+            
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Date string '\(dateString)' does not match any expected format.")
+        }
     }
         
     @discardableResult
