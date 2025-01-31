@@ -8,8 +8,20 @@
 import SwiftUI
 
 struct CreateWorkoutView: View {
+    @State var viewModel = ViewModel()
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationStack {
+            SelectTemplateWorkoutView(templateWorkout: $viewModel.templateWorkout)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    NavigationLink("Next") {
+                        CreateWorkoutMovementSelectorView(
+                            templateWorkout: viewModel.templateWorkout)
+                    }
+                }
+            }
+        }
     }
 }
 

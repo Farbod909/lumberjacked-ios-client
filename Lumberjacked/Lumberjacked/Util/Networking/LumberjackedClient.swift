@@ -162,5 +162,23 @@ struct LumberjackedClient {
         }
         return true
     }
+    
+    func getWorkouts() async -> APIResponseList<Workout>? {
+        errors.messages = [:]
+        
+        let options = Networking.RequestOptions(url: "/api/workouts/", method: .GET)
+        do {
+            return try await Networking.shared.request(options: options)
+        } catch let error as RemoteNetworkingError {
+            if let messages = error.messages {
+                errors.messages = messages
+            } else {
+                errors.messages["detail"] = "Unknown error"
+            }
+        } catch {
+            errors.messages["detail"] = "Unknown error"
+        }
+        return nil
+    }
 
 }

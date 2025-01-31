@@ -10,6 +10,6 @@ import SwiftUI
 extension CreateWorkoutView {
     @Observable
     class ViewModel {
-        
+        var templateWorkout: Workout?
     }
 }

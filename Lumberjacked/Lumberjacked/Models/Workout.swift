@@ -15,14 +15,25 @@ struct Workout: Codable, Hashable {
     var end_timestamp: Date?
     
     var movements_details: [Movement]?
+    
+    var humanReadableStartTimestamp: String? {
+        guard let start_timestamp else {
+            return nil
+        }
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.timeZone = TimeZone.current
+
+        if Calendar.current.isDateInToday(start_timestamp) {
+            return "Today"
+        }
+        if Calendar.current.isDateInYesterday(start_timestamp) {
+            return "Yesterday"
+        }
+
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .none
+        return dateFormatter.string(from: start_timestamp)
+    }
 }
-
-//struct CurrentWorkout: Codable, Hashable, Identifiable {
-//    var id: Int64?
-//    var user: Int64?
-//    var start_timestamp: Date?
-//    var end_timestamp: Date?
-//    
-//    var movements_details: [CurrentWorkoutMovementDetail]?
-//}
-

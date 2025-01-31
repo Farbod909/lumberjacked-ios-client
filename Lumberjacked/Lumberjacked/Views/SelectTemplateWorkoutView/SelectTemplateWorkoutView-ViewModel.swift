@@ -10,6 +10,15 @@ import SwiftUI
 extension SelectTemplateWorkoutView {
     @Observable
     class ViewModel {
+        var workouts = [Workout]()
+        var isLoading = true
         
+        func attemptGetWorkouts(errors: Binding<LumberjackedClientErrors>) async {
+            isLoading = true
+            if let response = await LumberjackedClient(errors: errors).getWorkouts() {
+                workouts = response.results
+            }
+            isLoading = false
+        }
     }
 }
