@@ -9,15 +9,19 @@ import SwiftUI
 
 struct CreateWorkoutView: View {
     @State var viewModel = ViewModel()
+    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         NavigationStack {
-            SelectTemplateWorkoutView(templateWorkout: $viewModel.templateWorkout)
+            TemplateWorkoutSelectorView(
+                templateWorkout: $viewModel.templateWorkout,
+                dismissAction: { dismiss() })
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     NavigationLink("Next") {
-                        CreateWorkoutMovementSelectorView(
-                            templateWorkout: viewModel.templateWorkout)
+                        MovementSelectorView(
+                            viewModel: MovementSelectorView.ViewModel(templateWorkout: viewModel.templateWorkout),
+                            dismissAction: { dismiss() })
                     }
                 }
             }

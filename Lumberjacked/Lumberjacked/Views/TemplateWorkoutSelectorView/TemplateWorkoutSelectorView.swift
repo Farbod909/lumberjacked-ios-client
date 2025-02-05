@@ -1,5 +1,5 @@
 //
-//  SelectTemplateWorkoutView.swift
+//  TemplateWorkoutSelectorView.swift
 //  Lumberjacked
 //
 //  Created by Farbod Rafezy on 1/22/25.
@@ -7,11 +7,13 @@
 
 import SwiftUI
 
-struct SelectTemplateWorkoutView: View {
+struct TemplateWorkoutSelectorView: View {
     @State var viewModel = ViewModel()
-    @Binding var templateWorkout: Workout?
     @State var errors = LumberjackedClientErrors()
+    @Binding var templateWorkout: Workout?
     
+    let dismissAction: () -> Void
+
     var body: some View {
         VStack {
             if viewModel.isLoading {
@@ -41,7 +43,7 @@ struct SelectTemplateWorkoutView: View {
         @State var templateWorkout: Workout? = nil
         
         var body: some View {
-            SelectTemplateWorkoutView(templateWorkout: $templateWorkout)
+            TemplateWorkoutSelectorView(templateWorkout: $templateWorkout, dismissAction: { })
         }
     }
 

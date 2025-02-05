@@ -37,3 +37,7 @@ struct Workout: Codable, Hashable {
         return dateFormatter.string(from: start_timestamp)
     }
 }
+
+struct CreateWorkoutRequest: Codable {
+    var movements: [UInt64]
+}

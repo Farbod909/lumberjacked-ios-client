@@ -36,7 +36,11 @@ struct CurrentWorkoutView: View {
         .task(id: appEnvironment.isNotAuthenticated) {
             await viewModel.attemptGetCurrentWorkout(errors: $errors)
         }
-        .sheet(isPresented: $viewModel.showCreateWorkoutSheet) {
+        .sheet(isPresented: $viewModel.showCreateWorkoutSheet, onDismiss: {
+            Task {
+                await viewModel.attemptGetCurrentWorkout(errors: $errors)
+            }
+        }) {
             CreateWorkoutView()
         }
     }
