@@ -9,9 +9,22 @@ import SwiftUI
 
 struct WorkoutHistoryView: View {
     @State var viewModel = ViewModel()
+    @State var errors = LumberjackedClientErrors()
 
     var body: some View {
-        Text("History!")
+        NavigationStack {
+            List {
+                ForEach(viewModel.pastWorkouts, id: \.self) { workout in
+                    WorkoutOverviewView(workout: workout)
+                }
+            }
+            .listRowSpacing(10)
+            .navigationTitle("Workout History")
+            .navigationBarTitleDisplayMode(.inline)
+            .task {
+                await viewModel.attemptGetWorkouts(errors: $errors)
+            }
+        }
     }
 }
 

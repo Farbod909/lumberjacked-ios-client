@@ -18,6 +18,8 @@ struct MovementCatalogView: View {
                     Text(movement.name!)
                 }
             }
+            .navigationTitle("Movement Catalog")
+            .navigationBarTitleDisplayMode(.inline)
             .task {
                 await viewModel.attemptGetMovements(errors: $errors)
             }
