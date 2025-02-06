@@ -17,7 +17,12 @@ struct MovementLog: Codable, Hashable {
     var timestamp: Date?
     
     var for_current_workout: Bool?
-    
+}
+
+extension MovementLog {
+    /**
+     *  Helper functions/properties for representing MovementLog data more easily in the UI.
+     */
     var setsAndRepsString: String {
         guard let reps = reps else {
             return ""
@@ -40,4 +45,37 @@ struct MovementLog: Codable, Hashable {
         }
             
     }
+    
+    var loadsString: String {
+        func roundDouble(double: Double) -> String {
+            let roundedValue = (double * 10).rounded() / 10
+            if roundedValue.truncatingRemainder(dividingBy: 1) == 0 {
+                return String(Int(roundedValue))
+            } else {
+                return String(format: "%.1f", roundedValue)
+            }
+        }
+        
+        guard let loads = loads else {
+            return ""
+        }
+        
+        var loadsAllEqual = true
+        for (idx, l) in loads.enumerated() {
+            if idx < loads.count - 1 {
+                if l != loads[idx + 1] {
+                    loadsAllEqual = false
+                    break
+                }
+            }
+        }
+        
+        if loadsAllEqual {
+            return roundDouble(double: loads[0]) + " lb"
+        } else {
+            return loads.map { roundDouble(double: $0) + " lb" }.joined(separator: ", ")
+        }
+            
+    }
+
 }

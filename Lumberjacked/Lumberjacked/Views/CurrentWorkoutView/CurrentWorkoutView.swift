@@ -25,14 +25,21 @@ struct CurrentWorkoutView: View {
                     }
                 }
             } else {
-                Text(viewModel.currentWorkout.debugDescription)
-                Button("End workout ") {
-                    Task {
-                        await viewModel.attemptEndCurrentWorkout(errors: $errors)
+                ScrollView {
+                    ForEach(viewModel.currentWorkout?.movements_details ?? [], id: \.self) { movement in
+                        CurrentWorkoutMovementView(movement: movement)
                     }
+                    Button("End workout") {
+                        Task {
+                            await viewModel.attemptEndCurrentWorkout(errors: $errors)
+                        }
+                    }
+                    .foregroundStyle(.red)
+                    .padding(.vertical, 10)
                 }
             }
         }
+        .padding(.horizontal, 16)
         .task(id: appEnvironment.isNotAuthenticated) {
             await viewModel.attemptGetCurrentWorkout(errors: $errors)
         }
