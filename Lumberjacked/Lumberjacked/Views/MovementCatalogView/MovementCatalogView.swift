@@ -15,13 +15,18 @@ struct MovementCatalogView: View {
         NavigationStack {
             List {
                 ForEach(viewModel.filteredMovements, id: \.self) { movement in
-                    Text(movement.name!)
+                    NavigationLink(value: movement) {
+                        Text(movement.name!)
+                    }
                 }
             }
             .navigationTitle("Movement Catalog")
             .navigationBarTitleDisplayMode(.inline)
             .task {
                 await viewModel.attemptGetMovements(errors: $errors)
+            }
+            .navigationDestination(for: Movement.self) { movement in
+                MovementDetailView(viewModel: MovementDetailView.ViewModel(movement: movement))
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {

@@ -226,5 +226,42 @@ struct LumberjackedClient {
         }
         return nil
     }
+    
+    func getMovementLogs(movementId: UInt64) async -> APIResponseList<MovementLog>? {
+        errors.messages = [:]
+        
+        let options = Networking.RequestOptions(url: "/api/movement-logs/?movement=\(movementId)", method: .GET)
+        do {
+            return try await Networking.shared.request(options: options)
+        } catch let error as RemoteNetworkingError {
+            if let messages = error.messages {
+                errors.messages = messages
+            } else {
+                errors.messages["detail"] = "Unknown error"
+            }
+        } catch {
+            errors.messages["detail"] = "Unknown error"
+        }
+        return nil
+    }
+    
+    func deleteMovement(movementId: UInt64) async -> Bool {
+        errors.messages = [:]
+        
+        let options = Networking.RequestOptions(url: "/api/movements/\(movementId)", method: .DELETE)
+        do {
+            try await Networking.shared.request(options: options)
+            return true
+        } catch let error as RemoteNetworkingError {
+            if let messages = error.messages {
+                errors.messages = messages
+            } else {
+                errors.messages["detail"] = "Unknown error"
+            }
+        } catch {
+            errors.messages["detail"] = "Unknown error"
+        }
+        return false
+    }
 
 }

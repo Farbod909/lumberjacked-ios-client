@@ -49,8 +49,13 @@ struct CurrentWorkoutMovementView: View {
                 .fontWeight(.semibold)
                 .textCase(.uppercase)
                 Group {
-                    Text(latestLog?.setsAndRepsString ?? "N/A")
-                    Text(latestLog?.loadsString ?? "N/A")
+                    if let latestLog = movement.latest_log {
+                        ForEach(latestLog.summary, id: \.self) { item in
+                            Text(item)
+                        }
+                    } else {
+                        Text("N/A")
+                    }
                 }
                 .font(.footnote)
             }

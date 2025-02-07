@@ -24,3 +24,26 @@ struct Movement: Codable, Hashable {
     var latest_log: MovementLog?
     var recorded_log: MovementLog?
 }
+
+extension Movement {
+    /**
+     *  Helper functions/properties for representing Movement data more easily in the UI.
+     */
+    
+    var hasAnyRecommendations: Bool {
+        return (recommended_warmup_sets != nil && recommended_warmup_sets! != "")
+        || (recommended_working_sets != nil && recommended_working_sets! != "")
+        || (recommended_rep_range != nil && recommended_rep_range! != "")
+        || (recommended_rpe != nil && recommended_rpe! != "")
+        || recommended_rest_time != nil
+    }
+    
+    var hasCategory: Bool {
+        return category != nil && category != ""
+    }
+    
+    var hasNotes: Bool {
+        return notes != nil && notes! != ""
+    }
+    
+}
