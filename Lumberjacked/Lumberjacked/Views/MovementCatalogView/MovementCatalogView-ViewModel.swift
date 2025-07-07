@@ -13,6 +13,7 @@ extension MovementCatalogView {
         var movements = [Movement]()
         var isLoading = true
         var searchText = ""
+        var showCreateMovementSheet = false
         
         func attemptGetMovements(errors: Binding<LumberjackedClientErrors>) async {
             isLoading = true
@@ -26,7 +27,7 @@ extension MovementCatalogView {
             if searchText.isEmpty {
                 return movements
             } else {
-                return movements.filter { $0.name!.contains(searchText) }
+                return movements.filter { $0.name.contains(searchText) }
             }
         }
     }

@@ -17,7 +17,7 @@ struct WorkoutOverviewView: View {
                     .font(.title2)
                 ForEach(workout.movements_details!, id: \.self.id!) { movement in
                     HStack {
-                        Text(movement.name!)
+                        Text(movement.name)
                         Spacer()
                         if let recorded_log = movement.recorded_log {
                             Text(recorded_log.setsAndRepsString)

@@ -10,6 +10,33 @@ import SwiftUI
 extension MovementInputView {
     @Observable
     class ViewModel {
+        var movement: Movement
+        var saveActionLoading = false
         
+        init(movement: Movement) {
+            self.movement = movement
+        }
+                
+        func attemptSaveNewMovement(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
+            saveActionLoading = true
+            if let _ = await LumberjackedClient(errors: errors)
+                .createMovement(movement: movement) {
+                dismissAction()
+            }
+            saveActionLoading = false
+        }
+        
+        func attemptUpdateMovement(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
+            guard let movementId = movement.id else {
+                print("No Movement ID")
+                return
+            }
+            saveActionLoading = true
+            if let _ = await LumberjackedClient(errors: errors)
+                .updateMovement(movementId: movementId, movement: movement) {
+                dismissAction()
+            }
+            saveActionLoading = false
+        }
     }
 }

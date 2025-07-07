@@ -16,7 +16,7 @@ struct MovementCatalogView: View {
             List {
                 ForEach(viewModel.filteredMovements, id: \.self) { movement in
                     NavigationLink(value: movement) {
-                        Text(movement.name!)
+                        Text(movement.name)
                     }
                 }
             }
@@ -31,12 +31,22 @@ struct MovementCatalogView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        // New movement
+                        viewModel.showCreateMovementSheet = true
                     } label: {
                         Label("New movement", systemImage: "plus")
                     }
                 }
             }
+            .sheet(
+                isPresented: $viewModel.showCreateMovementSheet,
+                onDismiss: {
+                    Task {
+                        await viewModel.attemptGetMovements(errors: $errors)
+                    }
+                }
+                ) {
+                    MovementInputView(viewModel: MovementInputView.ViewModel(movement: Movement(name: "", category: "", notes: "", recommended_warmup_sets: "", recommended_working_sets: "", recommended_rep_range: "", recommended_rpe: "")))
+                }
         }
         .searchable(text: $viewModel.searchText)
     }

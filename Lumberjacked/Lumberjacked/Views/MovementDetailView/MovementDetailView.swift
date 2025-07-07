@@ -21,7 +21,7 @@ struct MovementDetailView: View {
                             Text("category")
                                 .textCase(.uppercase)
                                 .font(.headline)
-                            Text(viewModel.movement.category!)
+                            Text(viewModel.movement.category)
                                 .foregroundColor(.primary)
                             Spacer()
                         }
@@ -35,7 +35,7 @@ struct MovementDetailView: View {
                                 Text("Notes")
                                     .textCase(.uppercase)
                                     .font(.headline)
-                                Text(viewModel.movement.notes!)
+                                Text(viewModel.movement.notes)
                                     .foregroundColor(.primary)
                             }
                             Spacer()
@@ -65,7 +65,7 @@ struct MovementDetailView: View {
                 Spacer()
             }
         }
-        .navigationTitle(viewModel.movement.name!)
+        .navigationTitle(viewModel.movement.name)
         .task {
             await viewModel.attemptGetMovementLogs(errors: $errors)
         }
@@ -85,8 +85,8 @@ struct MovementDetailView: View {
                 }
             }
             ToolbarItemGroup(placement: .secondaryAction) {
-                NavigationLink {
-                    Text("edit movement page")
+                Button {
+                    viewModel.showEditSheet = true
                 } label: {
                     Label("Edit movement", systemImage: "pencil.circle")
                 }
@@ -97,8 +97,17 @@ struct MovementDetailView: View {
                 }
             }
         }
-        .navigationDestination(for: Movement.self) { selection in
+        .navigationDestination(for: MovementLog.self) { movementLog in
             // edit log
+        }
+        .sheet(isPresented: $viewModel.showEditSheet, onDismiss: {
+            Task {
+                if let movementId = viewModel.movement.id {
+                    await viewModel.attemptGetMovementDetail(id: movementId, errors: $errors)
+                }
+            }
+        }) {
+            MovementInputView(viewModel: MovementInputView.ViewModel(movement: viewModel.movement))
         }
         .alert("Delete", isPresented: $viewModel.showDeleteConfirmationAlert) {
             Button("Delete", role: .destructive) {
@@ -125,17 +134,17 @@ struct RecommendationsView: View {
     
     var recommendations: [Recommendation] {
         var result = [Recommendation]()
-        if let warmupSets = movement.recommended_warmup_sets {
-            result.append(Recommendation(name: "Warmup Sets", value: warmupSets))
+        if !movement.recommended_warmup_sets.isEmpty {
+            result.append(Recommendation(name: "Warmup Sets", value: movement.recommended_warmup_sets))
         }
-        if let workingSets = movement.recommended_working_sets {
-            result.append(Recommendation(name: "Working Sets", value: workingSets))
+        if !movement.recommended_working_sets.isEmpty {
+            result.append(Recommendation(name: "Working Sets", value: movement.recommended_working_sets))
         }
-        if let repRange = movement.recommended_rep_range {
-            result.append(Recommendation(name: "Rep Range", value: repRange))
+        if !movement.recommended_rep_range.isEmpty {
+            result.append(Recommendation(name: "Rep Range", value: movement.recommended_rep_range))
         }
-        if let rpe = movement.recommended_rpe {
-            result.append(Recommendation(name: "RPE", value: rpe))
+        if !movement.recommended_rpe.isEmpty {
+            result.append(Recommendation(name: "RPE", value: movement.recommended_rpe))
         }
         if let restTime = movement.recommended_rest_time {
             let minutes: UInt16 = restTime / 60

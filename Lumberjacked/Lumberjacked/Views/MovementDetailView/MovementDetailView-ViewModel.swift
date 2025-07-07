@@ -16,6 +16,7 @@ extension MovementDetailView {
         var isLoadingMovementLogs = true
         var deleteActionLoading = false
         var showDeleteConfirmationAlert = false
+        var showEditSheet = false
         
         init(movement: Movement, movementLogs: [MovementLog] = [MovementLog]()) {
             self.movement = movement
@@ -33,8 +34,17 @@ extension MovementDetailView {
         
         func attemptDeleteMovement(id: UInt64, errors: Binding<LumberjackedClientErrors>) async -> Bool {
             deleteActionLoading = true
-            return await LumberjackedClient(errors: errors)
+            let success = await LumberjackedClient(errors: errors)
                 .deleteMovement(movementId: self.movement.id!)
+            deleteActionLoading = false
+            return success
+        }
+        
+        func attemptGetMovementDetail(id: UInt64, errors: Binding<LumberjackedClientErrors>) async {
+            if let response = await LumberjackedClient(errors: errors)
+                .getMovement(movementId: id) {
+                movement = response
+            }
         }
     }
 }

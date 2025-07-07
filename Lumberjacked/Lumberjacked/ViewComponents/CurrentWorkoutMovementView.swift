@@ -34,7 +34,7 @@ struct CurrentWorkoutMovementView: View {
             }
             Spacer()
             VStack {
-                Text(movement.name!)
+                Text(movement.name)
                     .font(.title3)
                     .fontWeight(.bold)
                 Group {
@@ -73,8 +73,4 @@ struct CurrentWorkoutMovementView: View {
         .foregroundStyle(.primary)
         .clipShape(.rect(cornerRadius: 20))
     }
-}
-
-#Preview {
-    CurrentWorkoutMovementView(movement: Movement())
 }

@@ -20,7 +20,7 @@ struct MovementSelectorView: View {
                 Section("Selected exercises") {
                     ForEach($viewModel.selectedMovements, id: \.self, editActions: .move) { $movement in
                         HStack {
-                            Text(movement.name!)
+                            Text(movement.name)
                             Spacer()
                             Image(systemName: "line.3.horizontal")
                                 .foregroundStyle(.tertiary)
@@ -52,7 +52,7 @@ struct MovementSelectorView: View {
                             }
                         }) {
                             HStack {
-                                Text("\(movement.name!)")
+                                Text("\(movement.name)")
                                 Spacer()
                                 Image(systemName: "checkmark")
                                     .opacity(self.viewModel.selectedMovements.map({ $0.id }).contains(movement.id) ? 1.0 : 0.0)
@@ -82,7 +82,7 @@ struct MovementSelectorView: View {
         if searchText.isEmpty {
             return viewModel.allMovements
         } else {
-            return viewModel.allMovements.filter { $0.name!.contains(searchText) }
+            return viewModel.allMovements.filter { $0.name.contains(searchText) }
         }
     }
 
