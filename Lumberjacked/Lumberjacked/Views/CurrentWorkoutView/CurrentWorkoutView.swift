@@ -13,42 +13,46 @@ struct CurrentWorkoutView: View {
     @EnvironmentObject var appEnvironment: LumberjackedAppEnvironment
     
     var body: some View {
-        VStack {
-            if viewModel.currentWorkout == nil {
-                if viewModel.isLoading {
-                    ProgressView()
-                } else {
-                    Button {
-                        viewModel.showCreateWorkoutSheet.toggle()
-                    } label: {
-                        Label("New workout", systemImage: "plus")
-                    }
-                }
-            } else {
-                ScrollView {
-                    ForEach(viewModel.currentWorkout?.movements_details ?? [], id: \.self) { movement in
-                        CurrentWorkoutMovementView(movement: movement)
-                    }
-                    Button("End workout") {
-                        Task {
-                            await viewModel.attemptEndCurrentWorkout(errors: $errors)
+        NavigationStack {
+            VStack {
+                if viewModel.currentWorkout == nil {
+                    if viewModel.isLoading {
+                        ProgressView()
+                    } else {
+                        Button {
+                            viewModel.showCreateWorkoutSheet.toggle()
+                        } label: {
+                            Label("New workout", systemImage: "plus")
                         }
                     }
-                    .foregroundStyle(.red)
-                    .padding(.vertical, 10)
+                } else {
+                    ScrollView {
+                        ForEach(viewModel.currentWorkout?.movements_details ?? [], id: \.self) { movement in
+                            CurrentWorkoutMovementView(movement: movement)
+                        }
+                        Button("End workout") {
+                            Task {
+                                await viewModel.attemptEndCurrentWorkout(errors: $errors)
+                            }
+                        }
+                        .foregroundStyle(.red)
+                        .padding(.vertical, 10)
+                    }
                 }
             }
-        }
-        .padding(.horizontal, 16)
-        .task(id: appEnvironment.isNotAuthenticated) {
-            await viewModel.attemptGetCurrentWorkout(errors: $errors)
-        }
-        .sheet(isPresented: $viewModel.showCreateWorkoutSheet, onDismiss: {
-            Task {
+            .padding(.horizontal, 16)
+            .task(id: appEnvironment.isNotAuthenticated) {
                 await viewModel.attemptGetCurrentWorkout(errors: $errors)
             }
-        }) {
-            CreateWorkoutView()
+            .sheet(isPresented: $viewModel.showCreateWorkoutSheet, onDismiss: {
+                Task {
+                    await viewModel.attemptGetCurrentWorkout(errors: $errors)
+                }
+            }) {
+                CreateWorkoutView()
+            }
+            .navigationTitle("Current Workout")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
