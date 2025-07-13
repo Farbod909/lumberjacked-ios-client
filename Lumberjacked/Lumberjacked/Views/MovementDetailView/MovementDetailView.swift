@@ -98,7 +98,10 @@ struct MovementDetailView: View {
             }
         }
         .navigationDestination(for: MovementLog.self) { movementLog in
-            // edit log
+            MovementLogInputView(
+                viewModel: MovementLogInputView.ViewModel(
+                    movementLog: movementLog,
+                    movement: viewModel.movement))
         }
         .sheet(isPresented: $viewModel.showEditSheet, onDismiss: {
             Task {

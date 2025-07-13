@@ -12,10 +12,15 @@ struct MovementLogInputView: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
+        if viewModel.movementLog.id == nil {
+            Text("New Log")
+        } else {
+            Text("Edit log")
+        }
         if let reps = viewModel.movementLog.reps, !reps.isEmpty {
             Text("\(viewModel.movementLog.summary)")
         } else {
-            Text("New log")
+            Text("empty log")
         }
     }
 }
