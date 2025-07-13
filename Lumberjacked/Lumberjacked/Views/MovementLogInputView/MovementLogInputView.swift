@@ -8,11 +8,14 @@
 import SwiftUI
 
 struct MovementLogInputView: View {
+    @State var viewModel: ViewModel
+    @Environment(\.dismiss) var dismiss
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        if let reps = viewModel.movementLog.reps, !reps.isEmpty {
+            Text("\(viewModel.movementLog.summary)")
+        } else {
+            Text("New log")
+        }
     }
-}
-
-#Preview {
-    MovementLogInputView()
 }

@@ -108,6 +108,14 @@ extension MovementLog {
         }
         return summaryList
     }
+    
+    var withJustInputFields: MovementLog {
+        /**
+         * Returns a MovementLog instance that just pre-populates input fields, except notes.
+         */
+        return MovementLog(reps: reps, loads: loads)
+    }
+
 
 
 }

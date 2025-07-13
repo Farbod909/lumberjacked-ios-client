@@ -56,6 +56,13 @@ struct CurrentWorkoutView: View {
             .navigationDestination(for: Movement.self) { movement in
                 MovementDetailView(viewModel: MovementDetailView.ViewModel(movement: movement))
             }
+            .navigationDestination(for: MovementLogDestination.self) { movementLogDestination in
+                MovementLogInputView(
+                    viewModel: MovementLogInputView.ViewModel(
+                        movementLog: movementLogDestination.log,
+                        movement: movementLogDestination.movement))
+            }
+
         }
     }
 }

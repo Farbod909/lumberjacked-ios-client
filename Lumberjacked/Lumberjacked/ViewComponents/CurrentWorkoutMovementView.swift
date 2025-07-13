@@ -58,9 +58,11 @@ struct CurrentWorkoutMovementView: View {
                 .font(.footnote)
             }
             Spacer()
-            Button {
-                // Show movement log creation page
-            } label: {
+            NavigationLink(
+                value: MovementLogDestination(
+                    log: movement.latest_log?.withJustInputFields ?? MovementLog(reps: [], loads: []),
+                    movement: movement))
+            {
                 Image(systemName: movementDone ? "checkmark" : "square.and.pencil")
                     .font(.title2)
             }
