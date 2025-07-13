@@ -26,9 +26,7 @@ struct CurrentWorkoutMovementView: View {
     
     var body: some View {
         HStack {
-            Button {
-                // Show movement detail page
-            } label: {
+            NavigationLink(value: movement) {
                 Image(systemName: "info.circle")
                     .font(.title2)
             }

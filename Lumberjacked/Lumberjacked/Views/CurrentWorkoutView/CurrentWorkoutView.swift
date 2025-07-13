@@ -53,6 +53,9 @@ struct CurrentWorkoutView: View {
             }
             .navigationTitle("Current Workout")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(for: Movement.self) { movement in
+                MovementDetailView(viewModel: MovementDetailView.ViewModel(movement: movement))
+            }
         }
     }
 }
