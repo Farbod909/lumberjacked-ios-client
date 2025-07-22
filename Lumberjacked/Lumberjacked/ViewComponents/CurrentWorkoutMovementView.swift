@@ -60,7 +60,7 @@ struct CurrentWorkoutMovementView: View {
             Spacer()
             NavigationLink(
                 value: MovementLogDestination(
-                    log: movement.latest_log?.withJustInputFields ?? MovementLog(reps: [], loads: []),
+                    log: movementDone ? movement.latest_log! : movement.latest_log?.withJustInputFields ?? MovementLog(reps: [], loads: [], notes: ""),
                     movement: movement))
             {
                 Image(systemName: movementDone ? "checkmark" : "square.and.pencil")

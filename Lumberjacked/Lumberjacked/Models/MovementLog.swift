@@ -13,7 +13,7 @@ struct MovementLog: Codable, Hashable {
     var workout: UInt64?
     var reps: [UInt16]?
     var loads: [Double]?
-    var notes: String?
+    var notes: String
     var timestamp: Date?
     
     var for_current_workout: Bool?
@@ -113,7 +113,7 @@ extension MovementLog {
         /**
          * Returns a MovementLog instance that just pre-populates input fields, except notes.
          */
-        return MovementLog(reps: reps, loads: loads)
+        return MovementLog(reps: reps, loads: loads, notes: "")
     }
 
 

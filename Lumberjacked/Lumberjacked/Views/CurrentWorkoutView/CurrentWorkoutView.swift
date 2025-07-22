@@ -60,7 +60,8 @@ struct CurrentWorkoutView: View {
                 MovementLogInputView(
                     viewModel: MovementLogInputView.ViewModel(
                         movementLog: movementLogDestination.log,
-                        movement: movementLogDestination.movement))
+                        movement: movementLogDestination.movement,
+                        workout: viewModel.currentWorkout!))
             }
 
         }

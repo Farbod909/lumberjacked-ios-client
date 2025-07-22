@@ -291,9 +291,7 @@ struct LumberjackedClient {
     
     func updateMovement(movementId: UInt64, movement: Movement) async -> Movement? {
         errors.messages = [:]
-        
-        print(movement)
-                
+                        
         let options = Networking.RequestOptions(
             url: "/api/movements/\(movementId)/",
             body: movement,
@@ -333,6 +331,76 @@ struct LumberjackedClient {
             errors.messages["detail"] = "Unknown error"
         }
         return nil
+    }
+    
+    func createLog(movementLog: MovementLog) async -> MovementLog? {
+        errors.messages = [:]
+                
+        let options = Networking.RequestOptions(
+            url: "/api/movement-logs/",
+            body: movementLog,
+            method: .POST,
+            headers: [
+                ("application/json", "Content-Type")
+            ])
+        
+        do {
+            return try await Networking.shared.request(options: options)
+        } catch let error as RemoteNetworkingError {
+            if let messages = error.messages {
+                errors.messages = messages
+            } else {
+                errors.messages["detail"] = "Unknown error"
+            }
+        } catch {
+            errors.messages["detail"] = "Unknown error"
+        }
+        return nil
+    }
+    
+    func updateLog(movementLogId: UInt64, movementLog: MovementLog) async -> MovementLog? {
+        errors.messages = [:]
+        
+        let options = Networking.RequestOptions(
+            url: "/api/movement-logs/\(movementLogId)/",
+            body: movementLog,
+            method: .PATCH,
+            headers: [
+                ("application/json", "Content-Type")
+            ])
+        
+        do {
+            return try await Networking.shared.request(options: options)
+        } catch let error as RemoteNetworkingError {
+            if let messages = error.messages {
+                errors.messages = messages
+            } else {
+                errors.messages["detail"] = "Unknown error"
+            }
+        } catch {
+            errors.messages["detail"] = "Unknown error"
+        }
+        print(errors)
+        return nil
+    }
+
+    func deleteLog(movementLogId: UInt64) async -> Bool {
+        errors.messages = [:]
+        
+        let options = Networking.RequestOptions(url: "/api/movement-logs/\(movementLogId)/", method: .DELETE)
+        do {
+            try await Networking.shared.request(options: options)
+            return true
+        } catch let error as RemoteNetworkingError {
+            if let messages = error.messages {
+                errors.messages = messages
+            } else {
+                errors.messages["detail"] = "Unknown error"
+            }
+        } catch {
+            errors.messages["detail"] = "Unknown error"
+        }
+        return false
     }
 
 

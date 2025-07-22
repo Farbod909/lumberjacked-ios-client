@@ -101,7 +101,8 @@ struct MovementDetailView: View {
             MovementLogInputView(
                 viewModel: MovementLogInputView.ViewModel(
                     movementLog: movementLog,
-                    movement: viewModel.movement))
+                    movement: viewModel.movement,
+                    workout: nil))
         }
         .sheet(isPresented: $viewModel.showEditSheet, onDismiss: {
             Task {
