@@ -380,7 +380,6 @@ struct LumberjackedClient {
         } catch {
             errors.messages["detail"] = "Unknown error"
         }
-        print(errors)
         return nil
     }
 

@@ -116,9 +116,6 @@ extension MovementLogInputView {
                 print("Input cannot be unwrapped")
                 return false
             }
-            print("AAAAAAA")
-            print(movementLogId)
-            print(movementLogInput)
             if let _ = await LumberjackedClient(errors: errors)
                 .updateLog(movementLogId: movementLogId, movementLog: movementLogInput) {
                 return true
