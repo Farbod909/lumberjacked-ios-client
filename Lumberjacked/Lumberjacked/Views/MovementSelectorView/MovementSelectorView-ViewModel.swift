@@ -33,6 +33,7 @@ extension MovementSelectorView {
             isLoading = false
         }
         
+        @MainActor
         func attemptCreateWorkout(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
             isLoadingToolbarAction = true
             if let _ = await LumberjackedClient(errors: errors).createWorkout(

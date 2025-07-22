@@ -17,6 +17,7 @@ extension MovementInputView {
             self.movement = movement
         }
                 
+        @MainActor
         func attemptSaveNewMovement(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
             saveActionLoading = true
             if let _ = await LumberjackedClient(errors: errors)
@@ -26,6 +27,7 @@ extension MovementInputView {
             saveActionLoading = false
         }
         
+        @MainActor
         func attemptUpdateMovement(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
             guard let movementId = movement.id else {
                 print("No Movement ID")
