@@ -27,7 +27,8 @@ class Networking {
         var headers = [(String?, String)]()
     }
     
-    static let host = "http://192.168.0.147:8000"
+//    static let host = "http://192.168.0.147:8000"
+    static let host = "https://lumberjacked-dev-2-1029906100530.us-west2.run.app"
     var sessionConfiguration: URLSessionConfiguration
     let decoder: JSONDecoder
                 

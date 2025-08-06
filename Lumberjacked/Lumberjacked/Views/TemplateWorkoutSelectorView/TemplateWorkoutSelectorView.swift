@@ -24,7 +24,7 @@ struct TemplateWorkoutSelectorView: View {
                         Text("Build from scratch").tag(Optional<Workout>(nil))
                         ForEach(viewModel.workouts, id: \.self.id) { workout in
                             WorkoutOverviewView(workout: workout)
-                                .tag(Optional(workout))
+                                .tag(Optional(workout.withoutId)) // Just using this workout as a template so do not pass along id.
                         }
                     }
                     .pickerStyle(.inline)

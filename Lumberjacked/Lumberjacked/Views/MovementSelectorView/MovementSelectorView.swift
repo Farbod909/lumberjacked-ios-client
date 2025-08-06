@@ -11,8 +11,8 @@ struct MovementSelectorView: View {
     @State var viewModel = ViewModel()
     @State var errors = LumberjackedClientErrors()
     @State var searchText = ""
-    
-    let dismissAction: () -> Void
+    @Environment(\.dismiss) var dismiss
+    var dismissAction: (() -> Void)? = nil
     
     var body: some View {
         List {
@@ -66,9 +66,19 @@ struct MovementSelectorView: View {
         }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button("Start Workout") {
-                    Task {
-                        await viewModel.attemptCreateWorkout(errors: $errors, dismissAction: dismissAction)
+                if viewModel.workout != nil && viewModel.workout!.id != nil {
+                    Button("Save") {
+                        Task {
+                            await viewModel.attemptEditWorkout(
+                                errors: $errors, dismissAction: dismissAction ?? { dismiss() })
+                        }
+                    }
+                } else {
+                    Button("Start Workout") {
+                        Task {
+                            await viewModel.attemptCreateWorkout(
+                                errors: $errors, dismissAction: dismissAction ?? { dismiss() })
+                        }
                     }
                 }
             }
@@ -89,5 +99,5 @@ struct MovementSelectorView: View {
 }
 
 #Preview {
-    MovementSelectorView(dismissAction: {})
+    MovementSelectorView()
 }

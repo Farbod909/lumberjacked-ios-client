@@ -10,15 +10,15 @@ import SwiftUI
 extension MovementSelectorView {
     @Observable
     class ViewModel {
-        var templateWorkout: Workout?
+        var workout: Workout?
         var allMovements = [Movement]()
         var selectedMovements: [Movement]
         var isLoading = true
         var isLoadingToolbarAction = false
         
-        init(templateWorkout: Workout? = nil) {
-            self.templateWorkout = templateWorkout
-            if let movements_details = templateWorkout?.movements_details {
+        init(workout: Workout? = nil) {
+            self.workout = workout
+            if let movements_details = workout?.movements_details {
                 self.selectedMovements = movements_details
             } else {
                 self.selectedMovements = []
@@ -42,5 +42,17 @@ extension MovementSelectorView {
             }
             isLoadingToolbarAction = false
         }
+        
+        @MainActor
+        func attemptEditWorkout(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
+            isLoadingToolbarAction = true
+            if let _ = await LumberjackedClient(errors: errors).updateWorkout(
+                workoutId: (workout?.id)!,
+                movements: selectedMovements.map() { $0.id! }) {
+                dismissAction()
+            }
+            isLoadingToolbarAction = false
+        }
+
     }
 }

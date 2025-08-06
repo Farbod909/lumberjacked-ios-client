@@ -202,7 +202,7 @@ struct LumberjackedClient {
     func createWorkout(movements: [UInt64]) async -> Workout? {
         errors.messages = [:]
         
-        let createWorkoutRequest = CreateWorkoutRequest(
+        let createWorkoutRequest = CreateOrEditWorkoutRequest(
             movements: movements)
         
         let options = Networking.RequestOptions(
@@ -227,6 +227,34 @@ struct LumberjackedClient {
         return nil
     }
     
+    func updateWorkout(workoutId: UInt64, movements: [UInt64]) async -> Workout? {
+        errors.messages = [:]
+        
+        let updateWorkoutRequest = CreateOrEditWorkoutRequest(
+            movements: movements)
+                        
+        let options = Networking.RequestOptions(
+            url: "/api/workouts/\(workoutId)/",
+            body: updateWorkoutRequest,
+            method: .PATCH,
+            headers: [
+                ("application/json", "Content-Type")
+            ])
+        
+        do {
+            return try await Networking.shared.request(options: options)
+        } catch let error as RemoteNetworkingError {
+            if let messages = error.messages {
+                errors.messages = messages
+            } else {
+                errors.messages["detail"] = "Unknown error"
+            }
+        } catch {
+            errors.messages["detail"] = "Unknown error"
+        }
+        return nil
+    }
+
     func getMovementLogs(movementId: UInt64) async -> APIResponseList<MovementLog>? {
         errors.messages = [:]
         

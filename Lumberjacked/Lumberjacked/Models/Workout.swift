@@ -38,6 +38,14 @@ struct Workout: Codable, Hashable {
     }
 }
 
-struct CreateWorkoutRequest: Codable {
+extension Workout {
+    var withoutId: Workout {
+        var copy = self
+        copy.id = nil
+        return copy
+    }
+}
+
+struct CreateOrEditWorkoutRequest: Codable {
     var movements: [UInt64]
 }

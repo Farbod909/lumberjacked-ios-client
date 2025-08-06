@@ -11,7 +11,7 @@ struct CurrentWorkoutView: View {
     @State var viewModel = ViewModel()
     @State var errors = LumberjackedClientErrors()
     @EnvironmentObject var appEnvironment: LumberjackedAppEnvironment
-    
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -63,7 +63,16 @@ struct CurrentWorkoutView: View {
                         movement: movementLogDestination.movement,
                         workout: viewModel.currentWorkout!))
             }
-
+            .toolbar {
+                if viewModel.currentWorkout != nil {
+                    ToolbarItem(placement: .confirmationAction) {
+                        NavigationLink("Edit") {
+                            MovementSelectorView(
+                                viewModel: MovementSelectorView.ViewModel(workout: viewModel.currentWorkout))
+                        }
+                    }
+                }
+            }
         }
     }
 }

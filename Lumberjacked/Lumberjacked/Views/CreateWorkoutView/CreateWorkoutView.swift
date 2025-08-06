@@ -20,7 +20,7 @@ struct CreateWorkoutView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     NavigationLink("Next") {
                         MovementSelectorView(
-                            viewModel: MovementSelectorView.ViewModel(templateWorkout: viewModel.templateWorkout),
+                            viewModel: MovementSelectorView.ViewModel(workout: viewModel.templateWorkout),
                             dismissAction: { dismiss() })
                     }
                 }
