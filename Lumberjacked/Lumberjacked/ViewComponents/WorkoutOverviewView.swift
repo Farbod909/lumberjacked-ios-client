@@ -20,7 +20,7 @@ struct WorkoutOverviewView: View {
                         Text(movement.name)
                         Spacer()
                         if let recorded_log = movement.recorded_log {
-                            Text(recorded_log.setsAndRepsString)
+                            Text(recorded_log.conciseSummaryString)
                         } else {
                             Text("Skipped")
                         }

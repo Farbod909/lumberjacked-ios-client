@@ -67,7 +67,7 @@ extension MovementLog {
         }
                 
         if repsAllEqual {
-            return "\(reps.count) x \(reps[0])"
+            return "\(reps.count) × \(reps[0])"
         } else {
             return reps.map { String($0) }.joined(separator: ", ")
         }
@@ -103,10 +103,26 @@ extension MovementLog {
         
         if let reps = reps, let loads = loads {
             for i in 0...(reps.count - 1) {
-                summaryList.append("\(reps[i]) x \(roundDouble(loads[i])) lb")
+                summaryList.append("\(reps[i]) reps × \(roundDouble(loads[i])) lb")
             }
         }
         return summaryList
+    }
+    
+    var conciseSummaryString: String {
+        if repsAllEqual && loadsAllEqual {
+            return "\(reps!.count) × \(reps![0]) × \(roundDouble(loads![0])) lb"
+        }
+        
+        if let reps = reps, let loads = loads {
+            var summaryList = [String]()
+            for i in 0...(reps.count - 1) {
+                summaryList.append("\(reps[i]) × \(roundDouble(loads[i])) lb")
+            }
+            return summaryList.joined(separator: ", ")
+        }
+        
+        return "N/A"
     }
     
     var withJustInputFields: MovementLog {
