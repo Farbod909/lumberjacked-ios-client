@@ -19,7 +19,7 @@ struct MovementSelectorView: View {
             FormErrors(errors: $errors)
             if !viewModel.selectedMovements.isEmpty {
                 Section("Selected exercises") {
-                    ForEach($viewModel.selectedMovements, id: \.self, editActions: .move) { $movement in
+                    ForEach($viewModel.selectedMovements, id: \.self, editActions: .all) { $movement in
                         HStack {
                             Text(movement.name)
                             Spacer()
