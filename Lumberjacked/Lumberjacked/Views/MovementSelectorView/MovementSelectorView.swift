@@ -16,6 +16,7 @@ struct MovementSelectorView: View {
     
     var body: some View {
         List {
+            FormErrors(errors: $errors)
             if !viewModel.selectedMovements.isEmpty {
                 Section("Selected exercises") {
                     ForEach($viewModel.selectedMovements, id: \.self, editActions: .move) { $movement in
