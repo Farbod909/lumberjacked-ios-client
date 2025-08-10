@@ -163,6 +163,26 @@ struct LumberjackedClient {
         return true
     }
     
+    func deleteWorkout(id: UInt64) async -> Bool {
+        errors.messages = [:]
+        
+        let options = Networking.RequestOptions(url: "/api/workouts/\(id)/", method: .DELETE)
+        do {
+            try await Networking.shared.request(options: options)
+        } catch let error as RemoteNetworkingError {
+            if let messages = error.messages {
+                errors.messages = messages
+            } else {
+                errors.messages["detail"] = "Unknown error"
+            }
+            return false
+        } catch {
+            errors.messages["detail"] = "Unknown error"
+            return false
+        }
+        return true
+    }
+    
     func getWorkouts() async -> APIResponseList<Workout>? {
         errors.messages = [:]
         

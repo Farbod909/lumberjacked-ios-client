@@ -68,10 +68,26 @@ struct CurrentWorkoutView: View {
                     ToolbarItem(placement: .confirmationAction) {
                         NavigationLink("Edit") {
                             MovementSelectorView(
-                                viewModel: MovementSelectorView.ViewModel(workout: viewModel.currentWorkout))
+                                viewModel: MovementSelectorView.ViewModel(workout: viewModel.currentWorkout)
+                            )
+                        }
+                    }
+                    ToolbarItem(placement: .secondaryAction) {
+                        Button {
+                            viewModel.showCancelConfirmationAlert = true
+                        } label: {
+                            Label("Cancel workout", systemImage: "trash")
                         }
                     }
                 }
+            }
+            .alert("Cancel Workout", isPresented: $viewModel.showCancelConfirmationAlert) {
+                Button("Yes", role: .destructive) {
+                    Task {
+                        await viewModel.attemptDeleteCurrentWorkout(errors: $errors)
+                    }
+                }
+                Button("No", role: .cancel) {}
             }
         }
     }

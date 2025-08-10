@@ -13,6 +13,7 @@ extension CurrentWorkoutView {
         var currentWorkout: Workout?
         var isLoading = true
         var showCreateWorkoutSheet = false
+        var showCancelConfirmationAlert = false
         
         func attemptGetCurrentWorkout(errors: Binding<LumberjackedClientErrors>) async {
             isLoading = true
@@ -28,6 +29,17 @@ extension CurrentWorkoutView {
             }
             if let id = currentWorkout.id {
                 if await LumberjackedClient(errors: errors).endWorkout(id: id) {
+                    self.currentWorkout = nil
+                }
+            }
+        }
+        
+        func attemptDeleteCurrentWorkout(errors: Binding<LumberjackedClientErrors>) async {
+            guard let currentWorkout = currentWorkout else {
+                return
+            }
+            if let id = currentWorkout.id {
+                if await LumberjackedClient(errors: errors).deleteWorkout(id: id) {
                     self.currentWorkout = nil
                 }
             }
