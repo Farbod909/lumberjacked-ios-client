@@ -29,6 +29,7 @@ struct ContentView: View {
                     Label("Settings", systemImage: "line.3.horizontal")
                 }
         }
+        .preferredColorScheme(.dark)
     }
 }
 
