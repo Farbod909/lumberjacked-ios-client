@@ -42,6 +42,11 @@ struct MovementSelectorView: View {
                 }
                 .listRowBackground(Color.init(uiColor: .systemGray5))
                 Section {
+                    Button {
+                        viewModel.showCreateMovementSheet = true
+                    } label: {
+                        Label("New movement", systemImage: "plus")
+                    }
                     ForEach(searchResults, id: \.self) { movement in
                         Button(action: {
                             withAnimation {
@@ -87,6 +92,16 @@ struct MovementSelectorView: View {
         .task {
             await viewModel.attemptGetMovements(errors: $errors)
         }
+        .sheet(
+            isPresented: $viewModel.showCreateMovementSheet,
+            onDismiss: {
+                Task {
+                    await viewModel.attemptGetMovements(errors: $errors)
+                }
+            }
+            ) {
+                MovementInputView(viewModel: MovementInputView.ViewModel(movement: Movement(name: "", category: "", notes: "", recommended_warmup_sets: "", recommended_working_sets: "", recommended_rep_range: "", recommended_rpe: "")))
+            }
     }
     
     var searchResults: [Movement] {

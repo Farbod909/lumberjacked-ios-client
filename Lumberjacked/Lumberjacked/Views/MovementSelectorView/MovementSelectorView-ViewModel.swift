@@ -15,6 +15,7 @@ extension MovementSelectorView {
         var selectedMovements: [Movement]
         var isLoading = true
         var isLoadingToolbarAction = false
+        var showCreateMovementSheet = false
         
         init(workout: Workout? = nil) {
             self.workout = workout
