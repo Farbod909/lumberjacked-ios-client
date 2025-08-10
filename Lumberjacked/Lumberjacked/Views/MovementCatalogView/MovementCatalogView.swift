@@ -45,7 +45,16 @@ struct MovementCatalogView: View {
                     }
                 }
                 ) {
-                    MovementInputView(viewModel: MovementInputView.ViewModel(movement: Movement(name: "", category: "", notes: "", recommended_warmup_sets: "", recommended_working_sets: "", recommended_rep_range: "", recommended_rpe: "")))
+                    MovementInputView(
+                        viewModel: MovementInputView.ViewModel(movement: Movement(
+                            name: "",
+                            category: "",
+                            notes: "",
+                            recommended_warmup_sets: "",
+                            recommended_working_sets: "",
+                            recommended_rep_range: "",
+                            recommended_rpe: "")),
+                        newlyAddedMovement: .constant(nil))
                 }
         }
         .searchable(text: $viewModel.searchText)

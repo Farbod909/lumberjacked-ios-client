@@ -111,7 +111,9 @@ struct MovementDetailView: View {
                 }
             }
         }) {
-            MovementInputView(viewModel: MovementInputView.ViewModel(movement: viewModel.movement))
+            MovementInputView(
+                viewModel: MovementInputView.ViewModel(movement: viewModel.movement),
+                newlyAddedMovement: .constant(nil))
         }
         .alert("Delete", isPresented: $viewModel.showDeleteConfirmationAlert) {
             Button("Delete", role: .destructive) {

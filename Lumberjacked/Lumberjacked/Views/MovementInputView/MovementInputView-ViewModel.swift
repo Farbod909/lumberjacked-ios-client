@@ -18,13 +18,15 @@ extension MovementInputView {
         }
                 
         @MainActor
-        func attemptSaveNewMovement(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
+        func attemptSaveNewMovement(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async -> Movement? {
             saveActionLoading = true
-            if let _ = await LumberjackedClient(errors: errors)
+            if let movement = await LumberjackedClient(errors: errors)
                 .createMovement(movement: movement) {
                 dismissAction()
+                return movement
             }
             saveActionLoading = false
+            return nil
         }
         
         @MainActor

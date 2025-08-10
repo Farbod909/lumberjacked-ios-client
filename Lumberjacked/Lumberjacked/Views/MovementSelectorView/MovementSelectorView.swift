@@ -11,6 +11,9 @@ struct MovementSelectorView: View {
     @State var viewModel = ViewModel()
     @State var errors = LumberjackedClientErrors()
     @State var searchText = ""
+    // Keeps track of the most recently added new movement,
+    // if the user adds a new movement from within the selector view.
+    @State var newlyAddedMovement: Movement?
     @Environment(\.dismiss) var dismiss
     var dismissAction: (() -> Void)? = nil
     
@@ -96,11 +99,24 @@ struct MovementSelectorView: View {
             isPresented: $viewModel.showCreateMovementSheet,
             onDismiss: {
                 Task {
+                    if let newMovement = newlyAddedMovement {
+                        viewModel.selectedMovements.append(newMovement)
+                        newlyAddedMovement = nil
+                    }
                     await viewModel.attemptGetMovements(errors: $errors)
                 }
             }
             ) {
-                MovementInputView(viewModel: MovementInputView.ViewModel(movement: Movement(name: "", category: "", notes: "", recommended_warmup_sets: "", recommended_working_sets: "", recommended_rep_range: "", recommended_rpe: "")))
+                MovementInputView(
+                    viewModel: MovementInputView.ViewModel(movement: Movement(
+                        name: "",
+                        category: "",
+                        notes: "",
+                        recommended_warmup_sets: "",
+                        recommended_working_sets: "",
+                        recommended_rep_range: "",
+                        recommended_rpe: "")),
+                    newlyAddedMovement: $newlyAddedMovement)
             }
     }
     

@@ -10,6 +10,7 @@ import SwiftUI
 struct MovementInputView: View {
     @State var viewModel: ViewModel
     @State var errors = LumberjackedClientErrors()
+    @Binding var newlyAddedMovement: Movement? // Binding to tell parent view about a new movement.
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -69,8 +70,10 @@ struct MovementInputView: View {
                     Button {
                         Task {
                             if viewModel.movement.id == nil {
-                                await viewModel.attemptSaveNewMovement(
-                                    errors: $errors, dismissAction: { dismiss() })
+                                if let movement = await viewModel.attemptSaveNewMovement(
+                                    errors: $errors, dismissAction: { dismiss() }) {
+                                    newlyAddedMovement = movement
+                                }
                             } else {
                                 await viewModel.attemptUpdateMovement(
                                     errors: $errors, dismissAction: { dismiss() })
