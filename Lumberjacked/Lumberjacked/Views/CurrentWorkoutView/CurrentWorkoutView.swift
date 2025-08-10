@@ -10,8 +10,12 @@ import SwiftUI
 struct CurrentWorkoutView: View {
     @State var viewModel = ViewModel()
     @State var errors = LumberjackedClientErrors()
+    @State var timeElapsed: String = "00:00"
     @EnvironmentObject var appEnvironment: LumberjackedAppEnvironment
-
+    
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+        
+    
     var body: some View {
         NavigationStack {
             VStack {
@@ -26,6 +30,19 @@ struct CurrentWorkoutView: View {
                         }
                     }
                 } else {
+                    VStack {
+                        Text(timeElapsed)
+                            .font(.largeTitle)
+                            .onReceive(timer) { _ in
+                                let interval = Date.now.timeIntervalSince((viewModel.currentWorkout?.start_timestamp)!)
+                                
+                                let totalMinutes = Int(interval / 60)
+                                let hours = totalMinutes / 60
+                                let minutes = totalMinutes % 60
+
+                                timeElapsed = String(format: "%02d:%02d", hours, minutes)
+                            }
+                    }
                     ScrollView {
                         ForEach(viewModel.currentWorkout?.movements_details ?? [], id: \.self) { movement in
                             CurrentWorkoutMovementView(movement: movement)
