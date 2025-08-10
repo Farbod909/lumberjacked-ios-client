@@ -24,8 +24,14 @@ struct CreateWorkoutView: View {
                             dismissAction: { dismiss() })
                     }
                 }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
             }
         }
+        .interactiveDismissDisabled()
     }
 }
 

@@ -87,6 +87,11 @@ struct MovementInputView: View {
                         }
                     }
                 }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
             }
             .onDisappear() {
                 viewModel.movement = Movement(
@@ -98,6 +103,7 @@ struct MovementInputView: View {
                     recommended_rep_range: "",
                     recommended_rpe: "")
             }
+            .interactiveDismissDisabled()
         }
     }
 }
