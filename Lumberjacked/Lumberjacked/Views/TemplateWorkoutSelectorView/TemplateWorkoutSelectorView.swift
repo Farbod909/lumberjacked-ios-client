@@ -20,14 +20,38 @@ struct TemplateWorkoutSelectorView: View {
                 ProgressView()
             } else {
                 List {
-                    Picker("Build a new workout from scratch or choose a past workout as a template.", selection: $templateWorkout) {
-                        Text("Build from scratch").tag(Optional<Workout>(nil))
+                    Section(header: Text("Build a new workout from scratch or choose a past workout as a template.")) {
+                        Text("Build from scratch")
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                templateWorkout = nil
+                            }
+                            .listRowInsets(EdgeInsets())
+                            .overlay {
+                                if templateWorkout == nil {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.accentColor, lineWidth: 3)
+                                }
+                            }
                         ForEach(viewModel.workouts, id: \.self.id) { workout in
                             WorkoutOverviewView(workout: workout)
-                                .tag(Optional(workout.withoutId)) // Just using this workout as a template so do not pass along id.
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    templateWorkout = workout
+                                }
+                                .listRowInsets(EdgeInsets())
+                                .overlay {
+                                    if templateWorkout == workout {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color.accentColor, lineWidth: 3)
+                                    }
+                                }
                         }
                     }
-                    .pickerStyle(.inline)
                 }
                 .listRowSpacing(10)
             }
