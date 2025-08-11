@@ -16,6 +16,7 @@ struct MovementInputView: View {
     var body: some View {
         NavigationStack {
             Form {
+                FormErrors(errors: $errors)
                 Section {
                     MovementInputTextFieldView(
                         placeholderText: "Movement name",
