@@ -27,7 +27,7 @@ extension MovementCatalogView {
             if searchText.isEmpty {
                 return movements
             } else {
-                return movements.filter { $0.name.contains(searchText) }
+                return movements.filter { $0.name.lowercased().contains(searchText.lowercased()) }
             }
         }
     }

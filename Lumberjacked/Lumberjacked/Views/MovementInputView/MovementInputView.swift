@@ -20,12 +20,14 @@ struct MovementInputView: View {
                     MovementInputTextFieldView(
                         placeholderText: "Movement name",
                         stickyText: "Name",
-                        text: $viewModel.movement.name)
+                        text: $viewModel.movement.name,
+                        capitalizeWords: true)
                     .formFieldError($errors, "name")
                     MovementInputTextFieldView(
                         placeholderText: "Category",
                         stickyText: "Category",
-                        text: $viewModel.movement.category)
+                        text: $viewModel.movement.category,
+                        capitalizeWords: true)
                     .formFieldError($errors, "category")
                     MovementInputTextFieldView(
                         placeholderText: "Notes",
@@ -112,11 +114,13 @@ struct MovementInputTextFieldView: View {
     var placeholderText: String
     var stickyText: String
     @Binding var text: String
+    var capitalizeWords = false
     
     var body: some View {
         HStack {
             TextField(placeholderText, text: $text)
                 .textFieldStyle(.plain)
+                .textInputAutocapitalization(capitalizeWords ? .words : .sentences)
             if !text.isEmpty {
                 Text(stickyText)
                     .textCase(.uppercase)

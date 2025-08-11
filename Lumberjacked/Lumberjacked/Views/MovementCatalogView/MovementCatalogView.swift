@@ -58,6 +58,8 @@ struct MovementCatalogView: View {
                 }
         }
         .searchable(text: $viewModel.searchText)
+        .autocorrectionDisabled()
+        .textInputAutocapitalization(.never)
     }
 }
 

@@ -41,6 +41,8 @@ struct MovementSelectorView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(.secondary)
                         TextField("Search exercises", text: $searchText)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
                     }
                 }
                 .listRowBackground(Color.init(uiColor: .systemGray5))
@@ -124,7 +126,9 @@ struct MovementSelectorView: View {
         if searchText.isEmpty {
             return viewModel.allMovements
         } else {
-            return viewModel.allMovements.filter { $0.name.contains(searchText) }
+            return viewModel.allMovements.filter {
+                $0.name.lowercased().contains(searchText.lowercased())
+            }
         }
     }
 
