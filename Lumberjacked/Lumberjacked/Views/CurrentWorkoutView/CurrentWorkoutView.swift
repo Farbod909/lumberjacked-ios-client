@@ -55,6 +55,7 @@ struct CurrentWorkoutView: View {
                         .foregroundStyle(.red)
                         .padding(.vertical, 10)
                     }
+                    .scrollIndicators(.hidden)
                 }
             }
             .padding(.horizontal, 16)
