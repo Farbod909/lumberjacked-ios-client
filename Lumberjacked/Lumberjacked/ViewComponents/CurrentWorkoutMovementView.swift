@@ -79,7 +79,7 @@ struct CurrentWorkoutMovementView: View {
         VStack {
             HStack {
                 if movementDone {
-                    Image(systemName: "checkmark.circle")
+                    Image(systemName: "checkmark.square.fill")
                         .foregroundStyle(.green)
                 }
                 Button(action: {
@@ -88,13 +88,11 @@ struct CurrentWorkoutMovementView: View {
                     }
                 }) {
                     HStack(alignment: .bottom) {
-                        Text(movement.name)
+                        Text("\(movement.name)\u{FEFF} \u{FEFF}\(Image(systemName: isExpanded ? "chevron.up.circle" : "chevron.down.circle"))")
                             .textCase(.uppercase)
                             .fontWeight(.bold)
                             .foregroundStyle(.foreground)
                             .multilineTextAlignment(.leading)
-                        Image(systemName: isExpanded ? "chevron.up.circle" : "chevron.down.circle")
-                            .foregroundStyle(.accent)
                     }
                 }
                 Spacer()
