@@ -31,6 +31,9 @@ class Networking {
 //    static let host = "https://lumberjacked-dev-2-1029906100530.us-west2.run.app"
     var sessionConfiguration: URLSessionConfiguration
     let decoder: JSONDecoder
+    private lazy var session: URLSession = {
+        URLSession(configuration: self.sessionConfiguration)
+    }()
                 
     init(sessionConfiguration: URLSessionConfiguration = URLSessionConfiguration.default) {
         
@@ -103,7 +106,8 @@ class Networking {
         } else {
             self.sessionConfiguration.httpAdditionalHeaders?.removeValue(forKey: "Authorization")
         }
-        let session = URLSession(configuration: self.sessionConfiguration)
+        
+        let session = self.session
         
         var response = URLResponse()
         var data = Data()
@@ -114,8 +118,11 @@ class Networking {
                 do {
                     (data, response) = try await session.upload(for: request, from: encoded)
                 } catch {
-                    assertionFailure("Failed to fetch data: \(error)")
-                    return nil
+                    if let urlError = error as? URLError, urlError.code == .cancelled {
+                        // Expected when user switches tabs / cancels a task
+                        return nil
+                    }
+                    throw error // rethrow unexpected errors
                 }
             } catch {
                 assertionFailure("Failed to encode data: \(error)")
@@ -125,8 +132,11 @@ class Networking {
             do {
                 (data, response) = try await session.data(for: request)
             } catch {
-                assertionFailure("Failed to fetch data: \(error)")
-                return nil
+                if let urlError = error as? URLError, urlError.code == .cancelled {
+                    // Expected when user switches tabs / cancels a task
+                    return nil
+                }
+                throw error // rethrow unexpected errors
             }
         }
                 
