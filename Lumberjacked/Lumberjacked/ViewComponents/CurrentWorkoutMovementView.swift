@@ -79,7 +79,7 @@ struct CurrentWorkoutMovementView: View {
         VStack {
             HStack {
                 if movementDone {
-                    Image(systemName: "checkmark.square.fill")
+                    Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
                 }
                 Button(action: {
@@ -170,7 +170,7 @@ struct CurrentWorkoutMovementView: View {
 
             }
         }
-        .padding(EdgeInsets(top: 4, leading: 0, bottom: 20, trailing: 0))
+        .padding(EdgeInsets(top: 4, leading: 0, bottom: 14, trailing: 0))
         .overlay(
             Divider().background(.foreground).frame(height: 2).overlay(.foreground),
             alignment: .bottom)

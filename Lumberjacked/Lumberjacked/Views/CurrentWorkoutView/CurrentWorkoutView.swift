@@ -59,6 +59,7 @@ struct CurrentWorkoutView: View {
                 }
             }
             .padding(.horizontal, 16)
+            .animation(.default, value: viewModel.currentWorkout)
             .task(id: appEnvironment.isNotAuthenticated) {
                 await viewModel.attemptGetCurrentWorkout(errors: $errors)
             }
