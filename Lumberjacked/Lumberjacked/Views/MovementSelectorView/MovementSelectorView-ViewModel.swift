@@ -54,6 +54,26 @@ extension MovementSelectorView {
             }
             isLoadingToolbarAction = false
         }
+        
+        @MainActor
+        func attemptQuickAddMovement(movementName: String, errors: Binding<LumberjackedClientErrors>) async -> Movement? {
+            isLoadingToolbarAction = true
+            if let movement = await LumberjackedClient(errors: errors)
+                .createMovement(
+                    movement: Movement.init(
+                        name: movementName,
+                        category: "",
+                        notes: "",
+                        recommended_warmup_sets: "",
+                        recommended_working_sets: "",
+                        recommended_rep_range: "",
+                        recommended_rpe: "")) {
+                return movement
+            }
+            isLoadingToolbarAction = false
+            return nil
+        }
+
 
     }
 }

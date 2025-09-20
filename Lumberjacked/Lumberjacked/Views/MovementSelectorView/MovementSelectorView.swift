@@ -38,28 +38,50 @@ struct MovementSelectorView: View {
             } else {
                 Section {
                     HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(.secondary)
-                        TextField("Search exercises", text: $searchText)
+                        TextField("Start typing exercise name...", text: $searchText)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
                     }
                 }
                 .listRowBackground(Color.init(uiColor: .systemGray5))
                 Section {
-                    Button {
-                        viewModel.showCreateMovementSheet = true
-                    } label: {
-                        Label("New movement", systemImage: "plus")
+                    if !searchText.isEmpty {
+                        Button {
+                            Task {
+                                if let newMovement = await viewModel.attemptQuickAddMovement(
+                                    movementName: formattedSearchText,
+                                    errors: $errors) {
+                                    viewModel.selectedMovements.append(newMovement)
+                                    searchText = ""
+                                    await viewModel.attemptGetMovements(errors: $errors)
+                                }
+                            }
+                        } label: {
+                            VStack(alignment: .leading) {
+                                Label("Quick Add \"\(formattedSearchText)\"", systemImage: "plus")
+                                Text("Quick-added movements can be edited later.")
+                                    .foregroundStyle(.gray)
+                                    .font(.caption2)
+                                    .padding(EdgeInsets(top: 1, leading: 0, bottom: 0, trailing: 0))
+                            }
+                        }
+                        Button {
+                            viewModel.showCreateMovementSheet = true
+                        } label: {
+                            VStack(alignment: .leading) {
+                                Label("Create Movement: \"\(formattedSearchText)\"...", systemImage: "plus")
+                            }
+                        }
                     }
+                }
+                Section {
                     ForEach(searchResults, id: \.self) { movement in
                         Button(action: {
-                            withAnimation {
-                                if self.viewModel.selectedMovements.map({ $0.id }).contains(movement.id) {
-                                    self.viewModel.selectedMovements.removeAll(where: { $0.id == movement.id })
-                                } else {
-                                    self.viewModel.selectedMovements.append(movement)
-                                }
+                            if self.viewModel.selectedMovements.map({ $0.id }).contains(movement.id) {
+                                self.viewModel.selectedMovements.removeAll(where: { $0.id == movement.id })
+                            } else {
+                                self.viewModel.selectedMovements.append(movement)
+                                searchText = ""
                             }
                         }) {
                             HStack {
@@ -104,6 +126,7 @@ struct MovementSelectorView: View {
                     if let newMovement = newlyAddedMovement {
                         viewModel.selectedMovements.append(newMovement)
                         newlyAddedMovement = nil
+                        searchText = ""
                     }
                     await viewModel.attemptGetMovements(errors: $errors)
                 }
@@ -111,7 +134,7 @@ struct MovementSelectorView: View {
             ) {
                 MovementInputView(
                     viewModel: MovementInputView.ViewModel(movement: Movement(
-                        name: "",
+                        name: formattedSearchText,
                         category: "",
                         notes: "",
                         recommended_warmup_sets: "",
@@ -120,16 +143,23 @@ struct MovementSelectorView: View {
                         recommended_rpe: "")),
                     newlyAddedMovement: $newlyAddedMovement)
             }
+        .animation(.default, value: viewModel.allMovements)
+        .animation(.default, value: viewModel.selectedMovements)
+
     }
     
     var searchResults: [Movement] {
         if searchText.isEmpty {
-            return viewModel.allMovements
+            return []
         } else {
             return viewModel.allMovements.filter {
                 $0.name.lowercased().contains(searchText.lowercased())
             }
         }
+    }
+    
+    var formattedSearchText: String {
+        return searchText.trimmingCharacters(in: [" "]) .capitalized
     }
 
 }
