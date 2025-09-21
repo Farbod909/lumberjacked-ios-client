@@ -29,13 +29,14 @@ struct MovementLogInputView: View {
                     CustomDoubleStepper(label: "Load", value: $viewModel.equalSetsMovementLogInput.load, minValue: -1000, maxValue: 1000, increment: 5)
                     TextField("",
                               text: $viewModel.movementLog.notes,
-                              prompt: Text("Notes").foregroundStyle(Color.secondary))
+                              prompt: Text("Notes").foregroundStyle(Color.secondary), axis: .vertical)
                     .padding()
                     .background(Color.init(.systemGray6))
                     .foregroundColor(Color.primary)
                     .clipShape(
-                        RoundedRectangle(cornerRadius: 100)
+                        RoundedRectangle(cornerRadius: 20)
                     )
+                    .lineLimit(5)
                     Spacer()
                 }
                 .padding()
@@ -109,7 +110,7 @@ struct CustomIntStepper : View {
             .disabled(value == minValue)
             
             VStack {
-                TextField("", value: $value, format: .number)
+                ClearOnTapValueField(value: $value, format: .number)
                     .keyboardType(.numberPad)
                     .multilineTextAlignment(.center)
                     .font(.title2)
@@ -171,9 +172,23 @@ struct CustomDoubleStepper : View {
                     .padding()
             }
             .disabled(value == minValue)
-            
+            Button {
+                if value != nil {
+                    if value! > minValue {
+                        value = value! - (increment * 0.5)
+                    } else {
+                        value = 0.0
+                    }
+                }
+            } label: {
+                Image(systemName: "minus")
+                    .padding()
+                    .font(.callout)
+            }
+            .disabled(value == minValue)
+            Spacer()
             VStack {
-                TextField("", value: $value, format: .number)
+                ClearOnTapValueField(value: $value, format: .number)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.center)
                     .font(.title2)
@@ -181,7 +196,21 @@ struct CustomDoubleStepper : View {
                     .font(.caption)
                     .textCase(.uppercase)
             }
-
+            Spacer()
+            Button {
+                if value != nil {
+                    if value! < maxValue {
+                        value = value! + (increment * 0.5)
+                    } else {
+                        value = 0.0
+                    }
+                }
+            } label: {
+                Image(systemName: "plus")
+                    .padding()
+                    .font(.callout)
+            }
+            .disabled(value == maxValue)
             Button {
                 if value != nil {
                     if value! < maxValue {
@@ -195,6 +224,7 @@ struct CustomDoubleStepper : View {
                     .padding()
             }
             .disabled(value == maxValue)
+
         }
         .padding(2)
         .background(Color.init(.systemGray6))
@@ -209,6 +239,48 @@ struct CustomDoubleStepper : View {
             } else {
                 return .increase
             }
+        }
+    }
+}
+
+struct ClearOnTapValueField<Value, Format>: View
+where Value: Equatable,
+      Format: ParseableFormatStyle,
+      Format.FormatInput == Value,
+      Format.FormatOutput == String
+{
+    @Binding var value: Value?
+    @State private var savedValue: Value?
+    @State private var savedValueString: String?
+    var format: Format
+    var placeholder: String = ""
+    
+    @FocusState private var isFocused: Bool
+    
+    var body: some View {
+        TextField(effectivePlaceholder, value: $value, format: format)
+            .focused($isFocused)
+            .onChange(of: isFocused) { oldFocusValue, newFocusValue in
+                if newFocusValue {
+                    if let value = value {
+                        savedValue = value
+                        savedValueString = format.format(value)
+                    }
+                    value = nil
+                } else {
+                    if value == nil {
+                        value = savedValue
+                    }
+                    savedValue = nil
+                }
+            }
+    }
+    
+    private var effectivePlaceholder: String {
+        if let savedValueString = savedValueString {
+            return savedValueString
+        } else {
+            return placeholder
         }
     }
 }
