@@ -34,7 +34,7 @@ struct CurrentWorkoutView: View {
                         Text(timeElapsed)
                             .font(.largeTitle)
                             .onReceive(timer) { _ in
-                                let interval = Date.now.timeIntervalSince((viewModel.currentWorkout?.start_timestamp)!)
+                                let interval = Date.now.timeIntervalSince((viewModel.currentWorkout?.start_timestamp) ?? Date.now)
                                 
                                 let totalMinutes = Int(interval / 60)
                                 let hours = totalMinutes / 60

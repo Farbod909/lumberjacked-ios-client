@@ -88,7 +88,7 @@ struct CurrentWorkoutMovementView: View {
                     }
                 }) {
                     HStack(alignment: .bottom) {
-                        Text("\(movement.name)\u{FEFF} \u{FEFF}\(Image(systemName: isExpanded ? "chevron.up.circle" : "chevron.down.circle"))")
+                        Text("\(movement.name)\u{FEFF} \u{FEFF}\(Image(systemName: isExpanded ? "chevron.up" : "chevron.down"))")
                             .textCase(.uppercase)
                             .fontWeight(.bold)
                             .foregroundStyle(.foreground)
@@ -111,7 +111,7 @@ struct CurrentWorkoutMovementView: View {
             .font(.system(size: 20))
             if isExpanded {
                 VStack {
-                    HStack {
+                    HStack(alignment: .top) {
                         VStack(alignment: .leading) {
                             Group {
                                 if movementDone {
@@ -128,7 +128,7 @@ struct CurrentWorkoutMovementView: View {
                                         Text(item).textCase(.uppercase)
                                     }
                                 } else {
-                                    Text("N/A")
+                                    Text("None")
                                 }
                             }
                         }
