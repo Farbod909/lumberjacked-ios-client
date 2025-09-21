@@ -20,8 +20,8 @@ struct TemplateWorkoutSelectorView: View {
                 ProgressView()
             } else {
                 List {
-                    Section(header: Text("Build a new workout from scratch or choose a past workout as a template.")) {
-                        Text("Build from scratch")
+                    Section(header: Text("Start fresh or choose a past workout as a template.")) {
+                        Text("Start fresh")
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())

@@ -32,13 +32,16 @@ struct MovementSelectorView: View {
                     }
                 }
                 .listSectionSpacing(.default)
+            } else {
+                Text("\(Image(systemName: "info.circle")) Add at least one movement to your workout to start. You can easily add or remove movements during your workout.")
+                    .listRowBackground(Color.clear)
             }
             if viewModel.isLoading {
                 ProgressView()
             } else {
                 Section {
                     HStack {
-                        TextField("Start typing exercise name...", text: $searchText)
+                        TextField("Add a movement to this workout...", text: $searchText)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
                     }
