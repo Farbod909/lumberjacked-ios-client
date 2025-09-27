@@ -15,6 +15,12 @@ extension CurrentWorkoutView {
         var showCreateWorkoutSheet = false
         var showCancelConfirmationAlert = false
         
+        var addMovementText = ""
+        var addMovementTextFieldFocused = false
+        var showAddMovementOverlay = false
+        
+        var placeholderWidth: CGFloat = 0
+
         func attemptGetCurrentWorkout(errors: Binding<LumberjackedClientErrors>) async {
             isLoading = true
             if let response = await LumberjackedClient(errors: errors).getCurrentWorkout() {
