@@ -13,57 +13,78 @@ struct MovementDetailView: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 8) {
-                VStack(alignment: .leading) {
-                    if viewModel.movement.hasCategory {
-                        HStack {
-                            Text("category")
+        VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading) {
+                if !viewModel.movement.hasNotes &&
+                    !viewModel.movement.hasCategory &&
+                    !viewModel.movement.hasAnyRecommendations {
+                    HStack {
+                        Text("\(Image(systemName: "info.circle")) Edit this movement to add useful information like notes or recommendations to help you during your workouts.")
+                            .padding()
+                        Spacer()
+                    }
+                    .padding(EdgeInsets(top: 4, leading: 0, bottom: 10 , trailing: 0))
+                    .overlay(Divider().frame(height: 2).background(.accent), alignment: .bottom)
+                }
+                
+                if viewModel.movement.hasCategory {
+                    HStack {
+                        Text("category")
+                            .textCase(.uppercase)
+                            .font(.headline)
+                        Text(viewModel.movement.category)
+                            .foregroundColor(.primary)
+                        Spacer()
+                    }
+                    .padding(EdgeInsets(top: 4, leading: 0, bottom: 10 , trailing: 0))
+                    .overlay(Divider().frame(height: 2).background(.accent), alignment: .bottom)
+                }
+                
+                if viewModel.movement.hasNotes {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Notes")
                                 .textCase(.uppercase)
                                 .font(.headline)
-                            Text(viewModel.movement.category)
+                            Text(viewModel.movement.notes)
                                 .foregroundColor(.primary)
-                            Spacer()
                         }
-                        .padding(EdgeInsets(top: 4, leading: 0, bottom: 10 , trailing: 0))
-                        .overlay(Divider().background(.primary), alignment: .bottom)
+                        Spacer()
                     }
-                    
-                    if viewModel.movement.hasNotes {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("Notes")
-                                    .textCase(.uppercase)
-                                    .font(.headline)
-                                Text(viewModel.movement.notes)
-                                    .foregroundColor(.primary)
-                            }
-                            Spacer()
-                        }
-                        .padding(EdgeInsets(top: 4, leading: 0, bottom: 10 , trailing: 0))
-                        .overlay(Divider().background(.primary), alignment: .bottom)
+                    .padding(EdgeInsets(top: 4, leading: 0, bottom: 10 , trailing: 0))
+                    .overlay(Divider().frame(height: 2).background(.accent), alignment: .bottom)
+                }
+                
+                if viewModel.movement.hasAnyRecommendations {
+                    HStack {
+                        RecommendationsView(movement: viewModel.movement)
+                        Spacer()
                     }
-                    
-                    if viewModel.movement.hasAnyRecommendations {
-                        HStack {
-                            RecommendationsView(movement: viewModel.movement)
-                            Spacer()
-                        }
-                        .padding(EdgeInsets(top: 4, leading: 0, bottom: 10 , trailing: 0))
-                        .overlay(Divider().background(.primary), alignment: .bottom)
-                    }
+                    .padding(EdgeInsets(top: 4, leading: 0, bottom: 10 , trailing: 0))
+                    .overlay(Divider().frame(height: 2).background(.accent), alignment: .bottom)
                 }
                 
                 if !viewModel.movementLogs.isEmpty {
                     LogListView(movementLogs: viewModel.movementLogs)
                 } else {
-                    Spacer()
-                    Text("No logs yet :/")
-                        .padding()
-                    Spacer()
+                    HStack {
+                        if viewModel.isLoadingMovementLogs {
+                            Spacer()
+                            VStack {
+                                Spacer()
+                                ProgressView()
+                                Spacer()
+                            }
+                            Spacer()
+                        } else {
+                            Text("\(Image(systemName: "info.circle")) Add this movement to a new workout to keep track of log history.")
+                                .padding()
+                        }
+                    }
                 }
                 Spacer()
             }
+            
         }
         .navigationTitle(viewModel.movement.name)
         .task {
@@ -194,25 +215,21 @@ struct LogListView: View {
     var movementLogs: [MovementLog]
     
     var body: some View {
-        VStack(alignment: .leading) {
-            HStack {
-                Text("Logs")
-                    .textCase(.uppercase)
-                    .font(.headline)
-                Spacer()
-            }
-            LazyVStack {
-                ForEach(
-                     movementLogs.sorted(
-                        by: { $0.timestamp! > $1.timestamp! }
-                    ),
-                    id: \.self
-                ) { log in
-                    LogItem(movementLog: log)
-                }
+        Text("Logs")
+            .textCase(.uppercase)
+            .font(.headline)
+        List {
+            ForEach(
+                movementLogs.sorted(
+                    by: { $0.timestamp! > $1.timestamp! }
+                ),
+                id: \.self
+            ) { log in
+                LogItem(movementLog: log)
             }
         }
-        .padding(EdgeInsets(top: 8, leading: 0, bottom: 0, trailing: 0))
+        .listStyle(.plain)
+        .overlay(Divider(), alignment: .top)
     }
 }
 
@@ -221,7 +238,7 @@ struct LogItem: View {
     
     var body: some View {
         NavigationLink(value: movementLog) {
-            HStack {
+            HStack(alignment: .top) {
                 if let timestamp = movementLog.timestamp {
                     Text(timestamp.formatted(date: .abbreviated, time: .omitted))
                         .fontWeight(.semibold)
@@ -232,13 +249,8 @@ struct LogItem: View {
                         Text(item)
                     }
                 }
+                .textCase(.uppercase)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 12)
-            .background(Color.init(uiColor: .systemGray6))
-            .foregroundColor(.primary)
-            .cornerRadius(5)
-            .padding(.bottom, 2)
         }
     }
 }

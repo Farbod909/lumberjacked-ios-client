@@ -20,6 +20,7 @@ struct MovementCatalogView: View {
                     }
                 }
             }
+            .listStyle(.inset)
             .navigationTitle("Movement Catalog")
             .navigationBarTitleDisplayMode(.inline)
             .task {

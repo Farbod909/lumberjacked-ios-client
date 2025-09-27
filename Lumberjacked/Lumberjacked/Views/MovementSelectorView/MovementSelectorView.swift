@@ -31,22 +31,19 @@ struct MovementSelectorView: View {
                         }
                     }
                 }
-                .listSectionSpacing(.default)
+                .listSectionSpacing(.compact)
             } else {
                 Text("\(Image(systemName: "info.circle")) Add at least one movement to your workout to start. You can easily add or remove movements during your workout.")
-                    .listRowBackground(Color.clear)
             }
             if viewModel.isLoading {
                 ProgressView()
             } else {
-                Section {
-                    HStack {
-                        TextField("Add a movement to this workout...", text: $searchText)
-                            .autocorrectionDisabled()
-                            .textInputAutocapitalization(.never)
-                    }
+                HStack {
+                    TextField("Add a movement to this workout...", text: $searchText)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .keyboardType(.alphabet)
                 }
-                .listRowBackground(Color.init(uiColor: .systemGray5))
                 Section {
                     if !searchText.isEmpty {
                         Button {
@@ -77,6 +74,7 @@ struct MovementSelectorView: View {
                         }
                     }
                 }
+                .listSectionSpacing(.compact)
                 Section {
                     ForEach(searchResults, id: \.self) { movement in
                         Button(action: {
@@ -100,6 +98,7 @@ struct MovementSelectorView: View {
                 .listSectionSpacing(.compact)
             }
         }
+        .listStyle(.inset)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 if viewModel.workout != nil && viewModel.workout!.id != nil {
@@ -165,8 +164,4 @@ struct MovementSelectorView: View {
         return searchText.trimmingCharacters(in: [" "]) .capitalized
     }
 
-}
-
-#Preview {
-    MovementSelectorView()
 }
