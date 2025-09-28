@@ -15,18 +15,18 @@ extension CurrentWorkoutView {
         var showCreateWorkoutSheet = false
         var showCancelConfirmationAlert = false
         
-        var addMovementText = ""
         var addMovementTextFieldFocused = false
         var showAddMovementOverlay = false
+        
+        var allMovements = [Movement]()
+        var searchText = ""
         
         var placeholderWidth: CGFloat = 0
 
         func attemptGetCurrentWorkout(errors: Binding<LumberjackedClientErrors>) async {
-            isLoading = true
             if let response = await LumberjackedClient(errors: errors).getCurrentWorkout() {
                 currentWorkout = response
             }
-            isLoading = false
         }
         
         func attemptEndCurrentWorkout(errors: Binding<LumberjackedClientErrors>) async {
@@ -50,5 +50,64 @@ extension CurrentWorkoutView {
                 }
             }
         }
+        
+        func attemptGetMovements(errors: Binding<LumberjackedClientErrors>) async {
+            if let response = await LumberjackedClient(errors: errors).getMovements() {
+                allMovements = response.results
+            }
+        }
+        
+        @MainActor
+        func addMovementToCurrentWorkout(errors: Binding<LumberjackedClientErrors>, movementId: UInt64) async {
+            if let movementIds = self.currentWorkout?.movements_details?.map({ $0.id }),
+               !movementIds.contains(movementId) {
+                await attemptAddMovementToCurrentWorkout(addMovementId: movementId, errors: errors) {
+                    searchText = ""
+                    showAddMovementOverlay = false
+                }
+            }
+
+        }
+        
+        @MainActor
+        func createWorkoutWithInitialMovement(errors: Binding<LumberjackedClientErrors>, movementId: UInt64) async {
+            if let _ = await LumberjackedClient(errors: errors).createWorkout(
+                movements: [movementId]) {
+                searchText = ""
+                showAddMovementOverlay = false
+            }
+        }
+        
+        @MainActor
+        func attemptQuickAddMovement(movementName: String, errors: Binding<LumberjackedClientErrors>) async -> Movement? {
+            if let movement = await LumberjackedClient(errors: errors)
+                .createMovement(
+                    movement: Movement.init(
+                        name: movementName,
+                        category: "",
+                        notes: "",
+                        recommended_warmup_sets: "",
+                        recommended_working_sets: "",
+                        recommended_rep_range: "",
+                        recommended_rpe: "")) {
+                return movement
+            }
+            return nil
+        }
+        
+        @MainActor
+        func attemptAddMovementToCurrentWorkout(addMovementId: UInt64, errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
+            if let currentWorkoutMovements = currentWorkout?.movements_details {
+                var newMovementsList = currentWorkoutMovements.map() { $0.id! }
+                newMovementsList.append(addMovementId)
+                if let _ = await LumberjackedClient(errors: errors).updateWorkout(
+                    workoutId: (currentWorkout?.id)!,
+                    movements: newMovementsList) {
+                    dismissAction()
+                }
+            }
+        }
+
+
     }
 }
