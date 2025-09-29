@@ -38,6 +38,14 @@ struct CurrentWorkoutView: View {
             .padding()
             .background(Color.brandSecondary)
             .clipShape(RoundedRectangle(cornerRadius: 25))
+            
+            Button {
+                viewModel.showCreateWorkoutSheet = true
+            } label: {
+                Label("Repeat a past workout", systemImage: "repeat")
+            }
+            .foregroundStyle(Color.accent)
+            .padding(.top, 14)
         }
     }
     
@@ -133,7 +141,7 @@ struct CurrentWorkoutView: View {
                             recommended_rep_range: "",
                             recommended_rpe: ""))
                     .hidden()
-                    Spacer().frame(height: 100)
+                    Spacer().frame(height: 50)
                 }
                 .scrollIndicators(.hidden)
             }
