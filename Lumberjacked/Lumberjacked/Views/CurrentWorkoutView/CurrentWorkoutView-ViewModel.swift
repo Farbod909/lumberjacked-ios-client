@@ -11,13 +11,14 @@ extension CurrentWorkoutView {
     @Observable
     class ViewModel {
         var currentWorkout: Workout?
-        var isLoading = true
+        var isLoadingCurrentWorkout = true
         var showCreateWorkoutSheet = false
         var showCancelConfirmationAlert = false
         
         var addMovementTextFieldFocused = false
         var showAddMovementOverlay = false
         
+        var isLoadingMovements = true
         var allMovements = [Movement]()
         var searchText = ""
         
@@ -61,10 +62,7 @@ extension CurrentWorkoutView {
         func addMovementToCurrentWorkout(errors: Binding<LumberjackedClientErrors>, movementId: UInt64) async {
             if let movementIds = self.currentWorkout?.movements_details?.map({ $0.id }),
                !movementIds.contains(movementId) {
-                await attemptAddMovementToCurrentWorkout(addMovementId: movementId, errors: errors) {
-                    searchText = ""
-                    showAddMovementOverlay = false
-                }
+                await attemptAddMovementToCurrentWorkout(addMovementId: movementId, errors: errors) { }
             }
 
         }
@@ -72,10 +70,7 @@ extension CurrentWorkoutView {
         @MainActor
         func createWorkoutWithInitialMovement(errors: Binding<LumberjackedClientErrors>, movementId: UInt64) async {
             if let _ = await LumberjackedClient(errors: errors).createWorkout(
-                movements: [movementId]) {
-                searchText = ""
-                showAddMovementOverlay = false
-            }
+                movements: [movementId]) { }
         }
         
         @MainActor

@@ -13,45 +13,31 @@ struct CurrentWorkoutView: View {
     @State var timeElapsed: String = "00:00"
     @EnvironmentObject var appEnvironment: LumberjackedAppEnvironment
     @FocusState var addMovementTextFieldFocusState: Bool
-    @Namespace private var animation
     
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     func dismissAddMovementOverlay() {
-        viewModel.searchText = ""
+        addMovementTextFieldFocusState = false
+//        viewModel.searchText = ""
         viewModel.showAddMovementOverlay = false
     }
-    
-    var sharedAnimationBackground: some View {
-        RoundedRectangle(cornerRadius: viewModel.showAddMovementOverlay ? 10 : 25)
-            .fill(viewModel.showAddMovementOverlay ? Color.white.opacity(0.15) : Color.brandSecondary)
-            .frame(
-                maxWidth: viewModel.showAddMovementOverlay ? .infinity : 200,
-                maxHeight: viewModel.showAddMovementOverlay ? 55 : 50
-            )
-            .matchedGeometryEffect(id: "background", in: animation)
-            .onTapGesture {
-                if !viewModel.showAddMovementOverlay {
+
+    var newWorkoutOptionsView: some View {
+        VStack {
+            Button {
+                Task {
                     viewModel.showAddMovementOverlay = true
                     addMovementTextFieldFocusState = true
+                    await viewModel.attemptGetMovements(errors: $errors)
                 }
+            } label: {
+                Label("New workout", systemImage: "plus")
             }
-    }
-    
-    var newWorkoutOptionsOverlayContent: some View {
-        HStack {
-            Image(systemName: "plus")
-            Text("New workout")
-        }
-        .font(.headline.weight(.semibold))
-        .foregroundStyle(Color.brandPrimaryText)
-        .matchedGeometryEffect(id: "content", in: animation)
-        .onTapGesture {
-            Task {
-                viewModel.showAddMovementOverlay = true
-                addMovementTextFieldFocusState = true
-                await viewModel.attemptGetMovements(errors: $errors)
-            }
+            .font(.headline.weight(.semibold))
+            .foregroundStyle(Color.brandPrimaryText)
+            .padding()
+            .background(Color.brandSecondary)
+            .clipShape(RoundedRectangle(cornerRadius: 25))
         }
     }
     
@@ -69,7 +55,7 @@ struct CurrentWorkoutView: View {
         .clipShape(RoundedRectangle(cornerRadius: 25))
     }
     
-    var addMovementOverlayContent: some View {
+    var addMovementSearchFieldView: some View {
         HStack {
             TextField("",
                       text: $viewModel.searchText,
@@ -79,9 +65,12 @@ struct CurrentWorkoutView: View {
             .keyboardType(.alphabet)
             .focused($addMovementTextFieldFocusState)
             .foregroundStyle(Color.brandPrimaryText)
-            .padding(.horizontal, 16)
             .frame(height: 44)
+            .padding(.horizontal, 16)
             
+            if viewModel.isLoadingMovements {
+                ProgressView()
+            }
             Button {
                 dismissAddMovementOverlay()
             } label: {
@@ -90,7 +79,12 @@ struct CurrentWorkoutView: View {
                     .padding()
             }
         }
-        .matchedGeometryEffect(id: "content", in: animation)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.brandSecondary)
+        )
+        .padding(.horizontal, 16)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
     
     var endWorkoutButton: some View {
@@ -128,6 +122,17 @@ struct CurrentWorkoutView: View {
                     ForEach(viewModel.currentWorkout?.movements_details ?? [], id: \.self) { movement in
                         CurrentWorkoutMovementView(movement: movement)
                     }
+                    // placeholder list item so that the view is already at the correct width.
+                    CurrentWorkoutMovementView(
+                        movement: Movement(
+                            name: "",
+                            category: "",
+                            notes: "",
+                            recommended_warmup_sets: "",
+                            recommended_working_sets: "",
+                            recommended_rep_range: "",
+                            recommended_rpe: ""))
+                    .hidden()
                     Spacer().frame(height: 100)
                 }
                 .scrollIndicators(.hidden)
@@ -157,7 +162,7 @@ struct CurrentWorkoutView: View {
                 if !viewModel.searchText.isEmpty {
                     Button {
                         Task {
-                            viewModel.isLoading = true
+                            viewModel.isLoadingCurrentWorkout = true
                             if let newMovement = await viewModel.attemptQuickAddMovement(
                                 movementName: formattedSearchText,
                                 errors: $errors) {
@@ -171,7 +176,7 @@ struct CurrentWorkoutView: View {
                                 await viewModel.attemptGetCurrentWorkout(errors: $errors)
                             }
                             dismissAddMovementOverlay()
-                            viewModel.isLoading = false
+                            viewModel.isLoadingCurrentWorkout = false
                         }
                     } label: {
                         VStack(alignment: .leading) {
@@ -189,21 +194,21 @@ struct CurrentWorkoutView: View {
                 ForEach(Array(movementSearchResults), id: \.self) { (movement: Movement) in
                     Button {
                         Task {
+                            if let movementIds = self.viewModel.currentWorkout?.movements_details?.map({ $0.id }),
+                               movementIds.contains(movement.id) {
+                                return
+                            }
+                            viewModel.isLoadingMovements = true
                             if let _ = viewModel.currentWorkout {
-                                viewModel.isLoading = true
-                                dismissAddMovementOverlay()
                                 await viewModel.addMovementToCurrentWorkout(
                                     errors: $errors, movementId: movement.id!)
-                                await viewModel.attemptGetCurrentWorkout(errors: $errors)
-                                viewModel.isLoading = false
                             } else {
-                                dismissAddMovementOverlay()
-                                viewModel.isLoading = true
                                 await viewModel.createWorkoutWithInitialMovement(
                                     errors: $errors, movementId: movement.id!)
-                                await viewModel.attemptGetCurrentWorkout(errors: $errors)
-                                viewModel.isLoading = false
                             }
+                            await viewModel.attemptGetCurrentWorkout(errors: $errors)
+                            dismissAddMovementOverlay()
+                            viewModel.isLoadingMovements = false
                         }
                     } label: {
                         HStack {
@@ -237,30 +242,19 @@ struct CurrentWorkoutView: View {
         return viewModel.searchText.trimmingCharacters(in: [" "]) .capitalized
     }
     
-    var overlay: some View {
-        Color(.brandBackground).ignoresSafeArea()
+    var addMovementOverlay: some View {
+        Color(.brandBackground)
+            .ignoresSafeArea()
+            .opacity(viewModel.showAddMovementOverlay ? 1 : 0)
     }
     
-    var overlayContent : some View {
+    var addMovementView : some View {
         VStack {
-            ZStack {
-                sharedAnimationBackground
-                
-                if viewModel.showAddMovementOverlay {
-                    addMovementOverlayContent
-                } else {
-                    newWorkoutOptionsOverlayContent
-                }
-                
-            }
-            .padding(.horizontal)
-            
-            if viewModel.showAddMovementOverlay {
-                if viewModel.searchText.isEmpty {
-                    Spacer()
-                } else {
-                    movementSearchResultsList
-                }
+            addMovementSearchFieldView
+            if viewModel.searchText.isEmpty {
+                Spacer()
+            } else {
+                movementSearchResultsList
             }
         }
     }
@@ -268,37 +262,48 @@ struct CurrentWorkoutView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                if viewModel.currentWorkout != nil {
-                    if viewModel.isLoading {
-                        ProgressView()
-                    } else {
-                        currentWorkoutView
-                    }
+                Color.brandBackground.ignoresSafeArea()
+                
+                currentWorkoutView
+                    .opacity(viewModel.currentWorkout != nil ? 1 : 0)
+                ProgressView()
+                    .opacity(viewModel.currentWorkout == nil && viewModel.isLoadingCurrentWorkout ? 1 : 0)
+                
+                if viewModel.currentWorkout == nil && !viewModel.isLoadingCurrentWorkout {
+                    newWorkoutOptionsView
+                        .transition(
+                            .asymmetric(
+                                insertion: .opacity.animation(.easeIn(duration: 0.2)),
+                                removal: .opacity.animation(.easeOut(duration: 0))
+                            )
+                        )
+
                 }
                 
-                if viewModel.currentWorkout == nil || viewModel.showAddMovementOverlay {
-                    overlay
-                    
-                    if viewModel.isLoading {
-                        ProgressView()
-                    } else {
-                        overlayContent
-                    }
+                addMovementOverlay
+                
+                if viewModel.showAddMovementOverlay {
+                    addMovementView
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .animation(.default, value: viewModel.currentWorkout)
             .animation(.spring(duration: 0.3, bounce: 0.05), value: viewModel.showAddMovementOverlay)
             .task(id: appEnvironment.isNotAuthenticated) {
-                viewModel.isLoading = true
+                viewModel.isLoadingCurrentWorkout = true
+                viewModel.isLoadingMovements = true
                 await viewModel.attemptGetCurrentWorkout(errors: $errors)
                 await viewModel.attemptGetMovements(errors: $errors)
-                viewModel.isLoading = false
+                viewModel.isLoadingCurrentWorkout = false
+                viewModel.isLoadingMovements = false
             }
             .sheet(isPresented: $viewModel.showCreateWorkoutSheet, onDismiss: {
                 Task {
-                    viewModel.isLoading = true
+                    viewModel.isLoadingCurrentWorkout = true
+                    viewModel.isLoadingMovements = true
                     await viewModel.attemptGetCurrentWorkout(errors: $errors)
-                    viewModel.isLoading = false
+                    viewModel.isLoadingCurrentWorkout = false
+                    viewModel.isLoadingMovements = false
                 }
             }) {
                 CreateWorkoutView()
