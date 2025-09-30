@@ -69,9 +69,12 @@ struct CurrentWorkoutView: View {
     
     var addMovementSearchFieldView: some View {
         HStack {
-            TextField("",
-                      text: $viewModel.searchText,
-                      prompt: Text("Enter movement name...").foregroundStyle(.white.opacity(0.6)))
+            TextField(
+                "",
+                text: $viewModel.searchText,
+                prompt: Text("Enter movement name...")
+                .foregroundStyle(.brandPrimaryText.opacity(0.6))
+            )
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
             .keyboardType(.alphabet)
@@ -87,7 +90,7 @@ struct CurrentWorkoutView: View {
                 dismissAddMovementOverlay()
             } label: {
                 Image(systemName: "xmark.circle")
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.brandPrimaryText.opacity(0.6))
                     .padding()
             }
         }
@@ -114,23 +117,33 @@ struct CurrentWorkoutView: View {
         .clipShape(RoundedRectangle(cornerRadius: 25))
     }
     
+    var timerView: some View {
+        Text(timeElapsed)
+            .font(.largeTitle)
+            .onReceive(timer) { _ in
+                let interval = Date.now.timeIntervalSince((viewModel.currentWorkout?.start_timestamp) ?? Date.now)
+                
+                let totalMinutes = Int(interval / 60)
+                let hours = totalMinutes / 60
+                let minutes = totalMinutes % 60
+                
+                timeElapsed = String(format: "%02d:%02d", hours, minutes)
+            }
+            .padding(EdgeInsets(top: 8, leading: 18, bottom: 8, trailing: 18))
+            .background(.thinMaterial)
+            .clipShape(
+                RoundedRectangle(cornerRadius: 25))
+    }
+        
     var currentWorkoutView: some View {
         ZStack {
             VStack {
-                VStack {
-                    Text(timeElapsed)
-                        .font(.largeTitle)
-                        .onReceive(timer) { _ in
-                            let interval = Date.now.timeIntervalSince((viewModel.currentWorkout?.start_timestamp) ?? Date.now)
-                            
-                            let totalMinutes = Int(interval / 60)
-                            let hours = totalMinutes / 60
-                            let minutes = totalMinutes % 60
-                            
-                            timeElapsed = String(format: "%02d:%02d", hours, minutes)
-                        }
-                }
                 ScrollView {
+                    // hidden timerView so that it doesn't cover the scrollable items below it.
+                    timerView
+                        .padding(.top, 10)
+                        .padding(.bottom, 20)
+                        .hidden()
                     ForEach(viewModel.currentWorkout?.movements_details ?? [], id: \.self) { movement in
                         CurrentWorkoutMovementView(movement: movement)
                     }
@@ -150,6 +163,12 @@ struct CurrentWorkoutView: View {
                 .scrollIndicators(.hidden)
             }
             .padding(.horizontal, 16)
+            VStack {
+                timerView
+                    .padding(.top, 10)
+                    .padding(.bottom, 20)
+                Spacer()
+            }
             HStack {
                 Spacer().frame(width: 25)
                 VStack {
