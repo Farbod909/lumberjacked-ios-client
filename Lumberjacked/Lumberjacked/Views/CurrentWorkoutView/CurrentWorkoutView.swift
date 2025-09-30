@@ -18,7 +18,6 @@ struct CurrentWorkoutView: View {
     
     func dismissAddMovementOverlay() {
         addMovementTextFieldFocusState = false
-//        viewModel.searchText = ""
         viewModel.showAddMovementOverlay = false
     }
 
@@ -26,6 +25,7 @@ struct CurrentWorkoutView: View {
         VStack {
             Button {
                 Task {
+                    viewModel.searchText = ""
                     viewModel.showAddMovementOverlay = true
                     addMovementTextFieldFocusState = true
                     await viewModel.attemptGetMovements(errors: $errors)
@@ -51,8 +51,12 @@ struct CurrentWorkoutView: View {
     
     var addMovementButton: some View {
         Button {
-            viewModel.showAddMovementOverlay = true
-            addMovementTextFieldFocusState = true
+            Task {
+                viewModel.searchText = ""
+                viewModel.showAddMovementOverlay = true
+                addMovementTextFieldFocusState = true
+                await viewModel.attemptGetMovements(errors: $errors)
+            }
         } label: {
             Label("Movement", systemImage: "plus")
                 .font(.headline)
@@ -195,6 +199,7 @@ struct CurrentWorkoutView: View {
                                 .padding(EdgeInsets(top: 1, leading: 0, bottom: 0, trailing: 0))
                         }
                     }
+                    .listRowBackground(Color.clear)
                 }
             }
             .listSectionSpacing(.compact)
@@ -229,11 +234,13 @@ struct CurrentWorkoutView: View {
                         }
                     }
                     .foregroundColor(.primary)
+                    .listRowBackground(Color.clear)
                 }
             }
             .listSectionSpacing(.compact)
         }
         .listStyle(.inset)
+        .scrollContentBackground(.hidden)
     }
         
     var movementSearchResults: [Movement] {
@@ -248,12 +255,6 @@ struct CurrentWorkoutView: View {
     
     var formattedSearchText: String {
         return viewModel.searchText.trimmingCharacters(in: [" "]) .capitalized
-    }
-    
-    var addMovementOverlay: some View {
-        Color(.brandBackground)
-            .ignoresSafeArea()
-            .opacity(viewModel.showAddMovementOverlay ? 1 : 0)
     }
     
     var addMovementView : some View {
@@ -287,12 +288,11 @@ struct CurrentWorkoutView: View {
                         )
 
                 }
-                
-                addMovementOverlay
-                
+                                
                 if viewModel.showAddMovementOverlay {
                     addMovementView
                         .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .background(.ultraThinMaterial.opacity(viewModel.showAddMovementOverlay ? 1 : 0))
                 }
             }
             .animation(.default, value: viewModel.currentWorkout)
