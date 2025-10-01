@@ -18,9 +18,12 @@ struct MovementCatalogView: View {
                     NavigationLink(value: movement) {
                         Text(movement.name)
                     }
+                    .listRowBackground(Color.clear)
                 }
             }
             .listStyle(.inset)
+            .scrollContentBackground(.hidden)
+            .background(Color.brandBackground.ignoresSafeArea())
             .navigationTitle("Movement Catalog")
             .navigationBarTitleDisplayMode(.inline)
             .task {
@@ -45,18 +48,18 @@ struct MovementCatalogView: View {
                         await viewModel.attemptGetMovements(errors: $errors)
                     }
                 }
-                ) {
-                    MovementInputView(
-                        viewModel: MovementInputView.ViewModel(movement: Movement(
-                            name: "",
-                            category: "",
-                            notes: "",
-                            recommended_warmup_sets: "",
-                            recommended_working_sets: "",
-                            recommended_rep_range: "",
-                            recommended_rpe: "")),
-                        newlyAddedMovement: .constant(nil))
-                }
+            ) {
+                MovementInputView(
+                    viewModel: MovementInputView.ViewModel(movement: Movement(
+                        name: "",
+                        category: "",
+                        notes: "",
+                        recommended_warmup_sets: "",
+                        recommended_working_sets: "",
+                        recommended_rep_range: "",
+                        recommended_rpe: "")),
+                    newlyAddedMovement: .constant(nil))
+            }
         }
         .searchable(text: $viewModel.searchText)
         .autocorrectionDisabled()

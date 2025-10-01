@@ -19,6 +19,8 @@ struct WorkoutHistoryView: View {
                 }
             }
             .listRowSpacing(10)
+            .scrollContentBackground(.hidden)
+            .background(Color.brandBackground.ignoresSafeArea())
             .navigationTitle("Workout History")
             .navigationBarTitleDisplayMode(.inline)
             .task {
