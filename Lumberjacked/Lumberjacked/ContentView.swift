@@ -24,10 +24,6 @@ struct ContentView: View {
                 .tabItem {
                     Label("History", systemImage: "calendar")
                 }
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "line.3.horizontal")
-                }
         }
         .preferredColorScheme(.dark)
     }

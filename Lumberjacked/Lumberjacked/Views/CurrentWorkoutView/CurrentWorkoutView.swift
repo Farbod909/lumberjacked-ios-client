@@ -87,12 +87,13 @@ struct CurrentWorkoutView: View {
                 ProgressView()
             }
             Button {
-                dismissAddMovementOverlay()
+                viewModel.searchText = ""
             } label: {
                 Image(systemName: "xmark.circle")
                     .foregroundStyle(.brandPrimaryText.opacity(0.6))
                     .padding()
             }
+            .opacity(viewModel.searchText.isEmpty ? 0 : 1)
         }
         .background(
             RoundedRectangle(cornerRadius: 10)
@@ -346,20 +347,35 @@ struct CurrentWorkoutView: View {
                         workout: viewModel.currentWorkout!))
             }
             .toolbar {
-                if viewModel.currentWorkout != nil {
-                    ToolbarItem(placement: .confirmationAction) {
-                        NavigationLink("Edit") {
-                            MovementSelectorView(
-                                viewModel: MovementSelectorView.ViewModel(workout: viewModel.currentWorkout)
-                            )
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    if viewModel.showAddMovementOverlay {
+                        Button("Dismiss") {
+                            dismissAddMovementOverlay()
+                        }
+                    } else if viewModel.currentWorkout != nil {
+                        Menu {
+                            NavigationLink {
+                                MovementSelectorView(
+                                    viewModel: MovementSelectorView.ViewModel(workout: viewModel.currentWorkout)
+                                )
+                            } label: {
+                                Label("Edit workout", systemImage: "pencil.circle")
+                            }
+
+                            Button(role: .destructive) {
+                                viewModel.showCancelConfirmationAlert = true
+                            } label: {
+                                Label("Cancel workout", systemImage: "trash")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
                         }
                     }
-                    ToolbarItem(placement: .secondaryAction) {
-                        Button {
-                            viewModel.showCancelConfirmationAlert = true
-                        } label: {
-                            Label("Cancel workout", systemImage: "trash")
-                        }
+                    
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Image(systemName: "gearshape")
                     }
                 }
             }
