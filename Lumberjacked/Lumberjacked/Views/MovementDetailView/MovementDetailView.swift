@@ -13,18 +13,23 @@ struct MovementDetailView: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            VStack(alignment: .leading) {
+        ZStack {
+            Color.brandBackground.ignoresSafeArea()
+            
+            VStack(alignment: .leading, spacing: 12) {
+                Text(viewModel.movement.name)
+                    .font(.title)
+                    .fontWeight(.semibold)
+                    .padding(EdgeInsets(top: 0, leading: 6, bottom: 0, trailing: 6))
                 if !viewModel.movement.hasNotes &&
                     !viewModel.movement.hasCategory &&
                     !viewModel.movement.hasAnyRecommendations {
                     HStack {
                         Text("\(Image(systemName: "info.circle")) Edit this movement to add useful information like notes or recommendations to help you during your workouts.")
-                            .padding()
                         Spacer()
                     }
-                    .padding(EdgeInsets(top: 4, leading: 0, bottom: 10 , trailing: 0))
-                    .overlay(Divider().frame(height: 2).background(.accent), alignment: .bottom)
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
                 }
                 
                 if viewModel.movement.hasCategory {
@@ -34,25 +39,13 @@ struct MovementDetailView: View {
                             .font(.headline)
                         Text(viewModel.movement.category)
                             .foregroundColor(.primary)
-                        Spacer()
                     }
-                    .padding(EdgeInsets(top: 4, leading: 0, bottom: 10 , trailing: 0))
-                    .overlay(Divider().frame(height: 2).background(.accent), alignment: .bottom)
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
                 }
                 
                 if viewModel.movement.hasNotes {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Notes")
-                                .textCase(.uppercase)
-                                .font(.headline)
-                            Text(viewModel.movement.notes)
-                                .foregroundColor(.primary)
-                        }
-                        Spacer()
-                    }
-                    .padding(EdgeInsets(top: 4, leading: 0, bottom: 10 , trailing: 0))
-                    .overlay(Divider().frame(height: 2).background(.accent), alignment: .bottom)
+                    NotesView(notes: viewModel.movement.notes, maxHeight: 100)
                 }
                 
                 if viewModel.movement.hasAnyRecommendations {
@@ -60,15 +53,15 @@ struct MovementDetailView: View {
                         RecommendationsView(movement: viewModel.movement)
                         Spacer()
                     }
-                    .padding(EdgeInsets(top: 4, leading: 0, bottom: 10 , trailing: 0))
-                    .overlay(Divider().frame(height: 2).background(.accent), alignment: .bottom)
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
                 }
                 
                 if !viewModel.movementLogs.isEmpty {
                     LogListView(movementLogs: viewModel.movementLogs)
                 } else {
-                    HStack {
-                        if viewModel.isLoadingMovementLogs {
+                    if viewModel.isLoadingMovementLogs {
+                        HStack {
                             Spacer()
                             VStack {
                                 Spacer()
@@ -76,78 +69,138 @@ struct MovementDetailView: View {
                                 Spacer()
                             }
                             Spacer()
-                        } else {
-                            Text("\(Image(systemName: "info.circle")) Add this movement to a new workout to keep track of log history.")
-                                .padding()
                         }
+                    } else {
+                        HStack {
+                            Text("\(Image(systemName: "info.circle")) Add this movement to a new workout to keep track of log history.")
+                            Spacer()
+                        }
+                        .padding()
+                        .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
                     }
                 }
                 Spacer()
             }
-            
-        }
-        .navigationTitle(viewModel.movement.name)
-        .task {
-            await viewModel.attemptGetMovementLogs(errors: $errors)
-        }
-        .toolbar {
-            if viewModel.deleteActionLoading {
-                ToolbarItem(placement: .topBarTrailing) {
-                    ProgressView()
-                }
+            .task {
+                await viewModel.attemptGetMovementLogs(errors: $errors)
             }
-            if viewModel.workout != nil {
-                ToolbarItem(placement: .primaryAction) {
-                    NavigationLink() {
-                        Text("new log page")
+            .toolbar {
+                if viewModel.deleteActionLoading {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        ProgressView()
+                    }
+                }
+                if viewModel.workout != nil {
+                    ToolbarItem(placement: .primaryAction) {
+                        NavigationLink() {
+                            Text("new log page")
+                        } label: {
+                            Label("New log", systemImage: "plus.square.fill")
+                        }
+                    }
+                }
+                ToolbarItemGroup(placement: .secondaryAction) {
+                    Button {
+                        viewModel.showEditSheet = true
                     } label: {
-                        Label("New log", systemImage: "plus.square.fill")
+                        Label("Edit movement", systemImage: "pencil.circle")
+                    }
+                    Button {
+                        viewModel.showDeleteConfirmationAlert = true
+                    } label: {
+                        Label("Delete movement", systemImage: "trash")
                     }
                 }
             }
-            ToolbarItemGroup(placement: .secondaryAction) {
-                Button {
-                    viewModel.showEditSheet = true
-                } label: {
-                    Label("Edit movement", systemImage: "pencil.circle")
-                }
-                Button {
-                    viewModel.showDeleteConfirmationAlert = true
-                } label: {
-                    Label("Delete movement", systemImage: "trash")
-                }
+            .navigationDestination(for: MovementLog.self) { movementLog in
+                MovementLogInputView(
+                    viewModel: MovementLogInputView.ViewModel(
+                        movementLog: movementLog,
+                        movement: viewModel.movement,
+                        workout: nil))
             }
-        }
-        .navigationDestination(for: MovementLog.self) { movementLog in
-            MovementLogInputView(
-                viewModel: MovementLogInputView.ViewModel(
-                    movementLog: movementLog,
-                    movement: viewModel.movement,
-                    workout: nil))
-        }
-        .sheet(isPresented: $viewModel.showEditSheet, onDismiss: {
-            Task {
-                if let movementId = viewModel.movement.id {
-                    await viewModel.attemptGetMovementDetail(id: movementId, errors: $errors)
-                }
-            }
-        }) {
-            MovementInputView(
-                viewModel: MovementInputView.ViewModel(movement: viewModel.movement),
-                newlyAddedMovement: .constant(nil))
-        }
-        .alert("Delete", isPresented: $viewModel.showDeleteConfirmationAlert) {
-            Button("Delete", role: .destructive) {
+            .sheet(isPresented: $viewModel.showEditSheet, onDismiss: {
                 Task {
-                    guard await viewModel.attemptDeleteMovement(id: viewModel.movement.id!, errors: $errors) else {
-                        return
+                    if let movementId = viewModel.movement.id {
+                        await viewModel.attemptGetMovementDetail(id: movementId, errors: $errors)
                     }
-                    dismiss()
+                }
+            }) {
+                MovementInputView(
+                    viewModel: MovementInputView.ViewModel(movement: viewModel.movement),
+                    newlyAddedMovement: .constant(nil))
+            }
+            .alert("Delete", isPresented: $viewModel.showDeleteConfirmationAlert) {
+                Button("Delete", role: .destructive) {
+                    Task {
+                        guard await viewModel.attemptDeleteMovement(id: viewModel.movement.id!, errors: $errors) else {
+                            return
+                        }
+                        dismiss()
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            }
+            .padding(.horizontal, 6)
+        }
+    }
+}
+
+struct NotesView: View {
+    let notes: String
+    let maxHeight: CGFloat
+    @State private var textHeight: CGFloat = .zero
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text("Notes")
+                    .textCase(.uppercase)
+                    .font(.headline)
+                
+                Group {
+                    if textHeight > maxHeight {
+                        ScrollView {
+                            Text(notes)
+                                .foregroundColor(.primary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(
+                                    GeometryReader { proxy in
+                                        Color.clear
+                                            .preference(key: HeightKey.self, value: proxy.size.height)
+                                    }
+                                )
+                        }
+                        .scrollIndicators(.hidden)
+                        .frame(height: maxHeight)
+                    } else {
+                        Text(notes)
+                            .foregroundColor(.primary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                GeometryReader { proxy in
+                                    Color.clear
+                                        .preference(key: HeightKey.self, value: proxy.size.height)
+                                }
+                            )
+                    }
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Spacer()
         }
-        .padding(.horizontal, 16)
+        .onPreferenceChange(HeightKey.self) { textHeight = $0 }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 25)
+                .fill(Color.brandSecondary)
+        )
+    }
+}
+
+private struct HeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = .zero
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 
@@ -215,21 +268,28 @@ struct LogListView: View {
     var movementLogs: [MovementLog]
     
     var body: some View {
-        Text("Logs")
-            .textCase(.uppercase)
-            .font(.headline)
-        List {
-            ForEach(
-                movementLogs.sorted(
-                    by: { $0.timestamp! > $1.timestamp! }
-                ),
-                id: \.self
-            ) { log in
-                LogItem(movementLog: log)
+        VStack(alignment: .leading) {
+            Text("Log History")
+                .textCase(.uppercase)
+                .font(.headline)
+            List {
+                ForEach(
+                    movementLogs.sorted(
+                        by: { $0.timestamp! > $1.timestamp! }
+                    ),
+                    id: \.self
+                ) { log in
+                    LogItem(movementLog: log)
+                    .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
+                    .listRowBackground(Color.clear)
+                }
             }
+            .listStyle(.plain)
+            .scrollIndicators(.hidden)
         }
-        .listStyle(.plain)
-        .overlay(Divider(), alignment: .top)
+        .padding()
+        .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
+
     }
 }
 
@@ -254,3 +314,88 @@ struct LogItem: View {
         }
     }
 }
+
+#if DEBUG
+struct MovementDetailView_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            NavigationStack {
+                MovementDetailView(
+                    viewModel: viewModelWithPopulatedMovementAndLogs
+                )
+            }
+            .previewDisplayName("Full Details with Logs")
+            NavigationStack {
+                MovementDetailView(
+                    viewModel: viewModelWithEmptyMovementNoLogs
+                )
+            }
+            .previewDisplayName("Minimal Details, No Logs")
+            NavigationStack {
+                MovementDetailView(
+                    viewModel: viewModelWithPopulatedMovementNoLogs
+                )
+            }
+            .previewDisplayName("Full Details, No Logs")
+        }
+    }
+
+    // MARK: - Sample Data
+
+    // --- Mock Data ---
+    static let sampleLog1 = MovementLog(
+        id: 1, movement: 1, reps: [10, 10, 10], loads: [135, 135, 135], notes: "", timestamp: Date()
+    )
+    
+    static let sampleLog2 = MovementLog(
+        id: 2, movement: 1, reps: [8, 8, 6], loads: [145, 145, 145], notes: "", timestamp: Calendar.current.date(byAdding: .day, value: -7, to: Date())!
+    )
+    
+    static let fullDetailMovement = Movement(
+        id: 1,
+        name: "Barbell Bench Press",
+        category: "Chest",
+        notes: "Keep elbows tucked at a 45-degree angle. Don't bounce the bar off the chest.",
+        recommended_warmup_sets: "2-3",
+        recommended_working_sets: "3",
+        recommended_rep_range: "8-12",
+        recommended_rpe: "7-8",
+        recommended_rest_time: 90
+    )
+    
+    static let noDetailMovement = Movement(
+        id: 2,
+        name: "Bodyweight Squat",
+        category: "",
+        notes: "",
+        recommended_warmup_sets: "",
+        recommended_working_sets: "",
+        recommended_rep_range: "",
+        recommended_rpe: ""
+    )
+    
+    static let mockWorkout = Workout(id: 1)
+
+    // --- View Models for Different States ---
+    
+    // 1. Full details with logs
+    static let viewModelWithPopulatedMovementAndLogs: MovementDetailView.ViewModel = {
+        let vm = MovementDetailView.ViewModel(movement: fullDetailMovement, movementLogs: [sampleLog1, sampleLog2])
+        vm.isLoadingMovementLogs = false
+        vm.workout = mockWorkout // Set workout to show the "New Log" button
+        return vm
+    }()
+
+    // 2. Minimal details, no logs
+    static let viewModelWithEmptyMovementNoLogs: MovementDetailView.ViewModel = {
+        let vm = MovementDetailView.ViewModel(movement: noDetailMovement)
+        return vm
+    }()
+    
+    // 3. Full details, no logs
+    static let viewModelWithPopulatedMovementNoLogs: MovementDetailView.ViewModel = {
+        let vm = MovementDetailView.ViewModel(movement: fullDetailMovement)
+        return vm
+    }()
+}
+#endif
