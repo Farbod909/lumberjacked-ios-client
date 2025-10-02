@@ -80,9 +80,9 @@ extension MovementLog {
         }
         
         if loadsAllEqual {
-            return roundDouble(loads[0]) + " lb"
+            return roundDouble(loads[0]) + "\u{FEFF} \u{FEFF}lb"
         } else {
-            return loads.map { roundDouble($0) + " lb" }.joined(separator: ", ")
+            return loads.map { roundDouble($0) + "\u{FEFF} \u{FEFF}lb" }.joined(separator: ", ")
         }
     }
     
@@ -95,29 +95,52 @@ extension MovementLog {
         var summaryList = [String]()
 
         if repsAllEqual && loadsAllEqual {
-            summaryList.append("\(reps!.count) sets of")
-            summaryList.append("\(reps![0]) reps")
-            summaryList.append("\(roundDouble(loads![0])) lb")
+            summaryList.append("\(reps!.count)\u{FEFF} \u{FEFF}sets")
+            summaryList.append("\(reps![0])\u{FEFF} \u{FEFF}reps")
+            summaryList.append("\(roundDouble(loads![0]))\u{FEFF} \u{FEFF}lb")
             return summaryList
         }
         
         if let reps = reps, let loads = loads {
             for i in 0...(reps.count - 1) {
-                summaryList.append("\(reps[i]) reps × \(roundDouble(loads[i])) lb")
+                summaryList.append("\(reps[i])\u{FEFF} \u{FEFF}reps × \(roundDouble(loads[i]))\u{FEFF} \u{FEFF}lb")
             }
         }
         return summaryList
     }
     
+    var shorterSummary: [String] {
+        /**
+         * Same as above but slightly shorter version.
+         * If the reps and loads are all equal, each element is: X, Y reps x Z load (e.g. ["3×", "10 reps × 50 lb"]
+         * If the reps and loads are different, each element is a set in the format: ["10 × 50 lb", "9 × 55 lb", "8 × 60 lb"]
+         */
+        var summaryList = [String]()
+
+        if repsAllEqual && loadsAllEqual {
+            summaryList.append("\(reps!.count)×")
+            summaryList.append("\(reps![0])\u{FEFF} \u{FEFF}reps × \(roundDouble(loads![0]))\u{FEFF} \u{FEFF}lb")
+            return summaryList
+        }
+        
+        if let reps = reps, let loads = loads {
+            for i in 0...(reps.count - 1) {
+                summaryList.append("\(reps[i])\u{FEFF} \u{FEFF}reps × \(roundDouble(loads[i]))\u{FEFF} \u{FEFF}lb")
+            }
+        }
+        return summaryList
+    }
+
+    
     var conciseSummaryString: String {
         if repsAllEqual && loadsAllEqual {
-            return "\(reps!.count) × \(reps![0]) × \(roundDouble(loads![0])) lb"
+            return "\(reps!.count) × \(reps![0]) × \(roundDouble(loads![0]))\u{FEFF} \u{FEFF}lb"
         }
         
         if let reps = reps, let loads = loads {
             var summaryList = [String]()
             for i in 0...(reps.count - 1) {
-                summaryList.append("\(reps[i]) × \(roundDouble(loads[i])) lb")
+                summaryList.append("\(reps[i]) × \(roundDouble(loads[i]))\u{FEFF} \u{FEFF}lb")
             }
             return summaryList.joined(separator: ", ")
         }

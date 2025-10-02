@@ -15,17 +15,25 @@ struct WorkoutOverviewView: View {
             Group {
                 Text(String(workout.humanReadableStartTimestamp!))
                     .font(.title2)
+                    .fontWeight(.bold)
+                    .padding(.bottom, 2)
                 ForEach(workout.movements_details!, id: \.self.id!) { movement in
                     HStack {
                         Text(movement.name)
                         Spacer()
-                        if let recorded_log = movement.recorded_log {
-                            Text(recorded_log.conciseSummaryString)
-                        } else {
-                            Text("Skipped")
+                        HStack {
+                            if let recorded_log = movement.recorded_log {
+                                ForEach(recorded_log.shorterSummary, id: \.self) { summaryItem in
+                                    Text(summaryItem)
+                                }
+                            } else {
+                                Text("Skipped")
+                            }
                         }
-                        
                     }
+                    .textCase(.uppercase)
+                    .font(.callout)
+                    .fontWidth(.condensed)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

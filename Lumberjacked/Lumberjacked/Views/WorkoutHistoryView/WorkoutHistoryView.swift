@@ -16,6 +16,7 @@ struct WorkoutHistoryView: View {
             List {
                 ForEach(viewModel.pastWorkouts, id: \.self) { workout in
                     WorkoutOverviewView(workout: workout)
+                        .listRowBackground(Color.brandSecondary)
                 }
             }
             .listRowSpacing(10)
