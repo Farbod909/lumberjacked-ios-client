@@ -21,19 +21,24 @@ struct WorkoutOverviewView: View {
                     HStack {
                         Text(movement.name)
                         Spacer()
-                        HStack {
+                        Group {
                             if let recorded_log = movement.recorded_log {
-                                ForEach(recorded_log.shorterSummary, id: \.self) { summaryItem in
-                                    Text(summaryItem)
+                                if let setsNum = recorded_log.reps?.count {
+                                    if setsNum > 1 {
+                                        Text("\(setsNum) Sets")
+                                    } else {
+                                        Text("\(setsNum) Set")
+                                    }
+                                } else {
+                                    Text("Unknown")
                                 }
                             } else {
                                 Text("Skipped")
                             }
                         }
+                        .textCase(.uppercase)
+                        .font(.caption)
                     }
-                    .textCase(.uppercase)
-                    .font(.callout)
-                    .fontWidth(.condensed)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

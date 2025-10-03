@@ -141,7 +141,7 @@ struct MovementDetailView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             }
-            .padding(.horizontal, 6)
+            .padding(.horizontal, 10)
         }
     }
 }

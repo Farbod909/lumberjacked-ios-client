@@ -20,37 +20,22 @@ struct TemplateWorkoutSelectorView: View {
                 ProgressView()
             } else {
                 List {
-                    Section(header: Text("Start fresh or choose a past workout as a template.")) {
-                        Text("Start fresh")
+                    ForEach(viewModel.workouts, id: \.self.id) { workout in
+                        WorkoutOverviewView(workout: workout)
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                templateWorkout = nil
+                                templateWorkout = workout
                             }
                             .listRowInsets(EdgeInsets())
                             .overlay {
-                                if templateWorkout == nil {
+                                if templateWorkout == workout {
                                     RoundedRectangle(cornerRadius: 10)
                                         .stroke(Color.accentColor, lineWidth: 3)
                                 }
                             }
-                        ForEach(viewModel.workouts, id: \.self.id) { workout in
-                            WorkoutOverviewView(workout: workout)
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    templateWorkout = workout
-                                }
-                                .listRowInsets(EdgeInsets())
-                                .overlay {
-                                    if templateWorkout == workout {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color.accentColor, lineWidth: 3)
-                                    }
-                                }
-                        }
+                        
                     }
                 }
                 .listRowSpacing(10)

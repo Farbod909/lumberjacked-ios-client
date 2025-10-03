@@ -15,8 +15,13 @@ struct WorkoutHistoryView: View {
         NavigationStack {
             List {
                 ForEach(viewModel.pastWorkouts, id: \.self) { workout in
-                    WorkoutOverviewView(workout: workout)
-                        .listRowBackground(Color.brandSecondary)
+                    ZStack {
+                        WorkoutOverviewView(workout: workout)
+                        NavigationLink(destination: WorkoutDetailView(viewModel: .init(workout: workout))) {
+                            EmptyView()
+                        }.opacity(0)
+                    }
+                    .listRowBackground(Color.brandSecondary)
                 }
             }
             .listRowSpacing(10)
