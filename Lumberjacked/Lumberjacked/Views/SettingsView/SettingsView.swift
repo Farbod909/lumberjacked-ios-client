@@ -14,13 +14,18 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Button("Log out") {
-                Task {
-                    await viewModel.attemptLogout(errors: $errors)
-                    appEnvironment.evaluateAuthenticationStatus()
+            Section {
+                Button("Log out") {
+                    Task {
+                        await viewModel.attemptLogout(errors: $errors)
+                        appEnvironment.evaluateAuthenticationStatus()
+                    }
                 }
             }
+            .listRowBackground(Color.brandSecondary)
         }
+        .scrollContentBackground(.hidden)
+        .background(Color.brandBackground.ignoresSafeArea())
     }
 }
 
