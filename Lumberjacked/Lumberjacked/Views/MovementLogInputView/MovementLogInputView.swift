@@ -86,7 +86,7 @@ struct MovementLogInputView: View {
                 }
                 if viewModel.movementLog.id != nil {
                     ToolbarItem(placement: .secondaryAction) {
-                        Button("Delete log", systemImage: "trash") {
+                        Button("Delete log", systemImage: "trash", role: .destructive) {
                             Task {
                                 await viewModel.attemptDeleteLog(
                                     errors: $errors, dismissAction: { dismiss() })

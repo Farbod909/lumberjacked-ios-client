@@ -99,16 +99,20 @@ struct MovementDetailView: View {
                         }
                     }
                 }
-                ToolbarItemGroup(placement: .secondaryAction) {
-                    Button {
-                        viewModel.showEditSheet = true
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Menu {
+                        Button {
+                            viewModel.showEditSheet = true
+                        } label: {
+                            Label("Edit movement", systemImage: "pencil.circle")
+                        }
+                        Button(role: .destructive) {
+                            viewModel.showDeleteConfirmationAlert = true
+                        } label: {
+                            Label("Delete movement", systemImage: "trash")
+                        }
                     } label: {
-                        Label("Edit movement", systemImage: "pencil.circle")
-                    }
-                    Button {
-                        viewModel.showDeleteConfirmationAlert = true
-                    } label: {
-                        Label("Delete movement", systemImage: "trash")
+                        Image(systemName: "ellipsis.circle")
                     }
                 }
             }
