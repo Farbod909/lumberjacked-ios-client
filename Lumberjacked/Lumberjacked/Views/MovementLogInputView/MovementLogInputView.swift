@@ -14,76 +14,88 @@ struct MovementLogInputView: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        VStack {
-            Picker("Input Style", selection: $viewModel.selectedInputStyle) {
-                ForEach(viewModel.inputStyles, id: \.self) {
-                    Text($0)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding()
-            if viewModel.selectedInputStyle == "Equal Sets" {
-                VStack {
-                    CustomIntStepper(label: "Sets", value: $viewModel.equalSetsMovementLogInput.sets, minValue: 0, maxValue: 100)
-                    CustomIntStepper(label: "Reps", value: $viewModel.equalSetsMovementLogInput.reps, minValue: 0, maxValue: 100)
-                    CustomDoubleStepper(label: "Load", value: $viewModel.equalSetsMovementLogInput.load, minValue: -1000, maxValue: 1000, increment: 5)
-                    TextField("",
-                              text: $viewModel.movementLog.notes,
-                              prompt: Text("Notes").foregroundStyle(Color.secondary), axis: .vertical)
-                    .padding()
-                    .background(Color.init(.systemGray6))
-                    .foregroundColor(Color.primary)
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: 20)
-                    )
-                    .lineLimit(5)
-                    Spacer()
-                }
-                .padding()
-            } else if viewModel.selectedInputStyle == "Custom Sets" {
-                VStack {
-                    Text("Custom Sets Input under construction...")
-                    Spacer()
-                }
-            } else {
-                VStack {
-                    Text("Unexpected input style selection.")
-                    Spacer()
-                }
-            }
-        }
-        .toolbar {
-            if viewModel.toolbarActionLoading {
-                ToolbarItem(placement: .topBarTrailing) {
-                    ProgressView()
-                }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    Task {
-                        await viewModel.formSubmit(errors: $errors, dismissAction: { dismiss() })
+        ZStack {
+            Color.brandBackground.ignoresSafeArea()
+            VStack(alignment: .leading) {
+                VStack(alignment: .leading) {
+                    Text(viewModel.movement.name)
+                    if  let logDate = viewModel.movementLog.timestamp?.formatted(
+                        date: .abbreviated,
+                        time: .omitted) {
+                        Text(logDate)
+                            .font(.headline)
+                    } else {
+                        Text("New Log")
+                            .font(.headline)
                     }
                 }
-                .disabled(!viewModel.canSave())
+                .font(.title)
+                .fontWeight(.semibold)
+                .padding(EdgeInsets(top: 0, leading: 6, bottom: 0, trailing: 6))
+
+                Picker("Input Style", selection: $viewModel.selectedInputStyle) {
+                    ForEach(viewModel.inputStyles, id: \.self) {
+                        Text($0)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.bottom, 10)
+                if viewModel.selectedInputStyle == "Equal Sets" {
+                    VStack {
+                        CustomIntStepper(label: "Sets", value: $viewModel.equalSetsMovementLogInput.sets, minValue: 0, maxValue: 100)
+                        CustomIntStepper(label: "Reps", value: $viewModel.equalSetsMovementLogInput.reps, minValue: 0, maxValue: 100)
+                        CustomDoubleStepper(label: "Load", value: $viewModel.equalSetsMovementLogInput.load, minValue: -1000, maxValue: 1000, increment: 5)
+                        TextField("",
+                                  text: $viewModel.movementLog.notes,
+                                  prompt: Text("Notes").foregroundStyle(Color.brandPlaceholderText), axis: .vertical)
+                        .padding()
+                        .background(.brandSecondary)
+                        .foregroundColor(Color.primary)
+                        .clipShape(
+                            RoundedRectangle(cornerRadius: 20)
+                        )
+                        .lineLimit(5)
+                        Spacer()
+                    }
+                } else if viewModel.selectedInputStyle == "Custom Sets" {
+                    VStack {
+                        Text("Custom Sets Input under construction...")
+                        Spacer()
+                    }
+                } else {
+                    VStack {
+                        Text("Unexpected input style selection.")
+                        Spacer()
+                    }
+                }
             }
-            if viewModel.movementLog.id != nil {
-                ToolbarItem(placement: .secondaryAction) {
-                    Button("Delete log", systemImage: "trash") {
+            .padding(.horizontal, 10)
+            .toolbar {
+                if viewModel.toolbarActionLoading {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        ProgressView()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
                         Task {
-                            await viewModel.attemptDeleteLog(
-                                errors: $errors, dismissAction: { dismiss() })
+                            await viewModel.formSubmit(errors: $errors, dismissAction: { dismiss() })
+                        }
+                    }
+                    .disabled(!viewModel.canSave())
+                }
+                if viewModel.movementLog.id != nil {
+                    ToolbarItem(placement: .secondaryAction) {
+                        Button("Delete log", systemImage: "trash") {
+                            Task {
+                                await viewModel.attemptDeleteLog(
+                                    errors: $errors, dismissAction: { dismiss() })
+                            }
                         }
                     }
                 }
             }
         }
-
-        .navigationTitle(
-            viewModel.movementLog.timestamp?.formatted(
-                date: .abbreviated,
-                time: .omitted) ??
-            "New Log"
-        )
     }
 }
 
@@ -134,7 +146,7 @@ struct CustomIntStepper : View {
             .disabled(value == maxValue)
         }
         .padding(2)
-        .background(Color.init(.systemGray6))
+        .background(.brandSecondary)
         .foregroundStyle(Color.primary)
         .font(.title2)
         .clipShape(
@@ -227,7 +239,7 @@ struct CustomDoubleStepper : View {
 
         }
         .padding(2)
-        .background(Color.init(.systemGray6))
+        .background(.brandSecondary)
         .foregroundStyle(Color.primary)
         .font(.title2)
         .clipShape(
