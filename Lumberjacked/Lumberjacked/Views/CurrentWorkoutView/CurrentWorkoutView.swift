@@ -282,10 +282,22 @@ struct CurrentWorkoutView: View {
             addMovementSearchFieldView
             if viewModel.searchText.isEmpty {
                 Spacer()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onEnded { value in
+                            if value.translation.height > 0 {
+                                dismissAddMovementOverlay()
+                            }
+                        }
+                )
+
             } else {
                 movementSearchResultsList
             }
         }
+
     }
 
     var body: some View {
