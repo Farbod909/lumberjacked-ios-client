@@ -117,21 +117,31 @@ struct CurrentWorkoutView: View {
     }
     
     var timerView: some View {
-        Text(timeElapsed)
-            .font(.largeTitle)
-            .onReceive(timer) { _ in
-                let interval = Date.now.timeIntervalSince((viewModel.currentWorkout?.start_timestamp) ?? Date.now)
-                
-                let totalMinutes = Int(interval / 60)
-                let hours = totalMinutes / 60
-                let minutes = totalMinutes % 60
-                
-                timeElapsed = String(format: "%02d:%02d", hours, minutes)
-            }
-            .padding(EdgeInsets(top: 8, leading: 18, bottom: 8, trailing: 18))
-            .background(.thinMaterial)
-            .clipShape(
-                RoundedRectangle(cornerRadius: 25))
+        HStack(alignment: .bottom) {
+            Text(timeElapsed)
+                .font(.largeTitle)
+                .onReceive(timer) { _ in
+                    let interval = Date.now.timeIntervalSince(viewModel.currentWorkout?.start_timestamp ?? Date.now)
+                    
+                    let totalMinutes = Int(interval / 60)
+                    let hours = totalMinutes / 60
+                    let minutes = totalMinutes % 60
+                    
+                    if hours > 0 {
+                        timeElapsed = "\(hours)h \(minutes)m"
+                    } else {
+                        timeElapsed = "\(minutes)m"
+                    }
+                }
+            Text("elapsed")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .textCase(.uppercase)
+                .padding(.bottom, 6)
+        }
+        .padding(EdgeInsets(top: 8, leading: 18, bottom: 8, trailing: 18))
+        .background(.thinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 25))
     }
         
     var currentWorkoutView: some View {
