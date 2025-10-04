@@ -347,6 +347,13 @@ struct CurrentWorkoutView: View {
                         workout: viewModel.currentWorkout!))
             }
             .toolbar {
+                ToolbarItemGroup(placement: .topBarLeading) {
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     if viewModel.showAddMovementOverlay {
                         Button("Dismiss") {
@@ -370,12 +377,6 @@ struct CurrentWorkoutView: View {
                         } label: {
                             Image(systemName: "ellipsis.circle")
                         }
-                    }
-                    
-                    NavigationLink {
-                        SettingsView()
-                    } label: {
-                        Image(systemName: "gearshape")
                     }
                 }
             }
