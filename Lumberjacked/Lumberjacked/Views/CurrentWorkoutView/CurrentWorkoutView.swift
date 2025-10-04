@@ -58,7 +58,7 @@ struct CurrentWorkoutView: View {
                 await viewModel.attemptGetMovements(errors: $errors)
             }
         } label: {
-            Label("Movement", systemImage: "plus")
+            Label("Add Movement", systemImage: "plus")
                 .font(.headline)
         }
         .padding()
@@ -105,11 +105,9 @@ struct CurrentWorkoutView: View {
     
     var endWorkoutButton: some View {
         Button {
-            Task {
-                await viewModel.attemptEndCurrentWorkout(errors: $errors)
-            }
+            viewModel.showFinishWorkoutConfirmationAlert = true
         } label: {
-            Label("End workout", systemImage: "xmark")
+            Label("Finish", systemImage: "flag.pattern.checkered")
                 .font(.headline)
         }
         .padding()
@@ -174,13 +172,13 @@ struct CurrentWorkoutView: View {
                 Spacer().frame(width: 25)
                 VStack {
                     Spacer()
-                    endWorkoutButton
+                    addMovementButton
                     Spacer().frame(height: 20)
                 }
                 Spacer()
                 VStack {
                     Spacer()
-                    addMovementButton
+                    endWorkoutButton
                     Spacer().frame(height: 20)
                 }
                 Spacer().frame(width: 25)
@@ -399,6 +397,23 @@ struct CurrentWorkoutView: View {
                     }
                 }
                 Button("No", role: .cancel) {}
+            }
+            .alert("Finish Workout", isPresented: $viewModel.showFinishWorkoutConfirmationAlert) {
+                Button("Save Workout") {
+                    Task {
+                        await viewModel.attemptEndCurrentWorkout(errors: $errors)
+                    }
+                }
+                Button("Discard Workout", role: .destructive) {
+                    Task {
+                        await viewModel.attemptDeleteCurrentWorkout(errors: $errors)
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                    
+                }
+            } message: {
+                Text("If you haven't recorded a log for a movement it will be marked as skipped.")
             }
         }
     }

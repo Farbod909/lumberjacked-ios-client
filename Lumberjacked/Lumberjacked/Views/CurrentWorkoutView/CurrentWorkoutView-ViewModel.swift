@@ -14,6 +14,7 @@ extension CurrentWorkoutView {
         var isLoadingCurrentWorkout = true
         var showCreateWorkoutSheet = false
         var showCancelConfirmationAlert = false
+        var showFinishWorkoutConfirmationAlert = false
         
         var addMovementTextFieldFocused = false
         var showAddMovementOverlay = false
