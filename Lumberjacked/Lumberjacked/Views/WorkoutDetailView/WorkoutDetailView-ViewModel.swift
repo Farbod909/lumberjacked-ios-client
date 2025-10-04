@@ -12,8 +12,19 @@ extension WorkoutDetailView {
     class ViewModel {
         var workout: Workout
         
+        var showDeleteConfirmationAlert = false
+        var deleteActionLoading = false
+        
         init(workout: Workout) {
             self.workout = workout
+        }
+        
+        func attemptDeleteWorkout(errors: Binding<LumberjackedClientErrors>) async -> Bool {
+            deleteActionLoading = true
+            let success = await LumberjackedClient(errors: errors)
+                .deleteWorkout(id: self.workout.id!)
+            deleteActionLoading = false
+            return success
         }
 
     }

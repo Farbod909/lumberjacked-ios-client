@@ -89,13 +89,33 @@ struct WorkoutDetailView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 10)
         }
-//        .navigationDestination(for: MovementLogDestination.self) { movementLogDestination in
-//            MovementLogInputView(
-//                viewModel: MovementLogInputView.ViewModel(
-//                    movementLog: movementLogDestination.log,
-//                    movement: movementLogDestination.movement,
-//                    workout: viewModel.workout))
-//        }
+        .toolbar {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                if viewModel.deleteActionLoading {
+                    ProgressView()
+                }
+                Menu {
+                    Button(role: .destructive) {
+                        viewModel.showDeleteConfirmationAlert = true
+                    } label: {
+                        Label("Delete workout", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
+        }
+        .alert("Delete", isPresented: $viewModel.showDeleteConfirmationAlert) {
+            Button("Delete", role: .destructive) {
+                Task {
+                    guard await viewModel.attemptDeleteWorkout(errors: $errors) else {
+                        return
+                    }
+                    dismiss()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 }
 
