@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CreateWorkoutView: View {
     @State var viewModel = ViewModel()
+    @State var errors = LumberjackedClientErrors()
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -18,10 +19,16 @@ struct CreateWorkoutView: View {
                 dismissAction: { dismiss() })
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    NavigationLink("Next") {
-                        MovementSelectorView(
-                            viewModel: MovementSelectorView.ViewModel(workout: viewModel.templateWorkout?.withoutId),
-                            dismissAction: { dismiss() })
+                    if viewModel.isLoadingToolbarAction {
+                        ProgressView()
+                    } else {
+                        Button("Start Workout") {
+                            Task {
+                                await viewModel.attemptCreateWorkout(
+                                    errors: $errors, dismissAction: { dismiss() })
+                            }
+                        }
+                        .disabled(viewModel.templateWorkout == nil)
                     }
                 }
                 ToolbarItem(placement: .cancellationAction) {
