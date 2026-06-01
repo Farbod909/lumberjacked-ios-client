@@ -9,9 +9,11 @@ import SwiftUI
 
 extension CreateWorkoutView {
     @Observable
-    class ViewModel {
+    class ViewModel: LoadingTrackable {
+        enum LoadingKey { case action }
+        var loadingKeys: Set<LoadingKey> = []
+
         var templateWorkout: Workout?
-        var isLoadingToolbarAction = false
         var errors = LumberjackedClientErrors()
 
         private let api: WorkoutAPIProtocol
@@ -26,22 +28,22 @@ extension CreateWorkoutView {
                 return
             }
 
-            isLoadingToolbarAction = true
-            errors.messages = [:]
-            do {
-                _ = try await api.createWorkout(
-                    movements: selectedMovements.map { $0.id! })
-                dismissAction()
-            } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
+            try? await withLoading(.action) {
+                self.errors.messages = [:]
+                do {
+                    _ = try await self.api.createWorkout(
+                        movements: selectedMovements.map { $0.id! })
+                    dismissAction()
+                } catch let error as RemoteNetworkingError {
+                    if let messages = error.messages {
+                        self.errors.messages = messages
+                    } else {
+                        self.errors.messages["detail"] = "Unknown error"
+                    }
+                } catch {
+                    self.errors.messages["detail"] = "Unknown error"
                 }
-            } catch {
-                errors.messages["detail"] = "Unknown error"
             }
-            isLoadingToolbarAction = false
         }
     }
 }

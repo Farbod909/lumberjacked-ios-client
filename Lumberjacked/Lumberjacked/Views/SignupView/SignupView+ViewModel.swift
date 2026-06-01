@@ -9,12 +9,13 @@ import SwiftUI
 
 extension SignupView {
     @Observable
-    class ViewModel {
+    class ViewModel: LoadingTrackable {
+        enum LoadingKey { case action }
+        var loadingKeys: Set<LoadingKey> = []
+
         var email = ""
         var password1 = ""
         var password2 = ""
-
-        var isLoadingToolbarAction = false
         var errors = LumberjackedClientErrors()
 
         private let api: AuthAPIProtocol
@@ -24,7 +25,8 @@ extension SignupView {
         }
 
         func attemptSignup() async -> Bool {
-            isLoadingToolbarAction = true
+            loadingKeys.insert(.action)
+            defer { loadingKeys.remove(.action) }
             errors.messages = [:]
 
             do {
@@ -32,7 +34,6 @@ extension SignupView {
                     email: email, password1: password1, password2: password2)
                 Keychain.standard.save(
                     response.key, service: "accessToken", account: "lumberjacked")
-                isLoadingToolbarAction = false
                 return true
             } catch let error as RemoteNetworkingError {
                 if let messages = error.messages {
@@ -44,7 +45,6 @@ extension SignupView {
                 errors.messages["detail"] = "Unknown error"
             }
 
-            isLoadingToolbarAction = false
             return false
         }
     }

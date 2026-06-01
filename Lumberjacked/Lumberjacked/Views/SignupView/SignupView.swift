@@ -42,7 +42,7 @@ struct SignupView: View {
                             dismiss()
                         }
                     } label: {
-                        if viewModel.isLoadingToolbarAction {
+                        if viewModel.isLoading(.action) {
                             ProgressView()
                         } else {
                             Text("Sign up")

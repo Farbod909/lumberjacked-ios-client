@@ -12,8 +12,8 @@ final class CreateWorkoutViewModelTests: XCTestCase {
         XCTAssertNil(vm.templateWorkout)
     }
 
-    func testIsLoadingToolbarActionStartsFalse() {
+    func testIsLoadingActionStartsFalse() {
         let vm = CreateWorkoutView.ViewModel()
-        XCTAssertFalse(vm.isLoadingToolbarAction)
+        XCTAssertFalse(vm.isLoading(.action))
     }
 }

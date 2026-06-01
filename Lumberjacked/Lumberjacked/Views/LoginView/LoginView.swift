@@ -41,7 +41,7 @@ struct LoginView: View {
                             dismiss()
                         }
                     } label: {
-                        if viewModel.isLoadingToolbarAction {
+                        if viewModel.isLoading(.action) {
                             ProgressView()
                         } else {
                             Text("Log in")

@@ -9,12 +9,13 @@ import SwiftUI
 
 extension MovementSelectorView {
     @Observable
-    class ViewModel {
+    class ViewModel: LoadingTrackable {
+        enum LoadingKey { case movements, action }
+        var loadingKeys: Set<LoadingKey> = [.movements]
+
         var workout: Workout?
         var allMovements = [Movement]()
         var selectedMovements: [Movement]
-        var isLoading = true
-        var isLoadingToolbarAction = false
         var showCreateMovementSheet = false
         var errors = LumberjackedClientErrors()
 
@@ -40,68 +41,69 @@ extension MovementSelectorView {
         }
 
         func attemptGetMovements() async {
-            isLoading = true
-            errors.messages = [:]
-            do {
-                let response = try await movementAPI.getMovements()
-                allMovements = response.results
-            } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
+            try? await withLoading(.movements) {
+                self.errors.messages = [:]
+                do {
+                    let response = try await self.movementAPI.getMovements()
+                    self.allMovements = response.results
+                } catch let error as RemoteNetworkingError {
+                    if let messages = error.messages {
+                        self.errors.messages = messages
+                    } else {
+                        self.errors.messages["detail"] = "Unknown error"
+                    }
+                } catch {
+                    self.errors.messages["detail"] = "Unknown error"
                 }
-            } catch {
-                errors.messages["detail"] = "Unknown error"
             }
-            isLoading = false
         }
 
         @MainActor
         func attemptCreateWorkout(dismissAction: () -> Void) async {
-            isLoadingToolbarAction = true
-            errors.messages = [:]
-            do {
-                _ = try await workoutAPI.createWorkout(
-                    movements: selectedMovements.map { $0.id! })
-                dismissAction()
-            } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
+            try? await withLoading(.action) {
+                self.errors.messages = [:]
+                do {
+                    _ = try await self.workoutAPI.createWorkout(
+                        movements: self.selectedMovements.map { $0.id! })
+                    dismissAction()
+                } catch let error as RemoteNetworkingError {
+                    if let messages = error.messages {
+                        self.errors.messages = messages
+                    } else {
+                        self.errors.messages["detail"] = "Unknown error"
+                    }
+                } catch {
+                    self.errors.messages["detail"] = "Unknown error"
                 }
-            } catch {
-                errors.messages["detail"] = "Unknown error"
             }
-            isLoadingToolbarAction = false
         }
 
         @MainActor
         func attemptEditWorkout(dismissAction: () -> Void) async {
             guard let workoutId = workout?.id else { return }
-            isLoadingToolbarAction = true
-            errors.messages = [:]
-            do {
-                _ = try await workoutAPI.updateWorkout(
-                    workoutId: workoutId,
-                    movements: selectedMovements.map { $0.id! })
-                dismissAction()
-            } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
+            try? await withLoading(.action) {
+                self.errors.messages = [:]
+                do {
+                    _ = try await self.workoutAPI.updateWorkout(
+                        workoutId: workoutId,
+                        movements: self.selectedMovements.map { $0.id! })
+                    dismissAction()
+                } catch let error as RemoteNetworkingError {
+                    if let messages = error.messages {
+                        self.errors.messages = messages
+                    } else {
+                        self.errors.messages["detail"] = "Unknown error"
+                    }
+                } catch {
+                    self.errors.messages["detail"] = "Unknown error"
                 }
-            } catch {
-                errors.messages["detail"] = "Unknown error"
             }
-            isLoadingToolbarAction = false
         }
 
         @MainActor
         func attemptQuickAddMovement(movementName: String) async -> Movement? {
-            isLoadingToolbarAction = true
+            loadingKeys.insert(.action)
+            defer { loadingKeys.remove(.action) }
             errors.messages = [:]
             do {
                 let movement = try await movementAPI.createMovement(
@@ -123,7 +125,6 @@ extension MovementSelectorView {
             } catch {
                 errors.messages["detail"] = "Unknown error"
             }
-            isLoadingToolbarAction = false
             return nil
         }
     }

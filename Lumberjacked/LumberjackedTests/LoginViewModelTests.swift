@@ -11,6 +11,6 @@ final class LoginViewModelTests: XCTestCase {
         let vm = LoginView.ViewModel()
         XCTAssertEqual(vm.email, "")
         XCTAssertEqual(vm.password, "")
-        XCTAssertFalse(vm.isLoadingToolbarAction)
+        XCTAssertFalse(vm.isLoading(.action))
     }
 }

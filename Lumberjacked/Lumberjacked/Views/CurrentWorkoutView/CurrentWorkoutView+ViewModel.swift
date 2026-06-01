@@ -9,9 +9,11 @@ import SwiftUI
 
 extension CurrentWorkoutView {
     @Observable
-    class ViewModel {
+    class ViewModel: LoadingTrackable {
+        enum LoadingKey { case currentWorkout, movements, addMovement, endWorkout, deleteWorkout }
+        var loadingKeys: Set<LoadingKey> = [.currentWorkout, .movements]
+
         var currentWorkout: Workout?
-        var isLoadingCurrentWorkout = true
         var showCreateWorkoutSheet = false
         var showCancelConfirmationAlert = false
         var showFinishWorkoutConfirmationAlert = false
@@ -19,7 +21,6 @@ extension CurrentWorkoutView {
         var addMovementTextFieldFocused = false
         var showAddMovementOverlay = false
 
-        var isLoadingMovements = true
         var allMovements = [Movement]()
         var searchText = ""
 
@@ -38,70 +39,78 @@ extension CurrentWorkoutView {
         }
 
         func attemptGetCurrentWorkout() async {
-            errors.messages = [:]
-            do {
-                currentWorkout = try await workoutAPI.getCurrentWorkout()
-            } catch let error as RemoteNetworkingError {
-                // 404 means no active workout — not a true error
-                if error.statusCode == 404 {
-                    currentWorkout = nil
-                } else if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
+            try? await withLoading(.currentWorkout) {
+                self.errors.messages = [:]
+                do {
+                    self.currentWorkout = try await self.workoutAPI.getCurrentWorkout()
+                } catch let error as RemoteNetworkingError {
+                    // 404 means no active workout — not a true error
+                    if error.statusCode == 404 {
+                        self.currentWorkout = nil
+                    } else if let messages = error.messages {
+                        self.errors.messages = messages
+                    } else {
+                        self.errors.messages["detail"] = "Unknown error"
+                    }
+                } catch {
+                    self.errors.messages["detail"] = "Unknown error"
                 }
-            } catch {
-                errors.messages["detail"] = "Unknown error"
             }
         }
 
         func attemptEndCurrentWorkout() async {
             guard let id = currentWorkout?.id else { return }
-            errors.messages = [:]
-            do {
-                try await workoutAPI.endWorkout(id: id)
-                currentWorkout = nil
-            } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
+            try? await withLoading(.endWorkout) {
+                self.errors.messages = [:]
+                do {
+                    try await self.workoutAPI.endWorkout(id: id)
+                    self.currentWorkout = nil
+                } catch let error as RemoteNetworkingError {
+                    if let messages = error.messages {
+                        self.errors.messages = messages
+                    } else {
+                        self.errors.messages["detail"] = "Unknown error"
+                    }
+                } catch {
+                    self.errors.messages["detail"] = "Unknown error"
                 }
-            } catch {
-                errors.messages["detail"] = "Unknown error"
             }
         }
 
         func attemptDeleteCurrentWorkout() async {
             guard let id = currentWorkout?.id else { return }
-            errors.messages = [:]
-            do {
-                try await workoutAPI.deleteWorkout(id: id)
-                currentWorkout = nil
-            } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
+            try? await withLoading(.deleteWorkout) {
+                self.errors.messages = [:]
+                do {
+                    try await self.workoutAPI.deleteWorkout(id: id)
+                    self.currentWorkout = nil
+                } catch let error as RemoteNetworkingError {
+                    if let messages = error.messages {
+                        self.errors.messages = messages
+                    } else {
+                        self.errors.messages["detail"] = "Unknown error"
+                    }
+                } catch {
+                    self.errors.messages["detail"] = "Unknown error"
                 }
-            } catch {
-                errors.messages["detail"] = "Unknown error"
             }
         }
 
         func attemptGetMovements() async {
-            errors.messages = [:]
-            do {
-                let response = try await movementAPI.getMovements()
-                allMovements = response.results
-            } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
+            try? await withLoading(.movements) {
+                self.errors.messages = [:]
+                do {
+                    let response = try await self.movementAPI.getMovements()
+                    self.allMovements = response.results
+                } catch let error as RemoteNetworkingError {
+                    if let messages = error.messages {
+                        self.errors.messages = messages
+                    } else {
+                        self.errors.messages["detail"] = "Unknown error"
+                    }
+                } catch {
+                    self.errors.messages["detail"] = "Unknown error"
                 }
-            } catch {
-                errors.messages["detail"] = "Unknown error"
             }
         }
 
@@ -115,22 +124,26 @@ extension CurrentWorkoutView {
 
         @MainActor
         func createWorkoutWithInitialMovement(movementId: UInt64) async {
-            errors.messages = [:]
-            do {
-                _ = try await workoutAPI.createWorkout(movements: [movementId])
-            } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
+            try? await withLoading(.addMovement) {
+                self.errors.messages = [:]
+                do {
+                    _ = try await self.workoutAPI.createWorkout(movements: [movementId])
+                } catch let error as RemoteNetworkingError {
+                    if let messages = error.messages {
+                        self.errors.messages = messages
+                    } else {
+                        self.errors.messages["detail"] = "Unknown error"
+                    }
+                } catch {
+                    self.errors.messages["detail"] = "Unknown error"
                 }
-            } catch {
-                errors.messages["detail"] = "Unknown error"
             }
         }
 
         @MainActor
         func attemptQuickAddMovement(movementName: String) async -> Movement? {
+            loadingKeys.insert(.addMovement)
+            defer { loadingKeys.remove(.addMovement) }
             errors.messages = [:]
             do {
                 return try await movementAPI.createMovement(
@@ -159,20 +172,22 @@ extension CurrentWorkoutView {
             if let currentWorkoutMovements = currentWorkout?.movements_details {
                 var newMovementsList = currentWorkoutMovements.map { $0.id! }
                 newMovementsList.append(addMovementId)
-                errors.messages = [:]
-                do {
-                    _ = try await workoutAPI.updateWorkout(
-                        workoutId: currentWorkout!.id!,
-                        movements: newMovementsList)
-                    dismissAction()
-                } catch let error as RemoteNetworkingError {
-                    if let messages = error.messages {
-                        errors.messages = messages
-                    } else {
-                        errors.messages["detail"] = "Unknown error"
+                try? await withLoading(.addMovement) {
+                    self.errors.messages = [:]
+                    do {
+                        _ = try await self.workoutAPI.updateWorkout(
+                            workoutId: self.currentWorkout!.id!,
+                            movements: newMovementsList)
+                        dismissAction()
+                    } catch let error as RemoteNetworkingError {
+                        if let messages = error.messages {
+                            self.errors.messages = messages
+                        } else {
+                            self.errors.messages["detail"] = "Unknown error"
+                        }
+                    } catch {
+                        self.errors.messages["detail"] = "Unknown error"
                     }
-                } catch {
-                    errors.messages["detail"] = "Unknown error"
                 }
             }
         }

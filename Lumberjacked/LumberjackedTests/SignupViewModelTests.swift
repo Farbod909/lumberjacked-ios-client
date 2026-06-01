@@ -12,6 +12,6 @@ final class SignupViewModelTests: XCTestCase {
         XCTAssertEqual(vm.email, "")
         XCTAssertEqual(vm.password1, "")
         XCTAssertEqual(vm.password2, "")
-        XCTAssertFalse(vm.isLoadingToolbarAction)
+        XCTAssertFalse(vm.isLoading(.action))
     }
 }

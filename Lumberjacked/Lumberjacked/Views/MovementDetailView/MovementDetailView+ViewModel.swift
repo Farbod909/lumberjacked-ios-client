@@ -9,12 +9,13 @@ import SwiftUI
 
 extension MovementDetailView {
     @Observable
-    class ViewModel {
+    class ViewModel: LoadingTrackable {
+        enum LoadingKey { case logs, delete }
+        var loadingKeys: Set<LoadingKey> = [.logs]
+
         var movement: Movement
         var movementLogs = [MovementLog]()
         var workout: Workout?
-        var isLoadingMovementLogs = true
-        var deleteActionLoading = false
         var showDeleteConfirmationAlert = false
         var showEditSheet = false
         var errors = LumberjackedClientErrors()
@@ -36,30 +37,30 @@ extension MovementDetailView {
 
         func attemptGetMovementLogs() async {
             guard let id = movement.id else { return }
-            isLoadingMovementLogs = true
-            errors.messages = [:]
-            do {
-                let response = try await movementLogAPI.getMovementLogs(movementId: id)
-                movementLogs = response.results
-            } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
+            try? await withLoading(.logs) {
+                self.errors.messages = [:]
+                do {
+                    let response = try await self.movementLogAPI.getMovementLogs(movementId: id)
+                    self.movementLogs = response.results
+                } catch let error as RemoteNetworkingError {
+                    if let messages = error.messages {
+                        self.errors.messages = messages
+                    } else {
+                        self.errors.messages["detail"] = "Unknown error"
+                    }
+                } catch {
+                    self.errors.messages["detail"] = "Unknown error"
                 }
-            } catch {
-                errors.messages["detail"] = "Unknown error"
             }
-            isLoadingMovementLogs = false
         }
 
         func attemptDeleteMovement() async -> Bool {
             guard let id = movement.id else { return false }
-            deleteActionLoading = true
+            loadingKeys.insert(.delete)
+            defer { loadingKeys.remove(.delete) }
             errors.messages = [:]
             do {
                 try await movementAPI.deleteMovement(movementId: id)
-                deleteActionLoading = false
                 return true
             } catch let error as RemoteNetworkingError {
                 if let messages = error.messages {
@@ -70,7 +71,6 @@ extension MovementDetailView {
             } catch {
                 errors.messages["detail"] = "Unknown error"
             }
-            deleteActionLoading = false
             return false
         }
 

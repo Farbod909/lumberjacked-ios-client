@@ -21,7 +21,7 @@ struct TemplateWorkoutSelectorView: View {
 
     var body: some View {
         VStack {
-            if viewModel.isLoading {
+            if viewModel.isLoading(.load) {
                 ProgressView()
             } else {
                 List {

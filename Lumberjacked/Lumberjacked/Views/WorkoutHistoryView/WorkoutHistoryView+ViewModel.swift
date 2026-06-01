@@ -9,8 +9,10 @@ import SwiftUI
 
 extension WorkoutHistoryView {
     @Observable
-    class ViewModel {
-        var isLoading = true
+    class ViewModel: LoadingTrackable {
+        enum LoadingKey { case load }
+        var loadingKeys: Set<LoadingKey> = [.load]
+
         var workouts = [Workout]()
         var errors = LumberjackedClientErrors()
 
@@ -25,21 +27,21 @@ extension WorkoutHistoryView {
         }
 
         func attemptGetWorkouts() async {
-            isLoading = true
-            errors.messages = [:]
-            do {
-                let response = try await api.getWorkouts()
-                workouts = response.results
-            } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
+            try? await withLoading(.load) {
+                self.errors.messages = [:]
+                do {
+                    let response = try await self.api.getWorkouts()
+                    self.workouts = response.results
+                } catch let error as RemoteNetworkingError {
+                    if let messages = error.messages {
+                        self.errors.messages = messages
+                    } else {
+                        self.errors.messages["detail"] = "Unknown error"
+                    }
+                } catch {
+                    self.errors.messages["detail"] = "Unknown error"
                 }
-            } catch {
-                errors.messages["detail"] = "Unknown error"
             }
-            isLoading = false
         }
     }
 }

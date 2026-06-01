@@ -59,7 +59,7 @@ struct MovementDetailView: View {
                 if !viewModel.movementLogs.isEmpty {
                     LogListView(movementLogs: viewModel.movementLogs)
                 } else {
-                    if viewModel.isLoadingMovementLogs {
+                    if viewModel.isLoading(.logs) {
                         HStack {
                             Spacer()
                             VStack {
@@ -84,7 +84,7 @@ struct MovementDetailView: View {
                 await viewModel.attemptGetMovementLogs()
             }
             .toolbar {
-                if viewModel.deleteActionLoading {
+                if viewModel.isLoading(.delete) {
                     ToolbarItem(placement: .topBarTrailing) {
                         ProgressView()
                     }

@@ -22,7 +22,7 @@ struct CreateWorkoutView: View {
                 dismissAction: { dismiss() })
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    if viewModel.isLoadingToolbarAction {
+                    if viewModel.isLoading(.action) {
                         ProgressView()
                     } else {
                         Button("Start Workout") {

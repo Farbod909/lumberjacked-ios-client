@@ -9,7 +9,7 @@ final class TemplateWorkoutSelectorViewModelTests: XCTestCase {
 
     func testInitialStateIsLoading() {
         let vm = TemplateWorkoutSelectorView.ViewModel()
-        XCTAssertTrue(vm.isLoading)
+        XCTAssertTrue(vm.isLoading(.load))
     }
 
     func testInitialWorkoutsEmpty() {

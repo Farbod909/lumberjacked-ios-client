@@ -14,8 +14,8 @@ final class CurrentWorkoutViewModelTests: XCTestCase {
 
     func testInitialStateShowsLoading() {
         let vm = CurrentWorkoutView.ViewModel()
-        XCTAssertTrue(vm.isLoadingCurrentWorkout)
-        XCTAssertTrue(vm.isLoadingMovements)
+        XCTAssertTrue(vm.isLoading(.currentWorkout))
+        XCTAssertTrue(vm.isLoading(.movements))
     }
 
     func testShowFinishWorkoutAlertStartsFalse() {

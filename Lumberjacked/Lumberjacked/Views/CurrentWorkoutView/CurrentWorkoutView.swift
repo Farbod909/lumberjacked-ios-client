@@ -86,7 +86,7 @@ struct CurrentWorkoutView: View {
             .frame(height: 44)
             .padding(.horizontal, 16)
 
-            if viewModel.isLoadingMovements {
+            if viewModel.isLoading(.movements) {
                 ProgressView()
             }
             Button {
@@ -205,7 +205,6 @@ struct CurrentWorkoutView: View {
                 if !viewModel.searchText.isEmpty {
                     Button {
                         Task {
-                            viewModel.isLoadingCurrentWorkout = true
                             if let newMovement = await viewModel.attemptQuickAddMovement(
                                 movementName: formattedSearchText) {
                                 if let _ = viewModel.currentWorkout {
@@ -216,7 +215,6 @@ struct CurrentWorkoutView: View {
                                 await viewModel.attemptGetCurrentWorkout()
                             }
                             dismissAddMovementOverlay()
-                            viewModel.isLoadingCurrentWorkout = false
                         }
                     } label: {
                         VStack(alignment: .leading) {
@@ -239,7 +237,6 @@ struct CurrentWorkoutView: View {
                                movementIds.contains(movement.id) {
                                 return
                             }
-                            viewModel.isLoadingMovements = true
                             if let _ = viewModel.currentWorkout {
                                 await viewModel.addMovementToCurrentWorkout(movementId: movement.id!)
                             } else {
@@ -247,7 +244,6 @@ struct CurrentWorkoutView: View {
                             }
                             await viewModel.attemptGetCurrentWorkout()
                             dismissAddMovementOverlay()
-                            viewModel.isLoadingMovements = false
                         }
                     } label: {
                         HStack {
@@ -313,9 +309,9 @@ struct CurrentWorkoutView: View {
                 currentWorkoutView
                     .opacity(viewModel.currentWorkout != nil ? 1 : 0)
                 ProgressView()
-                    .opacity(viewModel.currentWorkout == nil && viewModel.isLoadingCurrentWorkout ? 1 : 0)
+                    .opacity(viewModel.currentWorkout == nil && viewModel.isLoading(.currentWorkout) ? 1 : 0)
 
-                if viewModel.currentWorkout == nil && !viewModel.isLoadingCurrentWorkout {
+                if viewModel.currentWorkout == nil && !viewModel.isLoading(.currentWorkout) {
                     newWorkoutOptionsView
                         .transition(
                             .asymmetric(
@@ -334,20 +330,12 @@ struct CurrentWorkoutView: View {
             .animation(.default, value: viewModel.currentWorkout)
             .animation(.spring(duration: 0.3, bounce: 0.05), value: viewModel.showAddMovementOverlay)
             .task(id: appEnvironment.isNotAuthenticated) {
-                viewModel.isLoadingCurrentWorkout = true
-                viewModel.isLoadingMovements = true
                 await viewModel.attemptGetCurrentWorkout()
                 await viewModel.attemptGetMovements()
-                viewModel.isLoadingCurrentWorkout = false
-                viewModel.isLoadingMovements = false
             }
             .sheet(isPresented: $viewModel.showCreateWorkoutSheet, onDismiss: {
                 Task {
-                    viewModel.isLoadingCurrentWorkout = true
-                    viewModel.isLoadingMovements = true
                     await viewModel.attemptGetCurrentWorkout()
-                    viewModel.isLoadingCurrentWorkout = false
-                    viewModel.isLoadingMovements = false
                 }
             }) {
                 CreateWorkoutView()

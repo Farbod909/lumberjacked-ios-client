@@ -39,7 +39,7 @@ struct MovementSelectorView: View {
             } else {
                 Text("\(Image(systemName: "info.circle")) Add at least one movement to your workout to start. You can easily add or remove movements during your workout.")
             }
-            if viewModel.isLoading {
+            if viewModel.isLoading(.movements) {
                 ProgressView()
             } else {
                 HStack {

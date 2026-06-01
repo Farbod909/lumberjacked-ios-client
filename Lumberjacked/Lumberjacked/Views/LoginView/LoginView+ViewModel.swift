@@ -9,11 +9,12 @@ import SwiftUI
 
 extension LoginView {
     @Observable
-    class ViewModel {
+    class ViewModel: LoadingTrackable {
+        enum LoadingKey { case action }
+        var loadingKeys: Set<LoadingKey> = []
+
         var email = ""
         var password = ""
-
-        var isLoadingToolbarAction = false
         var errors = LumberjackedClientErrors()
 
         private let api: AuthAPIProtocol
@@ -23,14 +24,14 @@ extension LoginView {
         }
 
         func attemptLogin() async -> Bool {
-            isLoadingToolbarAction = true
+            loadingKeys.insert(.action)
+            defer { loadingKeys.remove(.action) }
             errors.messages = [:]
 
             do {
                 let response = try await api.login(email: email, password: password)
                 Keychain.standard.save(
                     response.key, service: "accessToken", account: "lumberjacked")
-                isLoadingToolbarAction = false
                 return true
             } catch let error as RemoteNetworkingError {
                 if let messages = error.messages {
@@ -42,7 +43,6 @@ extension LoginView {
                 errors.messages["detail"] = "Unknown error"
             }
 
-            isLoadingToolbarAction = false
             return false
         }
     }
