@@ -320,86 +320,34 @@ struct LogItem: View {
 }
 
 #if DEBUG
-struct MovementDetailView_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            NavigationStack {
-                MovementDetailView(
-                    viewModel: viewModelWithPopulatedMovementAndLogs
-                )
-            }
-            .previewDisplayName("Full Details with Logs")
-            NavigationStack {
-                MovementDetailView(
-                    viewModel: viewModelWithEmptyMovementNoLogs
-                )
-            }
-            .previewDisplayName("Minimal Details, No Logs")
-            NavigationStack {
-                MovementDetailView(
-                    viewModel: viewModelWithPopulatedMovementNoLogs
-                )
-            }
-            .previewDisplayName("Full Details, No Logs")
-        }
+#Preview("Full Details with Logs") {
+    let vm = MovementDetailView.ViewModel(
+        movement: PreviewData.benchPress,
+        movementLogs: PreviewData.benchPressLogs)
+    vm.isLoadingMovementLogs = false
+    vm.workout = PreviewData.activeWorkout
+    return NavigationStack {
+        MovementDetailView(viewModel: vm)
     }
+}
 
-    // MARK: - Sample Data
+#Preview("Minimal Details, No Logs") {
+    let movement = Movement(
+        id: 8, name: "Seated Cable Row", category: "", notes: "",
+        recommended_warmup_sets: "", recommended_working_sets: "",
+        recommended_rep_range: "", recommended_rpe: "")
+    let vm = MovementDetailView.ViewModel(movement: movement)
+    vm.isLoadingMovementLogs = false
+    return NavigationStack {
+        MovementDetailView(viewModel: vm)
+    }
+}
 
-    // --- Mock Data ---
-    static let sampleLog1 = MovementLog(
-        id: 1, movement: 1, reps: [10, 10, 10], loads: [135, 135, 135], notes: "", timestamp: Date()
-    )
-    
-    static let sampleLog2 = MovementLog(
-        id: 2, movement: 1, reps: [8, 8, 6], loads: [145, 145, 145], notes: "", timestamp: Calendar.current.date(byAdding: .day, value: -7, to: Date())!
-    )
-    
-    static let fullDetailMovement = Movement(
-        id: 1,
-        name: "Barbell Bench Press",
-        category: "Chest",
-        notes: "Keep elbows tucked at a 45-degree angle. Don't bounce the bar off the chest.",
-        recommended_warmup_sets: "2-3",
-        recommended_working_sets: "3",
-        recommended_rep_range: "8-12",
-        recommended_rpe: "7-8",
-        recommended_rest_time: 90
-    )
-    
-    static let noDetailMovement = Movement(
-        id: 2,
-        name: "Bodyweight Squat",
-        category: "",
-        notes: "",
-        recommended_warmup_sets: "",
-        recommended_working_sets: "",
-        recommended_rep_range: "",
-        recommended_rpe: ""
-    )
-    
-    static let mockWorkout = Workout(id: 1)
-
-    // --- View Models for Different States ---
-    
-    // 1. Full details with logs
-    static let viewModelWithPopulatedMovementAndLogs: MovementDetailView.ViewModel = {
-        let vm = MovementDetailView.ViewModel(movement: fullDetailMovement, movementLogs: [sampleLog1, sampleLog2])
-        vm.isLoadingMovementLogs = false
-        vm.workout = mockWorkout // Set workout to show the "New Log" button
-        return vm
-    }()
-
-    // 2. Minimal details, no logs
-    static let viewModelWithEmptyMovementNoLogs: MovementDetailView.ViewModel = {
-        let vm = MovementDetailView.ViewModel(movement: noDetailMovement)
-        return vm
-    }()
-    
-    // 3. Full details, no logs
-    static let viewModelWithPopulatedMovementNoLogs: MovementDetailView.ViewModel = {
-        let vm = MovementDetailView.ViewModel(movement: fullDetailMovement)
-        return vm
-    }()
+#Preview("Full Details, No Logs") {
+    let vm = MovementDetailView.ViewModel(movement: PreviewData.deadlift)
+    vm.isLoadingMovementLogs = false
+    return NavigationStack {
+        MovementDetailView(viewModel: vm)
+    }
 }
 #endif

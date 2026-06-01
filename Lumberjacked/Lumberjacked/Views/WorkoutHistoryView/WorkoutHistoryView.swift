@@ -8,8 +8,12 @@
 import SwiftUI
 
 struct WorkoutHistoryView: View {
-    @State var viewModel = ViewModel()
+    @State var viewModel: ViewModel
     @State var errors = LumberjackedClientErrors()
+
+    init(viewModel: ViewModel = ViewModel()) {
+        _viewModel = State(initialValue: viewModel)
+    }
 
     var body: some View {
         NavigationStack {
@@ -36,6 +40,13 @@ struct WorkoutHistoryView: View {
     }
 }
 
+#if DEBUG
 #Preview {
-    WorkoutHistoryView()
+    let vm = WorkoutHistoryView.ViewModel()
+    vm.workouts = PreviewData.pastWorkouts
+    vm.isLoading = false
+    return NavigationStack {
+        WorkoutHistoryView(viewModel: vm)
+    }
 }
+#endif

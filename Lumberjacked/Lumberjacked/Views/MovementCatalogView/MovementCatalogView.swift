@@ -8,8 +8,12 @@
 import SwiftUI
 
 struct MovementCatalogView: View {
-    @State var viewModel = ViewModel()
+    @State var viewModel: ViewModel
     @State var errors = LumberjackedClientErrors()
+
+    init(viewModel: ViewModel = ViewModel()) {
+        _viewModel = State(initialValue: viewModel)
+    }
 
     var body: some View {
         NavigationStack {
@@ -67,6 +71,23 @@ struct MovementCatalogView: View {
     }
 }
 
-#Preview {
-    MovementCatalogView()
+#if DEBUG
+#Preview("All Movements") {
+    let vm = MovementCatalogView.ViewModel()
+    vm.movements = PreviewData.movements
+    vm.isLoading = false
+    return NavigationStack {
+        MovementCatalogView(viewModel: vm)
+    }
 }
+
+#Preview("Filtered") {
+    let vm = MovementCatalogView.ViewModel()
+    vm.movements = PreviewData.movements
+    vm.isLoading = false
+    vm.searchText = "bar"
+    return NavigationStack {
+        MovementCatalogView(viewModel: vm)
+    }
+}
+#endif

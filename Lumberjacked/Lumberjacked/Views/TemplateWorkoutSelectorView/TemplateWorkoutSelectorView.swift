@@ -8,11 +8,17 @@
 import SwiftUI
 
 struct TemplateWorkoutSelectorView: View {
-    @State var viewModel = ViewModel()
+    @State var viewModel: ViewModel
     @State var errors = LumberjackedClientErrors()
     @Binding var templateWorkout: Workout?
-    
+
     let dismissAction: () -> Void
+
+    init(viewModel: ViewModel = ViewModel(), templateWorkout: Binding<Workout?>, dismissAction: @escaping () -> Void) {
+        _viewModel = State(initialValue: viewModel)
+        _templateWorkout = templateWorkout
+        self.dismissAction = dismissAction
+    }
 
     var body: some View {
         VStack {
@@ -47,14 +53,23 @@ struct TemplateWorkoutSelectorView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     struct Preview: View {
         @State var templateWorkout: Workout? = nil
-        
+
         var body: some View {
-            TemplateWorkoutSelectorView(templateWorkout: $templateWorkout, dismissAction: { })
+            let vm = TemplateWorkoutSelectorView.ViewModel()
+            vm.workouts = PreviewData.pastWorkouts
+            vm.isLoading = false
+            return NavigationStack {
+                TemplateWorkoutSelectorView(
+                    viewModel: vm,
+                    templateWorkout: $templateWorkout,
+                    dismissAction: { })
+            }
         }
     }
-
     return Preview()
 }
+#endif

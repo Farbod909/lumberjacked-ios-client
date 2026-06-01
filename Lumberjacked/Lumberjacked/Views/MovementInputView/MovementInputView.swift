@@ -133,6 +133,33 @@ struct MovementInputTextFieldView: View {
     }
 }
 
+#if DEBUG
+#Preview("New Movement") {
+    MovementInputView(
+        viewModel: MovementInputView.ViewModel(movement: Movement(
+            name: "",
+            category: "",
+            notes: "",
+            recommended_warmup_sets: "",
+            recommended_working_sets: "",
+            recommended_rep_range: "",
+            recommended_rpe: "")),
+        newlyAddedMovement: .constant(nil))
+}
+
+#Preview("Edit Movement — All Fields") {
+    MovementInputView(
+        viewModel: MovementInputView.ViewModel(movement: PreviewData.benchPress),
+        newlyAddedMovement: .constant(nil))
+}
+
+#Preview("Edit Movement — Sparse") {
+    MovementInputView(
+        viewModel: MovementInputView.ViewModel(movement: PreviewData.cableRow),
+        newlyAddedMovement: .constant(nil))
+}
+#endif
+
 struct MovementInputIntFieldView: View {
     var placeholderText: String
     var stickyText: String

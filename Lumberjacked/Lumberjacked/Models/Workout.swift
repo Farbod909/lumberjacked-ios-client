@@ -21,9 +21,7 @@ struct Workout: Codable, Hashable {
             return nil
         }
 
-        let now = Date()
         let calendar = Calendar.current
-
         let dateFormatter = DateFormatter()
 
         // Handle "Today" and "Yesterday" first

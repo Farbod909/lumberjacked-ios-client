@@ -20,9 +20,11 @@ struct LoginView: View {
                     .autocapitalization(.none)
                     .listRowBackground(Color.init(uiColor: .systemGray6))
                     .formFieldError($errors, "email")
+                    .accessibilityIdentifier("loginEmailField")
                 SecureField("Password", text: $viewModel.password)
                     .listRowBackground(Color.init(uiColor: .systemGray6))
                     .formFieldError($errors, "password")
+                    .accessibilityIdentifier("loginPasswordField")
                 
                 FormErrors(errors: $errors)
             }
@@ -42,6 +44,7 @@ struct LoginView: View {
                             Text("Log in")
                         }
                     }
+                    .accessibilityIdentifier("loginButton")
                 }
             }
         }

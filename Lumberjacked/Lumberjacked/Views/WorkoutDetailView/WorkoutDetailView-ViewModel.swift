@@ -26,6 +26,14 @@ extension WorkoutDetailView {
             deleteActionLoading = false
             return success
         }
+        
+        func attemptRefreshWorkout(errors: Binding<LumberjackedClientErrors>) async {
+            if let response = await LumberjackedClient(errors: errors)
+                .getWorkout(workoutId: workout.id!) {
+                workout = response
+            }
+
+        }
 
     }
 }

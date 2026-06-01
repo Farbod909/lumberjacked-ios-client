@@ -99,6 +99,38 @@ struct MovementLogInputView: View {
     }
 }
 
+#if DEBUG
+#Preview("New Log") {
+    NavigationStack {
+        MovementLogInputView(
+            viewModel: MovementLogInputView.ViewModel(
+                movementLog: MovementLog(notes: ""),
+                movement: PreviewData.benchPress,
+                workout: PreviewData.activeWorkout))
+    }
+}
+
+#Preview("Editing Existing Log") {
+    NavigationStack {
+        MovementLogInputView(
+            viewModel: MovementLogInputView.ViewModel(
+                movementLog: PreviewData.log_benchPress_1,
+                movement: PreviewData.benchPress,
+                workout: PreviewData.activeWorkout))
+    }
+}
+
+#Preview("Log Without Workout") {
+    NavigationStack {
+        MovementLogInputView(
+            viewModel: MovementLogInputView.ViewModel(
+                movementLog: PreviewData.log_deadlift_1,
+                movement: PreviewData.deadlift,
+                workout: nil))
+    }
+}
+#endif
+
 struct CustomIntStepper : View {
     var label: String
     @Binding var value: UInt16?

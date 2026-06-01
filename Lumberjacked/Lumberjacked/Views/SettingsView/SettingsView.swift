@@ -29,6 +29,9 @@ struct SettingsView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     SettingsView()
+        .environmentObject(LumberjackedAppEnvironment())
 }
+#endif

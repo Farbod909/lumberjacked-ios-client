@@ -11,39 +11,30 @@ struct LumberjackedClientErrors {
     var messages = [String: Any]()
     
     func hasError(key: String) -> Bool {
-        guard messages[key] != nil else {
-            return false
-        }
-            
-        if let errorValue = messages[key] as? [String] {
-            return !errorValue.isEmpty
-        }
-        
-        if let errorValue = messages[key] as? [String: [String]] {
-            return errorValue.count > 0
-        }
-        
+        guard let value = messages[key] else { return false }
+        if let arr = value as? NSArray { return arr.count > 0 }
+        if let dict = value as? [String: Any] { return !dict.isEmpty }
         return true
     }
-    
-    func errorMessage(key: String) -> String {
-        guard hasError(key: key) else {
-            return ""
-        }
-        
-        if let errorValue = messages[key] as? [String] {
-            return errorValue.joined(separator: "\n")
-        }
-        
-        if let errorValue = messages[key] as? [String: [String]] {
-            var childErrorStrings = [String]()
-            for (_, childErrorValue) in errorValue {
-                let childErrorString = childErrorValue.joined(separator: "\n")
-                childErrorStrings.append(childErrorString)
-            }
-            return childErrorStrings.joined(separator: "\n")
-        }
 
+    func errorMessage(key: String) -> String {
+        guard hasError(key: key) else { return "" }
+
+        // JSONSerialization returns NSArray, not [String] — cast via NSArray to avoid bridging failure
+        if let arr = messages[key] as? NSArray {
+            return arr.compactMap { $0 as? String }.joined(separator: "\n")
+        }
+        if let str = messages[key] as? String {
+            return str
+        }
+        if let dict = messages[key] as? [String: Any] {
+            return dict.values.compactMap { value -> String? in
+                if let arr = value as? NSArray {
+                    return arr.compactMap { $0 as? String }.joined(separator: "\n")
+                }
+                return value as? String
+            }.joined(separator: "\n")
+        }
         return "Unknown error"
     }
 }
@@ -187,6 +178,25 @@ struct LumberjackedClient {
         errors.messages = [:]
         
         let options = Networking.RequestOptions(url: "/api/workouts/", method: .GET)
+        do {
+            return try await Networking.shared.request(options: options)
+        } catch let error as RemoteNetworkingError {
+            if let messages = error.messages {
+                errors.messages = messages
+            } else {
+                errors.messages["detail"] = "Unknown error"
+            }
+        } catch {
+            errors.messages["detail"] = "Unknown error"
+        }
+        return nil
+    }
+    
+    func getWorkout(workoutId: UInt64) async -> Workout? {
+        errors.messages = [:]
+                
+        let options = Networking.RequestOptions(url: "/api/workouts/\(workoutId)/", method: .GET)
+        
         do {
             return try await Networking.shared.request(options: options)
         } catch let error as RemoteNetworkingError {

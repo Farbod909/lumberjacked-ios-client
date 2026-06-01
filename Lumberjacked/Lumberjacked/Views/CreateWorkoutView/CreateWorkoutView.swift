@@ -8,9 +8,13 @@
 import SwiftUI
 
 struct CreateWorkoutView: View {
-    @State var viewModel = ViewModel()
+    @State var viewModel: ViewModel
     @State var errors = LumberjackedClientErrors()
     @Environment(\.dismiss) var dismiss
+
+    init(viewModel: ViewModel = ViewModel()) {
+        _viewModel = State(initialValue: viewModel)
+    }
     
     var body: some View {
         NavigationStack {
@@ -42,6 +46,8 @@ struct CreateWorkoutView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     CreateWorkoutView()
 }
+#endif

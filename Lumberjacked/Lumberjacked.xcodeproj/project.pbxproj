@@ -6,11 +6,40 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		8E7A97342FCCDE2E00BE4778 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8EF984B92D40B879003082E6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8EF984C02D40B879003082E6;
+			remoteInfo = Lumberjacked;
+		};
+		8E7A975F2FCCF04000BE4778 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8EF984B92D40B879003082E6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8EF984C02D40B879003082E6;
+			remoteInfo = Lumberjacked;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		8E7A97302FCCDE2E00BE4778 /* LumberjackedTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LumberjackedTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8E7A97592FCCF04000BE4778 /* LumberjackedUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LumberjackedUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EF984C12D40B879003082E6 /* Lumberjacked.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lumberjacked.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		8E7A97312FCCDE2E00BE4778 /* LumberjackedTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LumberjackedTests;
+			sourceTree = "<group>";
+		};
+		8E7A975A2FCCF04000BE4778 /* LumberjackedUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LumberjackedUITests;
+			sourceTree = "<group>";
+		};
 		8EF984C32D40B879003082E6 /* Lumberjacked */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Lumberjacked;
@@ -19,6 +48,20 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		8E7A972D2FCCDE2E00BE4778 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8E7A97562FCCF04000BE4778 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8EF984BE2D40B879003082E6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -33,6 +76,8 @@
 			isa = PBXGroup;
 			children = (
 				8EF984C32D40B879003082E6 /* Lumberjacked */,
+				8E7A97312FCCDE2E00BE4778 /* LumberjackedTests */,
+				8E7A975A2FCCF04000BE4778 /* LumberjackedUITests */,
 				8EF984C22D40B879003082E6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +86,8 @@
 			isa = PBXGroup;
 			children = (
 				8EF984C12D40B879003082E6 /* Lumberjacked.app */,
+				8E7A97302FCCDE2E00BE4778 /* LumberjackedTests.xctest */,
+				8E7A97592FCCF04000BE4778 /* LumberjackedUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +95,52 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		8E7A972F2FCCDE2E00BE4778 /* LumberjackedTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8E7A97382FCCDE2E00BE4778 /* Build configuration list for PBXNativeTarget "LumberjackedTests" */;
+			buildPhases = (
+				8E7A972C2FCCDE2E00BE4778 /* Sources */,
+				8E7A972D2FCCDE2E00BE4778 /* Frameworks */,
+				8E7A972E2FCCDE2E00BE4778 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8E7A97352FCCDE2E00BE4778 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				8E7A97312FCCDE2E00BE4778 /* LumberjackedTests */,
+			);
+			name = LumberjackedTests;
+			packageProductDependencies = (
+			);
+			productName = LumberjackedTests;
+			productReference = 8E7A97302FCCDE2E00BE4778 /* LumberjackedTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		8E7A97582FCCF04000BE4778 /* LumberjackedUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8E7A97612FCCF04000BE4778 /* Build configuration list for PBXNativeTarget "LumberjackedUITests" */;
+			buildPhases = (
+				8E7A97552FCCF04000BE4778 /* Sources */,
+				8E7A97562FCCF04000BE4778 /* Frameworks */,
+				8E7A97572FCCF04000BE4778 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8E7A97602FCCF04000BE4778 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				8E7A975A2FCCF04000BE4778 /* LumberjackedUITests */,
+			);
+			name = LumberjackedUITests;
+			packageProductDependencies = (
+			);
+			productName = LumberjackedUITests;
+			productReference = 8E7A97592FCCF04000BE4778 /* LumberjackedUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		8EF984C02D40B879003082E6 /* Lumberjacked */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8EF984CF2D40B87B003082E6 /* Build configuration list for PBXNativeTarget "Lumberjacked" */;
@@ -77,9 +170,17 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1610;
+				LastSwiftUpdateCheck = 2630;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
+					8E7A972F2FCCDE2E00BE4778 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 8EF984C02D40B879003082E6;
+					};
+					8E7A97582FCCF04000BE4778 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 8EF984C02D40B879003082E6;
+					};
 					8EF984C02D40B879003082E6 = {
 						CreatedOnToolsVersion = 16.1;
 					};
@@ -100,11 +201,27 @@
 			projectRoot = "";
 			targets = (
 				8EF984C02D40B879003082E6 /* Lumberjacked */,
+				8E7A972F2FCCDE2E00BE4778 /* LumberjackedTests */,
+				8E7A97582FCCF04000BE4778 /* LumberjackedUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		8E7A972E2FCCDE2E00BE4778 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8E7A97572FCCF04000BE4778 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8EF984BF2D40B879003082E6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +232,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		8E7A972C2FCCDE2E00BE4778 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8E7A97552FCCF04000BE4778 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8EF984BD2D40B879003082E6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,7 +255,106 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		8E7A97352FCCDE2E00BE4778 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8EF984C02D40B879003082E6 /* Lumberjacked */;
+			targetProxy = 8E7A97342FCCDE2E00BE4778 /* PBXContainerItemProxy */;
+		};
+		8E7A97602FCCF04000BE4778 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8EF984C02D40B879003082E6 /* Lumberjacked */;
+			targetProxy = 8E7A975F2FCCF04000BE4778 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		8E7A97362FCCDE2E00BE4778 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GK8ZBK5FD2;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.FarbodRafezy.LumberjackedTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Lumberjacked.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Lumberjacked";
+			};
+			name = Debug;
+		};
+		8E7A97372FCCDE2E00BE4778 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GK8ZBK5FD2;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.FarbodRafezy.LumberjackedTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Lumberjacked.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Lumberjacked";
+			};
+			name = Release;
+		};
+		8E7A97622FCCF04000BE4778 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GK8ZBK5FD2;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.FarbodRafezy.LumberjackedUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Lumberjacked;
+			};
+			name = Debug;
+		};
+		8E7A97632FCCF04000BE4778 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GK8ZBK5FD2;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.FarbodRafezy.LumberjackedUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Lumberjacked;
+			};
+			name = Release;
+		};
 		8EF984CD2D40B87B003082E6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -311,6 +541,24 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		8E7A97382FCCDE2E00BE4778 /* Build configuration list for PBXNativeTarget "LumberjackedTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8E7A97362FCCDE2E00BE4778 /* Debug */,
+				8E7A97372FCCDE2E00BE4778 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8E7A97612FCCF04000BE4778 /* Build configuration list for PBXNativeTarget "LumberjackedUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8E7A97622FCCF04000BE4778 /* Debug */,
+				8E7A97632FCCF04000BE4778 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		8EF984BC2D40B879003082E6 /* Build configuration list for PBXProject "Lumberjacked" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

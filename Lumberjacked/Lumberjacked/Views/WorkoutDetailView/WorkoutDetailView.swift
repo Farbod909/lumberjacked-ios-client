@@ -89,6 +89,9 @@ struct WorkoutDetailView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 10)
         }
+        .task {
+            await viewModel.attemptRefreshWorkout(errors: $errors)
+        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 if viewModel.deleteActionLoading {
@@ -120,76 +123,15 @@ struct WorkoutDetailView: View {
 }
 
 #if DEBUG
-struct WorkoutDetailView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationStack {
-            WorkoutDetailView(
-                viewModel: previewViewModel
-            )
-        }
+#Preview("Recent Workout") {
+    NavigationStack {
+        WorkoutDetailView(viewModel: WorkoutDetailView.ViewModel(workout: PreviewData.pastWorkout_today))
     }
-    
-    // MARK: - Sample Data
-    
-    // --- Mock Data ---
-    
-    static let movement1Log = MovementLog(
-        id: 1, movement: 1, reps: [10, 10, 10], loads: [135, 135, 135], notes: "", timestamp: Calendar.current.date(byAdding: .hour, value: -3, to: Date())!
-    )
-    
-    static let movement2Log = MovementLog(
-        id: 2, movement: 2, reps: [6, 5, 4], loads: [145, 145, 150], notes: "Did not feel strong.", timestamp: Calendar.current.date(byAdding: .hour, value: -2, to: Date())!
-    )
-    
-    static let movement3Log = MovementLog(
-        id: 3, movement: 3, reps: [8, 8, 8], loads: [190, 190, 190], notes: "", timestamp: Calendar.current.date(byAdding: .hour, value: -1, to: Date())!
-    )
+}
 
-    static let movement1 = Movement(
-        id: 1,
-        name: "Barbell Bench Press",
-        category: "Chest",
-        notes: "Keep elbows tucked at a 45-degree angle. Don't bounce the bar off the chest.",
-        recommended_warmup_sets: "2-3",
-        recommended_working_sets: "3",
-        recommended_rep_range: "8-12",
-        recommended_rpe: "7-8",
-        recommended_rest_time: 90,
-        recorded_log: movement1Log
-    )
-    
-    static let movement2 = Movement(
-        id: 2,
-        name: "Barbell Squat",
-        category: "Lower",
-        notes: "Go as low as possible. Put plates under your heels if you need to.",
-        recommended_warmup_sets: "2-3",
-        recommended_working_sets: "1",
-        recommended_rep_range: "4-6",
-        recommended_rpe: "7-8",
-        recommended_rest_time: 90,
-        recorded_log: movement2Log
-    )
-
-    static let movement3 = Movement(
-        id: 3,
-        name: "Deadlift",
-        category: "Core",
-        notes: "Brace your core before going up. Do not round back.",
-        recommended_warmup_sets: "1",
-        recommended_working_sets: "2",
-        recommended_rep_range: "6-8",
-        recommended_rpe: "7-8",
-        recommended_rest_time: 90,
-        recorded_log: movement3Log
-    )
-
-    static let workout = Workout(
-        id: 1,
-        start_timestamp: Calendar.current.date(byAdding: .hour, value: -4, to: Date())!,
-        end_timestamp: Date(),
-        movements_details: [movement1, movement2, movement3])
-    
-    static let previewViewModel = WorkoutDetailView.ViewModel(workout: workout)
+#Preview("Older Workout") {
+    NavigationStack {
+        WorkoutDetailView(viewModel: WorkoutDetailView.ViewModel(workout: PreviewData.pastWorkout_2weeksAgo))
+    }
 }
 #endif

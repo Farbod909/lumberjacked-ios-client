@@ -8,8 +8,12 @@
 import SwiftUI
 
 struct CurrentWorkoutView: View {
-    @State var viewModel = ViewModel()
+    @State var viewModel: ViewModel
     @State var errors = LumberjackedClientErrors()
+
+    init(viewModel: ViewModel = ViewModel()) {
+        _viewModel = State(initialValue: viewModel)
+    }
     @State var timeElapsed: String = "00:00"
     @EnvironmentObject var appEnvironment: LumberjackedAppEnvironment
     @FocusState var addMovementTextFieldFocusState: Bool
@@ -430,6 +434,28 @@ struct CurrentWorkoutView: View {
 }
 
 
-#Preview {
-    CurrentWorkoutView()
+#if DEBUG
+#Preview("Active Workout") {
+    let vm = CurrentWorkoutView.ViewModel()
+    vm.currentWorkout = PreviewData.activeWorkout
+    vm.isLoadingCurrentWorkout = false
+    vm.isLoadingMovements = false
+    vm.allMovements = PreviewData.movements
+    return NavigationStack {
+        CurrentWorkoutView(viewModel: vm)
+    }
+    .environmentObject(LumberjackedAppEnvironment())
 }
+
+#Preview("No Workout Yet") {
+    let vm = CurrentWorkoutView.ViewModel()
+    vm.currentWorkout = nil
+    vm.isLoadingCurrentWorkout = false
+    vm.isLoadingMovements = false
+    vm.allMovements = PreviewData.movements
+    return NavigationStack {
+        CurrentWorkoutView(viewModel: vm)
+    }
+    .environmentObject(LumberjackedAppEnvironment())
+}
+#endif

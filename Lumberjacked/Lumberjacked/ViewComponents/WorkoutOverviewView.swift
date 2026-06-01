@@ -46,6 +46,8 @@ struct WorkoutOverviewView: View {
     }
 }
 
+#if DEBUG
 #Preview {
-    WorkoutOverviewView(workout: Workout())
+    WorkoutOverviewView(workout: PreviewData.pastWorkout_today)
 }
+#endif

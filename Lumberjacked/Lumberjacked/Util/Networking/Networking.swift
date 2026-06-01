@@ -13,6 +13,10 @@ struct RemoteNetworkingError: Error {
     var messages: [String: Any]?
 }
 
+extension Notification.Name {
+    static let appUnauthorized = Notification.Name("appUnauthorized")
+}
+
 class Networking {
     static let shared = Networking()
         
@@ -27,8 +31,7 @@ class Networking {
         var headers = [(String?, String)]()
     }
     
-//    static let host = "http://192.168.0.147:8000"
-    static let host = "https://lumberjacked-dev-2-1029906100530.us-west2.run.app"
+    static var host: String { NetworkConfiguration.baseURL }
     var sessionConfiguration: URLSessionConfiguration
     let decoder: JSONDecoder
     private lazy var session: URLSession = {
@@ -100,13 +103,9 @@ class Networking {
         if let accessToken = Keychain.standard.read(
             service: "accessToken", account: "lumberjacked", type: String.self
         ) {
-            self.sessionConfiguration.httpAdditionalHeaders = [
-                "Authorization": "Token \(accessToken)"
-            ]
-        } else {
-            self.sessionConfiguration.httpAdditionalHeaders?.removeValue(forKey: "Authorization")
+            request.setValue("Token \(accessToken)", forHTTPHeaderField: "Authorization")
         }
-        
+
         let session = self.session
         
         var response = URLResponse()
@@ -141,14 +140,25 @@ class Networking {
         }
                 
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode > 299 {
-            
+            #if DEBUG
+            print("[Networking] \(httpResponse.statusCode) \(options.url)")
+            print("[Networking] raw body: \(String(data: data, encoding: .utf8) ?? "<non-UTF8>")")
+            #endif
+
+            if httpResponse.statusCode == 401 {
+                Keychain.standard.delete(service: "accessToken", account: "lumberjacked")
+                NotificationCenter.default.post(name: .appUnauthorized, object: nil)
+            }
+
             if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),
                let jsonDict = jsonObject as? [String: Any] {
+                #if DEBUG
+                print("[Networking] parsed messages: \(jsonDict)")
+                #endif
                 throw RemoteNetworkingError(statusCode: httpResponse.statusCode, messages: jsonDict)
             } else {
                 throw RemoteNetworkingError(statusCode: httpResponse.statusCode, messages: nil)
             }
-
         }
         return data
     }
