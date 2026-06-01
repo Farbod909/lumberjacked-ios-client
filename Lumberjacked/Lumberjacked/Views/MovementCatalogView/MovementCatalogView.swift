@@ -9,7 +9,6 @@ import SwiftUI
 
 struct MovementCatalogView: View {
     @State var viewModel: ViewModel
-    @State var errors = LumberjackedClientErrors()
 
     init(viewModel: ViewModel = ViewModel()) {
         _viewModel = State(initialValue: viewModel)
@@ -31,7 +30,7 @@ struct MovementCatalogView: View {
             .navigationTitle("Movement Catalog")
             .navigationBarTitleDisplayMode(.inline)
             .task {
-                await viewModel.attemptGetMovements(errors: $errors)
+                await viewModel.attemptGetMovements()
             }
             .navigationDestination(for: Movement.self) { movement in
                 MovementDetailView(viewModel: MovementDetailView.ViewModel(movement: movement))
@@ -49,7 +48,7 @@ struct MovementCatalogView: View {
                 isPresented: $viewModel.showCreateMovementSheet,
                 onDismiss: {
                     Task {
-                        await viewModel.attemptGetMovements(errors: $errors)
+                        await viewModel.attemptGetMovements()
                     }
                 }
             ) {
@@ -73,21 +72,12 @@ struct MovementCatalogView: View {
 
 #if DEBUG
 #Preview("All Movements") {
-    let vm = MovementCatalogView.ViewModel()
-    vm.movements = PreviewData.movements
-    vm.isLoading = false
-    return NavigationStack {
-        MovementCatalogView(viewModel: vm)
-    }
+    MovementCatalogView(viewModel: MovementCatalogView.ViewModel(api: MockMovementAPI()))
 }
 
 #Preview("Filtered") {
-    let vm = MovementCatalogView.ViewModel()
-    vm.movements = PreviewData.movements
-    vm.isLoading = false
+    let vm = MovementCatalogView.ViewModel(api: MockMovementAPI())
     vm.searchText = "bar"
-    return NavigationStack {
-        MovementCatalogView(viewModel: vm)
-    }
+    return MovementCatalogView(viewModel: vm)
 }
 #endif

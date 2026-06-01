@@ -9,13 +9,12 @@ import SwiftUI
 
 struct MovementDetailView: View {
     @State var viewModel: ViewModel
-    @State var errors = LumberjackedClientErrors()
     @Environment(\.dismiss) var dismiss
-    
+
     var body: some View {
         ZStack {
             Color.brandBackground.ignoresSafeArea()
-            
+
             VStack(alignment: .leading, spacing: 12) {
                 Text(viewModel.movement.name)
                     .font(.title)
@@ -31,7 +30,7 @@ struct MovementDetailView: View {
                     .padding()
                     .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
                 }
-                
+
                 if viewModel.movement.hasCategory {
                     HStack {
                         Text("category")
@@ -43,11 +42,11 @@ struct MovementDetailView: View {
                     .padding()
                     .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
                 }
-                
+
                 if viewModel.movement.hasNotes {
                     NotesView(notes: viewModel.movement.notes, maxHeight: 100)
                 }
-                
+
                 if viewModel.movement.hasAnyRecommendations {
                     HStack {
                         RecommendationsView(movement: viewModel.movement)
@@ -56,7 +55,7 @@ struct MovementDetailView: View {
                     .padding()
                     .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
                 }
-                
+
                 if !viewModel.movementLogs.isEmpty {
                     LogListView(movementLogs: viewModel.movementLogs)
                 } else {
@@ -82,7 +81,7 @@ struct MovementDetailView: View {
                 Spacer()
             }
             .task {
-                await viewModel.attemptGetMovementLogs(errors: $errors)
+                await viewModel.attemptGetMovementLogs()
             }
             .toolbar {
                 if viewModel.deleteActionLoading {
@@ -126,7 +125,7 @@ struct MovementDetailView: View {
             .sheet(isPresented: $viewModel.showEditSheet, onDismiss: {
                 Task {
                     if let movementId = viewModel.movement.id {
-                        await viewModel.attemptGetMovementDetail(id: movementId, errors: $errors)
+                        await viewModel.attemptGetMovementDetail(id: movementId)
                     }
                 }
             }) {
@@ -137,7 +136,7 @@ struct MovementDetailView: View {
             .alert("Delete", isPresented: $viewModel.showDeleteConfirmationAlert) {
                 Button("Delete", role: .destructive) {
                     Task {
-                        guard await viewModel.attemptDeleteMovement(id: viewModel.movement.id!, errors: $errors) else {
+                        guard await viewModel.attemptDeleteMovement() else {
                             return
                         }
                         dismiss()
@@ -154,14 +153,14 @@ struct NotesView: View {
     let notes: String
     let maxHeight: CGFloat
     @State private var textHeight: CGFloat = .zero
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
                 Text("Notes")
                     .textCase(.uppercase)
                     .font(.headline)
-                
+
                 Group {
                     if textHeight > maxHeight {
                         ScrollView {
@@ -210,12 +209,12 @@ private struct HeightKey: PreferenceKey {
 
 struct RecommendationsView: View {
     let movement: Movement
-    
+
     struct Recommendation: Hashable, Equatable {
         let name: String
         let value: String
     }
-    
+
     var recommendations: [Recommendation] {
         var result = [Recommendation]()
         if !movement.recommended_warmup_sets.isEmpty {
@@ -244,7 +243,7 @@ struct RecommendationsView: View {
         }
         return result
     }
-    
+
     var body: some View {
         VStack(alignment: .leading) {
             Text("Recommendations")
@@ -270,7 +269,7 @@ struct RecommendationsView: View {
 
 struct LogListView: View {
     var movementLogs: [MovementLog]
-    
+
     var body: some View {
         VStack(alignment: .leading) {
             Text("Log History")
@@ -293,13 +292,12 @@ struct LogListView: View {
         }
         .padding()
         .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
-
     }
 }
 
 struct LogItem: View {
     let movementLog: MovementLog
-    
+
     var body: some View {
         NavigationLink(value: movementLog) {
             HStack(alignment: .top) {
@@ -321,13 +319,10 @@ struct LogItem: View {
 
 #if DEBUG
 #Preview("Full Details with Logs") {
-    let vm = MovementDetailView.ViewModel(
-        movement: PreviewData.benchPress,
-        movementLogs: PreviewData.benchPressLogs)
-    vm.isLoadingMovementLogs = false
-    vm.workout = PreviewData.activeWorkout
-    return NavigationStack {
-        MovementDetailView(viewModel: vm)
+    NavigationStack {
+        MovementDetailView(viewModel: MovementDetailView.ViewModel(
+            movement: PreviewData.benchPress,
+            movementLogAPI: MockMovementLogAPI()))
     }
 }
 
@@ -336,18 +331,19 @@ struct LogItem: View {
         id: 8, name: "Seated Cable Row", category: "", notes: "",
         recommended_warmup_sets: "", recommended_working_sets: "",
         recommended_rep_range: "", recommended_rpe: "")
-    let vm = MovementDetailView.ViewModel(movement: movement)
-    vm.isLoadingMovementLogs = false
     return NavigationStack {
-        MovementDetailView(viewModel: vm)
+        MovementDetailView(viewModel: MovementDetailView.ViewModel(
+            movement: movement,
+            movementAPI: MockMovementAPI(),
+            movementLogAPI: MockMovementLogAPI()))
     }
 }
 
 #Preview("Full Details, No Logs") {
-    let vm = MovementDetailView.ViewModel(movement: PreviewData.deadlift)
-    vm.isLoadingMovementLogs = false
-    return NavigationStack {
-        MovementDetailView(viewModel: vm)
+    NavigationStack {
+        MovementDetailView(viewModel: MovementDetailView.ViewModel(
+            movement: PreviewData.deadlift,
+            movementLogAPI: MockMovementLogAPI()))
     }
 }
 #endif

@@ -9,10 +9,9 @@ import SwiftUI
 
 struct MovementLogInputView: View {
     @State var viewModel: ViewModel
-    @State var errors = LumberjackedClientErrors()
 
     @Environment(\.dismiss) var dismiss
-    
+
     var body: some View {
         ZStack {
             Color.brandBackground.ignoresSafeArea()
@@ -79,7 +78,7 @@ struct MovementLogInputView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
-                            await viewModel.formSubmit(errors: $errors, dismissAction: { dismiss() })
+                            await viewModel.formSubmit(dismissAction: { dismiss() })
                         }
                     }
                     .disabled(!viewModel.canSave())
@@ -88,8 +87,7 @@ struct MovementLogInputView: View {
                     ToolbarItem(placement: .secondaryAction) {
                         Button("Delete log", systemImage: "trash", role: .destructive) {
                             Task {
-                                await viewModel.attemptDeleteLog(
-                                    errors: $errors, dismissAction: { dismiss() })
+                                await viewModel.attemptDeleteLog(dismissAction: { dismiss() })
                             }
                         }
                     }
@@ -106,7 +104,8 @@ struct MovementLogInputView: View {
             viewModel: MovementLogInputView.ViewModel(
                 movementLog: MovementLog(notes: ""),
                 movement: PreviewData.benchPress,
-                workout: PreviewData.activeWorkout))
+                workout: PreviewData.activeWorkout,
+                api: MockMovementLogAPI()))
     }
 }
 
@@ -116,7 +115,8 @@ struct MovementLogInputView: View {
             viewModel: MovementLogInputView.ViewModel(
                 movementLog: PreviewData.log_benchPress_1,
                 movement: PreviewData.benchPress,
-                workout: PreviewData.activeWorkout))
+                workout: PreviewData.activeWorkout,
+                api: MockMovementLogAPI()))
     }
 }
 
@@ -126,7 +126,8 @@ struct MovementLogInputView: View {
             viewModel: MovementLogInputView.ViewModel(
                 movementLog: PreviewData.log_deadlift_1,
                 movement: PreviewData.deadlift,
-                workout: nil))
+                workout: nil,
+                api: MockMovementLogAPI()))
     }
 }
 #endif
@@ -136,7 +137,7 @@ struct CustomIntStepper : View {
     @Binding var value: UInt16?
     var minValue: UInt16
     var maxValue: UInt16
-    
+
     var body: some View {
         HStack {
             Button {
@@ -152,7 +153,7 @@ struct CustomIntStepper : View {
                     .padding()
             }
             .disabled(value == minValue)
-            
+
             VStack {
                 ClearOnTapValueField(value: $value, format: .number)
                     .keyboardType(.numberPad)
@@ -200,7 +201,7 @@ struct CustomDoubleStepper : View {
     var minValue: Double
     var maxValue: Double
     var increment: Double
-    
+
     var body: some View {
         HStack {
             Button {
@@ -298,9 +299,9 @@ where Value: Equatable,
     @State private var savedValueString: String?
     var format: Format
     var placeholder: String = ""
-    
+
     @FocusState private var isFocused: Bool
-    
+
     var body: some View {
         TextField(effectivePlaceholder, value: $value, format: format)
             .focused($isFocused)
@@ -319,7 +320,7 @@ where Value: Equatable,
                 }
             }
     }
-    
+
     private var effectivePlaceholder: String {
         if let savedValueString = savedValueString {
             return savedValueString

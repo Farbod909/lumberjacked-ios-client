@@ -12,23 +12,38 @@ extension LoginView {
     class ViewModel {
         var email = ""
         var password = ""
-        
+
         var isLoadingToolbarAction = false
-        
-        func attemptLogin(errors: Binding<LumberjackedClientErrors>) async -> Bool {
+        var errors = LumberjackedClientErrors()
+
+        private let api: AuthAPIProtocol
+
+        init(api: AuthAPIProtocol = LiveAuthAPI()) {
+            self.api = api
+        }
+
+        func attemptLogin() async -> Bool {
             isLoadingToolbarAction = true
-            
-            if let response = await LumberjackedClient(errors: errors)
-                .login(email: email, password: password) {
+            errors.messages = [:]
+
+            do {
+                let response = try await api.login(email: email, password: password)
                 Keychain.standard.save(
                     response.key, service: "accessToken", account: "lumberjacked")
                 isLoadingToolbarAction = false
                 return true
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
 
             isLoadingToolbarAction = false
             return false
         }
-
     }
 }

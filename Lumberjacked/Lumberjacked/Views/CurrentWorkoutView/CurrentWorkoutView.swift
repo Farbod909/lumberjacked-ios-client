@@ -9,17 +9,16 @@ import SwiftUI
 
 struct CurrentWorkoutView: View {
     @State var viewModel: ViewModel
-    @State var errors = LumberjackedClientErrors()
+    @State var timeElapsed: String = "00:00"
+    @EnvironmentObject var appEnvironment: LumberjackedAppEnvironment
+    @FocusState var addMovementTextFieldFocusState: Bool
 
     init(viewModel: ViewModel = ViewModel()) {
         _viewModel = State(initialValue: viewModel)
     }
-    @State var timeElapsed: String = "00:00"
-    @EnvironmentObject var appEnvironment: LumberjackedAppEnvironment
-    @FocusState var addMovementTextFieldFocusState: Bool
-    
+
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    
+
     func dismissAddMovementOverlay() {
         addMovementTextFieldFocusState = false
         viewModel.showAddMovementOverlay = false
@@ -32,7 +31,7 @@ struct CurrentWorkoutView: View {
                     viewModel.searchText = ""
                     viewModel.showAddMovementOverlay = true
                     addMovementTextFieldFocusState = true
-                    await viewModel.attemptGetMovements(errors: $errors)
+                    await viewModel.attemptGetMovements()
                 }
             } label: {
                 Label("New workout", systemImage: "plus")
@@ -42,7 +41,7 @@ struct CurrentWorkoutView: View {
             .padding()
             .background(Color.brandSecondary)
             .clipShape(RoundedRectangle(cornerRadius: 25))
-            
+
             Button {
                 viewModel.showCreateWorkoutSheet = true
             } label: {
@@ -52,14 +51,14 @@ struct CurrentWorkoutView: View {
             .padding(.top, 14)
         }
     }
-    
+
     var addMovementButton: some View {
         Button {
             Task {
                 viewModel.searchText = ""
                 viewModel.showAddMovementOverlay = true
                 addMovementTextFieldFocusState = true
-                await viewModel.attemptGetMovements(errors: $errors)
+                await viewModel.attemptGetMovements()
             }
         } label: {
             Label("Add Movement", systemImage: "plus")
@@ -70,7 +69,7 @@ struct CurrentWorkoutView: View {
         .foregroundStyle(Color.brandPrimaryText)
         .clipShape(RoundedRectangle(cornerRadius: 25))
     }
-    
+
     var addMovementSearchFieldView: some View {
         HStack {
             TextField(
@@ -86,7 +85,7 @@ struct CurrentWorkoutView: View {
             .foregroundStyle(Color.brandPrimaryText)
             .frame(height: 44)
             .padding(.horizontal, 16)
-            
+
             if viewModel.isLoadingMovements {
                 ProgressView()
             }
@@ -106,7 +105,7 @@ struct CurrentWorkoutView: View {
         .padding(.horizontal, 16)
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
-    
+
     var endWorkoutButton: some View {
         Button {
             viewModel.showFinishWorkoutConfirmationAlert = true
@@ -119,18 +118,18 @@ struct CurrentWorkoutView: View {
         .foregroundStyle(Color.accentColor)
         .clipShape(RoundedRectangle(cornerRadius: 25))
     }
-    
+
     var timerView: some View {
         HStack(alignment: .bottom) {
             Text(timeElapsed)
                 .font(.largeTitle)
                 .onReceive(timer) { _ in
                     let interval = Date.now.timeIntervalSince(viewModel.currentWorkout?.start_timestamp ?? Date.now)
-                    
+
                     let totalMinutes = Int(interval / 60)
                     let hours = totalMinutes / 60
                     let minutes = totalMinutes % 60
-                    
+
                     if hours > 0 {
                         timeElapsed = "\(hours)h \(minutes)m"
                     } else {
@@ -147,7 +146,7 @@ struct CurrentWorkoutView: View {
         .background(.thinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 25))
     }
-        
+
     var currentWorkoutView: some View {
         ZStack {
             VStack {
@@ -199,7 +198,7 @@ struct CurrentWorkoutView: View {
             }
         }
     }
-    
+
     var movementSearchResultsList: some View {
         List {
             Section {
@@ -208,16 +207,13 @@ struct CurrentWorkoutView: View {
                         Task {
                             viewModel.isLoadingCurrentWorkout = true
                             if let newMovement = await viewModel.attemptQuickAddMovement(
-                                movementName: formattedSearchText,
-                                errors: $errors) {
+                                movementName: formattedSearchText) {
                                 if let _ = viewModel.currentWorkout {
-                                    await viewModel.addMovementToCurrentWorkout(
-                                        errors: $errors, movementId: newMovement.id!)
+                                    await viewModel.addMovementToCurrentWorkout(movementId: newMovement.id!)
                                 } else {
-                                    await viewModel.createWorkoutWithInitialMovement(
-                                        errors: $errors, movementId: newMovement.id!)
+                                    await viewModel.createWorkoutWithInitialMovement(movementId: newMovement.id!)
                                 }
-                                await viewModel.attemptGetCurrentWorkout(errors: $errors)
+                                await viewModel.attemptGetCurrentWorkout()
                             }
                             dismissAddMovementOverlay()
                             viewModel.isLoadingCurrentWorkout = false
@@ -245,13 +241,11 @@ struct CurrentWorkoutView: View {
                             }
                             viewModel.isLoadingMovements = true
                             if let _ = viewModel.currentWorkout {
-                                await viewModel.addMovementToCurrentWorkout(
-                                    errors: $errors, movementId: movement.id!)
+                                await viewModel.addMovementToCurrentWorkout(movementId: movement.id!)
                             } else {
-                                await viewModel.createWorkoutWithInitialMovement(
-                                    errors: $errors, movementId: movement.id!)
+                                await viewModel.createWorkoutWithInitialMovement(movementId: movement.id!)
                             }
-                            await viewModel.attemptGetCurrentWorkout(errors: $errors)
+                            await viewModel.attemptGetCurrentWorkout()
                             dismissAddMovementOverlay()
                             viewModel.isLoadingMovements = false
                         }
@@ -274,7 +268,7 @@ struct CurrentWorkoutView: View {
         .listStyle(.inset)
         .scrollContentBackground(.hidden)
     }
-        
+
     var movementSearchResults: [Movement] {
         if viewModel.searchText.isEmpty {
             return []
@@ -284,11 +278,11 @@ struct CurrentWorkoutView: View {
             }
         }
     }
-    
+
     var formattedSearchText: String {
-        return viewModel.searchText.trimmingCharacters(in: [" "]) .capitalized
+        return viewModel.searchText.trimmingCharacters(in: CharacterSet(charactersIn: " ")).capitalized
     }
-    
+
     var addMovementView : some View {
         VStack {
             addMovementSearchFieldView
@@ -309,19 +303,18 @@ struct CurrentWorkoutView: View {
                 movementSearchResultsList
             }
         }
-
     }
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.brandBackground.ignoresSafeArea()
-                
+
                 currentWorkoutView
                     .opacity(viewModel.currentWorkout != nil ? 1 : 0)
                 ProgressView()
                     .opacity(viewModel.currentWorkout == nil && viewModel.isLoadingCurrentWorkout ? 1 : 0)
-                
+
                 if viewModel.currentWorkout == nil && !viewModel.isLoadingCurrentWorkout {
                     newWorkoutOptionsView
                         .transition(
@@ -330,9 +323,8 @@ struct CurrentWorkoutView: View {
                                 removal: .opacity.animation(.easeOut(duration: 0))
                             )
                         )
-
                 }
-                                
+
                 if viewModel.showAddMovementOverlay {
                     addMovementView
                         .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -344,8 +336,8 @@ struct CurrentWorkoutView: View {
             .task(id: appEnvironment.isNotAuthenticated) {
                 viewModel.isLoadingCurrentWorkout = true
                 viewModel.isLoadingMovements = true
-                await viewModel.attemptGetCurrentWorkout(errors: $errors)
-                await viewModel.attemptGetMovements(errors: $errors)
+                await viewModel.attemptGetCurrentWorkout()
+                await viewModel.attemptGetMovements()
                 viewModel.isLoadingCurrentWorkout = false
                 viewModel.isLoadingMovements = false
             }
@@ -353,7 +345,7 @@ struct CurrentWorkoutView: View {
                 Task {
                     viewModel.isLoadingCurrentWorkout = true
                     viewModel.isLoadingMovements = true
-                    await viewModel.attemptGetCurrentWorkout(errors: $errors)
+                    await viewModel.attemptGetCurrentWorkout()
                     viewModel.isLoadingCurrentWorkout = false
                     viewModel.isLoadingMovements = false
                 }
@@ -407,7 +399,7 @@ struct CurrentWorkoutView: View {
             .alert("Cancel Workout", isPresented: $viewModel.showCancelConfirmationAlert) {
                 Button("Yes", role: .destructive) {
                     Task {
-                        await viewModel.attemptDeleteCurrentWorkout(errors: $errors)
+                        await viewModel.attemptDeleteCurrentWorkout()
                     }
                 }
                 Button("No", role: .cancel) {}
@@ -415,16 +407,16 @@ struct CurrentWorkoutView: View {
             .alert("Finish Workout", isPresented: $viewModel.showFinishWorkoutConfirmationAlert) {
                 Button("Save Workout") {
                     Task {
-                        await viewModel.attemptEndCurrentWorkout(errors: $errors)
+                        await viewModel.attemptEndCurrentWorkout()
                     }
                 }
                 Button("Discard Workout", role: .destructive) {
                     Task {
-                        await viewModel.attemptDeleteCurrentWorkout(errors: $errors)
+                        await viewModel.attemptDeleteCurrentWorkout()
                     }
                 }
                 Button("Cancel", role: .cancel) {
-                    
+
                 }
             } message: {
                 Text("If you haven't recorded a log for a movement it will be marked as skipped.")
@@ -436,25 +428,19 @@ struct CurrentWorkoutView: View {
 
 #if DEBUG
 #Preview("Active Workout") {
-    let vm = CurrentWorkoutView.ViewModel()
-    vm.currentWorkout = PreviewData.activeWorkout
-    vm.isLoadingCurrentWorkout = false
-    vm.isLoadingMovements = false
-    vm.allMovements = PreviewData.movements
-    return NavigationStack {
-        CurrentWorkoutView(viewModel: vm)
+    NavigationStack {
+        CurrentWorkoutView(viewModel: CurrentWorkoutView.ViewModel(
+            workoutAPI: MockWorkoutAPI(),
+            movementAPI: MockMovementAPI()))
     }
     .environmentObject(LumberjackedAppEnvironment())
 }
 
 #Preview("No Workout Yet") {
-    let vm = CurrentWorkoutView.ViewModel()
-    vm.currentWorkout = nil
-    vm.isLoadingCurrentWorkout = false
-    vm.isLoadingMovements = false
-    vm.allMovements = PreviewData.movements
-    return NavigationStack {
-        CurrentWorkoutView(viewModel: vm)
+    NavigationStack {
+        CurrentWorkoutView(viewModel: CurrentWorkoutView.ViewModel(
+            workoutAPI: MockWorkoutAPI(currentWorkout: nil),
+            movementAPI: MockMovementAPI()))
     }
     .environmentObject(LumberjackedAppEnvironment())
 }

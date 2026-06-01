@@ -11,29 +11,53 @@ extension WorkoutDetailView {
     @Observable
     class ViewModel {
         var workout: Workout
-        
+        var errors = LumberjackedClientErrors()
+
         var showDeleteConfirmationAlert = false
         var deleteActionLoading = false
-        
-        init(workout: Workout) {
+
+        private let api: WorkoutAPIProtocol
+
+        init(workout: Workout, api: WorkoutAPIProtocol = LiveWorkoutAPI()) {
             self.workout = workout
+            self.api = api
         }
-        
-        func attemptDeleteWorkout(errors: Binding<LumberjackedClientErrors>) async -> Bool {
+
+        func attemptDeleteWorkout() async -> Bool {
+            guard let id = workout.id else { return false }
             deleteActionLoading = true
-            let success = await LumberjackedClient(errors: errors)
-                .deleteWorkout(id: self.workout.id!)
-            deleteActionLoading = false
-            return success
-        }
-        
-        func attemptRefreshWorkout(errors: Binding<LumberjackedClientErrors>) async {
-            if let response = await LumberjackedClient(errors: errors)
-                .getWorkout(workoutId: workout.id!) {
-                workout = response
+            errors.messages = [:]
+            do {
+                try await api.deleteWorkout(id: id)
+                deleteActionLoading = false
+                return true
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
-
+            deleteActionLoading = false
+            return false
         }
 
+        func attemptRefreshWorkout() async {
+            guard let id = workout.id else { return }
+            errors.messages = [:]
+            do {
+                workout = try await api.getWorkout(workoutId: id)
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
+            }
+        }
     }
 }

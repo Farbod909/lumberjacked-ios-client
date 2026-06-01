@@ -15,21 +15,37 @@ extension SignupView {
         var password2 = ""
 
         var isLoadingToolbarAction = false
-        
-        func attemptSignup(errors: Binding<LumberjackedClientErrors>) async -> Bool {
+        var errors = LumberjackedClientErrors()
+
+        private let api: AuthAPIProtocol
+
+        init(api: AuthAPIProtocol = LiveAuthAPI()) {
+            self.api = api
+        }
+
+        func attemptSignup() async -> Bool {
             isLoadingToolbarAction = true
-            
-            if let response = await LumberjackedClient(errors: errors)
-                .signup(email: email, password1: password1, password2: password2) {
+            errors.messages = [:]
+
+            do {
+                let response = try await api.signup(
+                    email: email, password1: password1, password2: password2)
                 Keychain.standard.save(
                     response.key, service: "accessToken", account: "lumberjacked")
                 isLoadingToolbarAction = false
                 return true
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
 
             isLoadingToolbarAction = false
             return false
         }
-
     }
 }

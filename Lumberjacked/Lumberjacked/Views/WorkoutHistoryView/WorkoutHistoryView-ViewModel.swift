@@ -12,14 +12,32 @@ extension WorkoutHistoryView {
     class ViewModel {
         var isLoading = true
         var workouts = [Workout]()
+        var errors = LumberjackedClientErrors()
+
         var pastWorkouts: [Workout] {
             workouts.filter { $0.end_timestamp != nil }
         }
-        
-        func attemptGetWorkouts(errors: Binding<LumberjackedClientErrors>) async {
+
+        private let api: WorkoutAPIProtocol
+
+        init(api: WorkoutAPIProtocol = LiveWorkoutAPI()) {
+            self.api = api
+        }
+
+        func attemptGetWorkouts() async {
             isLoading = true
-            if let response = await LumberjackedClient(errors: errors).getWorkouts() {
+            errors.messages = [:]
+            do {
+                let response = try await api.getWorkouts()
                 workouts = response.results
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
             isLoading = false
         }

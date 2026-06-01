@@ -12,17 +12,34 @@ extension CreateWorkoutView {
     class ViewModel {
         var templateWorkout: Workout?
         var isLoadingToolbarAction = false
-        
+        var errors = LumberjackedClientErrors()
+
+        private let api: WorkoutAPIProtocol
+
+        init(api: WorkoutAPIProtocol = LiveWorkoutAPI()) {
+            self.api = api
+        }
+
         @MainActor
-        func attemptCreateWorkout(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
+        func attemptCreateWorkout(dismissAction: () -> Void) async {
             guard let selectedMovements: [Movement] = self.templateWorkout?.movements_details else {
                 return
             }
-            
+
             isLoadingToolbarAction = true
-            if let _ = await LumberjackedClient(errors: errors).createWorkout(
-                movements: selectedMovements.map() { $0.id! }) {
+            errors.messages = [:]
+            do {
+                _ = try await api.createWorkout(
+                    movements: selectedMovements.map { $0.id! })
                 dismissAction()
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
             isLoadingToolbarAction = false
         }

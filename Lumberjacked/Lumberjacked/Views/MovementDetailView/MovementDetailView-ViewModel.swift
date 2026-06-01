@@ -17,33 +17,75 @@ extension MovementDetailView {
         var deleteActionLoading = false
         var showDeleteConfirmationAlert = false
         var showEditSheet = false
-        
-        init(movement: Movement, movementLogs: [MovementLog] = [MovementLog]()) {
+        var errors = LumberjackedClientErrors()
+
+        private let movementAPI: MovementAPIProtocol
+        private let movementLogAPI: MovementLogAPIProtocol
+
+        init(
+            movement: Movement,
+            movementLogs: [MovementLog] = [],
+            movementAPI: MovementAPIProtocol = LiveMovementAPI(),
+            movementLogAPI: MovementLogAPIProtocol = LiveMovementLogAPI()
+        ) {
             self.movement = movement
             self.movementLogs = movementLogs
+            self.movementAPI = movementAPI
+            self.movementLogAPI = movementLogAPI
         }
-        
-        func attemptGetMovementLogs(errors: Binding<LumberjackedClientErrors>) async {
+
+        func attemptGetMovementLogs() async {
+            guard let id = movement.id else { return }
             isLoadingMovementLogs = true
-            if let response = await LumberjackedClient(errors: errors)
-                .getMovementLogs(movementId: self.movement.id!) {
+            errors.messages = [:]
+            do {
+                let response = try await movementLogAPI.getMovementLogs(movementId: id)
                 movementLogs = response.results
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
             isLoadingMovementLogs = false
         }
-        
-        func attemptDeleteMovement(id: UInt64, errors: Binding<LumberjackedClientErrors>) async -> Bool {
+
+        func attemptDeleteMovement() async -> Bool {
+            guard let id = movement.id else { return false }
             deleteActionLoading = true
-            let success = await LumberjackedClient(errors: errors)
-                .deleteMovement(movementId: self.movement.id!)
+            errors.messages = [:]
+            do {
+                try await movementAPI.deleteMovement(movementId: id)
+                deleteActionLoading = false
+                return true
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
+            }
             deleteActionLoading = false
-            return success
+            return false
         }
-        
-        func attemptGetMovementDetail(id: UInt64, errors: Binding<LumberjackedClientErrors>) async {
-            if let response = await LumberjackedClient(errors: errors)
-                .getMovement(movementId: id) {
-                movement = response
+
+        func attemptGetMovementDetail(id: UInt64) async {
+            errors.messages = [:]
+            do {
+                movement = try await movementAPI.getMovement(movementId: id)
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
         }
     }

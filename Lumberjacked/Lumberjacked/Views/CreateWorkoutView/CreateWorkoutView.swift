@@ -9,13 +9,12 @@ import SwiftUI
 
 struct CreateWorkoutView: View {
     @State var viewModel: ViewModel
-    @State var errors = LumberjackedClientErrors()
     @Environment(\.dismiss) var dismiss
 
     init(viewModel: ViewModel = ViewModel()) {
         _viewModel = State(initialValue: viewModel)
     }
-    
+
     var body: some View {
         NavigationStack {
             TemplateWorkoutSelectorView(
@@ -28,8 +27,7 @@ struct CreateWorkoutView: View {
                     } else {
                         Button("Start Workout") {
                             Task {
-                                await viewModel.attemptCreateWorkout(
-                                    errors: $errors, dismissAction: { dismiss() })
+                                await viewModel.attemptCreateWorkout(dismissAction: { dismiss() })
                             }
                         }
                         .disabled(viewModel.templateWorkout == nil)
@@ -48,6 +46,6 @@ struct CreateWorkoutView: View {
 
 #if DEBUG
 #Preview {
-    CreateWorkoutView()
+    CreateWorkoutView(viewModel: CreateWorkoutView.ViewModel(api: MockWorkoutAPI()))
 }
 #endif

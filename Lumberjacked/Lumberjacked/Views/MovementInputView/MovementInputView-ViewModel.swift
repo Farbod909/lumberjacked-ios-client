@@ -12,33 +12,55 @@ extension MovementInputView {
     class ViewModel {
         var movement: Movement
         var saveActionLoading = false
-        
-        init(movement: Movement) {
+        var errors = LumberjackedClientErrors()
+
+        private let api: MovementAPIProtocol
+
+        init(movement: Movement, api: MovementAPIProtocol = LiveMovementAPI()) {
             self.movement = movement
+            self.api = api
         }
-                
+
         @MainActor
-        func attemptSaveNewMovement(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async -> Movement? {
+        func attemptSaveNewMovement(dismissAction: () -> Void) async -> Movement? {
             saveActionLoading = true
-            if let movement = await LumberjackedClient(errors: errors)
-                .createMovement(movement: movement) {
+            errors.messages = [:]
+            do {
+                let created = try await api.createMovement(movement: movement)
                 dismissAction()
-                return movement
+                return created
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
             saveActionLoading = false
             return nil
         }
-        
+
         @MainActor
-        func attemptUpdateMovement(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
+        func attemptUpdateMovement(dismissAction: () -> Void) async {
             guard let movementId = movement.id else {
                 print("No Movement ID")
                 return
             }
             saveActionLoading = true
-            if let _ = await LumberjackedClient(errors: errors)
-                .updateMovement(movementId: movementId, movement: movement) {
+            errors.messages = [:]
+            do {
+                _ = try await api.updateMovement(movementId: movementId, movement: movement)
                 dismissAction()
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
             saveActionLoading = false
         }

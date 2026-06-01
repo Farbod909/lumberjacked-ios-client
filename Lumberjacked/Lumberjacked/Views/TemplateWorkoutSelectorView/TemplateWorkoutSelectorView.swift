@@ -9,7 +9,6 @@ import SwiftUI
 
 struct TemplateWorkoutSelectorView: View {
     @State var viewModel: ViewModel
-    @State var errors = LumberjackedClientErrors()
     @Binding var templateWorkout: Workout?
 
     let dismissAction: () -> Void
@@ -41,14 +40,13 @@ struct TemplateWorkoutSelectorView: View {
                                         .stroke(Color.accentColor, lineWidth: 3)
                                 }
                             }
-                        
                     }
                 }
                 .listRowSpacing(10)
             }
         }
         .task {
-            await viewModel.attemptGetWorkouts(errors: $errors)
+            await viewModel.attemptGetWorkouts()
         }
     }
 }
@@ -59,12 +57,9 @@ struct TemplateWorkoutSelectorView: View {
         @State var templateWorkout: Workout? = nil
 
         var body: some View {
-            let vm = TemplateWorkoutSelectorView.ViewModel()
-            vm.workouts = PreviewData.pastWorkouts
-            vm.isLoading = false
-            return NavigationStack {
+            NavigationStack {
                 TemplateWorkoutSelectorView(
-                    viewModel: vm,
+                    viewModel: TemplateWorkoutSelectorView.ViewModel(api: MockWorkoutAPI()),
                     templateWorkout: $templateWorkout,
                     dismissAction: { })
             }

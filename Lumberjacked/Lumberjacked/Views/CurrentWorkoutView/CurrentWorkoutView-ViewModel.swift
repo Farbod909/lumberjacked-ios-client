@@ -15,95 +15,166 @@ extension CurrentWorkoutView {
         var showCreateWorkoutSheet = false
         var showCancelConfirmationAlert = false
         var showFinishWorkoutConfirmationAlert = false
-        
+
         var addMovementTextFieldFocused = false
         var showAddMovementOverlay = false
-        
+
         var isLoadingMovements = true
         var allMovements = [Movement]()
         var searchText = ""
-        
-        var placeholderWidth: CGFloat = 0
 
-        func attemptGetCurrentWorkout(errors: Binding<LumberjackedClientErrors>) async {
-            if let response = await LumberjackedClient(errors: errors).getCurrentWorkout() {
-                currentWorkout = response
-            }
+        var placeholderWidth: CGFloat = 0
+        var errors = LumberjackedClientErrors()
+
+        private let workoutAPI: WorkoutAPIProtocol
+        private let movementAPI: MovementAPIProtocol
+
+        init(
+            workoutAPI: WorkoutAPIProtocol = LiveWorkoutAPI(),
+            movementAPI: MovementAPIProtocol = LiveMovementAPI()
+        ) {
+            self.workoutAPI = workoutAPI
+            self.movementAPI = movementAPI
         }
-        
-        func attemptEndCurrentWorkout(errors: Binding<LumberjackedClientErrors>) async {
-            guard let currentWorkout = currentWorkout else {
-                return
-            }
-            if let id = currentWorkout.id {
-                if await LumberjackedClient(errors: errors).endWorkout(id: id) {
-                    self.currentWorkout = nil
+
+        func attemptGetCurrentWorkout() async {
+            errors.messages = [:]
+            do {
+                currentWorkout = try await workoutAPI.getCurrentWorkout()
+            } catch let error as RemoteNetworkingError {
+                // 404 means no active workout — not a true error
+                if error.statusCode == 404 {
+                    currentWorkout = nil
+                } else if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
                 }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
         }
-        
-        func attemptDeleteCurrentWorkout(errors: Binding<LumberjackedClientErrors>) async {
-            guard let currentWorkout = currentWorkout else {
-                return
-            }
-            if let id = currentWorkout.id {
-                if await LumberjackedClient(errors: errors).deleteWorkout(id: id) {
-                    self.currentWorkout = nil
+
+        func attemptEndCurrentWorkout() async {
+            guard let id = currentWorkout?.id else { return }
+            errors.messages = [:]
+            do {
+                try await workoutAPI.endWorkout(id: id)
+                currentWorkout = nil
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
                 }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
         }
-        
-        func attemptGetMovements(errors: Binding<LumberjackedClientErrors>) async {
-            if let response = await LumberjackedClient(errors: errors).getMovements() {
+
+        func attemptDeleteCurrentWorkout() async {
+            guard let id = currentWorkout?.id else { return }
+            errors.messages = [:]
+            do {
+                try await workoutAPI.deleteWorkout(id: id)
+                currentWorkout = nil
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
+            }
+        }
+
+        func attemptGetMovements() async {
+            errors.messages = [:]
+            do {
+                let response = try await movementAPI.getMovements()
                 allMovements = response.results
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
         }
-        
+
         @MainActor
-        func addMovementToCurrentWorkout(errors: Binding<LumberjackedClientErrors>, movementId: UInt64) async {
+        func addMovementToCurrentWorkout(movementId: UInt64) async {
             if let movementIds = self.currentWorkout?.movements_details?.map({ $0.id }),
                !movementIds.contains(movementId) {
-                await attemptAddMovementToCurrentWorkout(addMovementId: movementId, errors: errors) { }
+                await attemptAddMovementToCurrentWorkout(addMovementId: movementId) { }
             }
+        }
 
-        }
-        
         @MainActor
-        func createWorkoutWithInitialMovement(errors: Binding<LumberjackedClientErrors>, movementId: UInt64) async {
-            if let _ = await LumberjackedClient(errors: errors).createWorkout(
-                movements: [movementId]) { }
+        func createWorkoutWithInitialMovement(movementId: UInt64) async {
+            errors.messages = [:]
+            do {
+                _ = try await workoutAPI.createWorkout(movements: [movementId])
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
+            }
         }
-        
+
         @MainActor
-        func attemptQuickAddMovement(movementName: String, errors: Binding<LumberjackedClientErrors>) async -> Movement? {
-            if let movement = await LumberjackedClient(errors: errors)
-                .createMovement(
-                    movement: Movement.init(
+        func attemptQuickAddMovement(movementName: String) async -> Movement? {
+            errors.messages = [:]
+            do {
+                return try await movementAPI.createMovement(
+                    movement: Movement(
                         name: movementName,
                         category: "",
                         notes: "",
                         recommended_warmup_sets: "",
                         recommended_working_sets: "",
                         recommended_rep_range: "",
-                        recommended_rpe: "")) {
-                return movement
+                        recommended_rpe: ""))
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
             return nil
         }
-        
+
         @MainActor
-        func attemptAddMovementToCurrentWorkout(addMovementId: UInt64, errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
+        func attemptAddMovementToCurrentWorkout(addMovementId: UInt64, dismissAction: () -> Void) async {
             if let currentWorkoutMovements = currentWorkout?.movements_details {
-                var newMovementsList = currentWorkoutMovements.map() { $0.id! }
+                var newMovementsList = currentWorkoutMovements.map { $0.id! }
                 newMovementsList.append(addMovementId)
-                if let _ = await LumberjackedClient(errors: errors).updateWorkout(
-                    workoutId: (currentWorkout?.id)!,
-                    movements: newMovementsList) {
+                errors.messages = [:]
+                do {
+                    _ = try await workoutAPI.updateWorkout(
+                        workoutId: currentWorkout!.id!,
+                        movements: newMovementsList)
                     dismissAction()
+                } catch let error as RemoteNetworkingError {
+                    if let messages = error.messages {
+                        errors.messages = messages
+                    } else {
+                        errors.messages["detail"] = "Unknown error"
+                    }
+                } catch {
+                    errors.messages["detail"] = "Unknown error"
                 }
             }
         }
-
-
     }
 }

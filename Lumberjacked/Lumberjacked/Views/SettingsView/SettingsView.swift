@@ -8,16 +8,19 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @State var viewModel = ViewModel()
-    @State var errors = LumberjackedClientErrors()
+    @State var viewModel: ViewModel
     @EnvironmentObject var appEnvironment: LumberjackedAppEnvironment
+
+    init(viewModel: ViewModel = ViewModel()) {
+        _viewModel = State(initialValue: viewModel)
+    }
 
     var body: some View {
         Form {
             Section {
                 Button("Log out") {
                     Task {
-                        await viewModel.attemptLogout(errors: $errors)
+                        await viewModel.attemptLogout()
                         appEnvironment.evaluateAuthenticationStatus()
                     }
                 }
@@ -31,7 +34,7 @@ struct SettingsView: View {
 
 #if DEBUG
 #Preview {
-    SettingsView()
+    SettingsView(viewModel: SettingsView.ViewModel(api: MockAuthAPI()))
         .environmentObject(LumberjackedAppEnvironment())
 }
 #endif

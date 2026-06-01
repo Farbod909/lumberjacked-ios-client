@@ -8,9 +8,12 @@
 import SwiftUI
 
 struct SignupView: View {
-    @State var viewModel = ViewModel()
-    @State var errors = LumberjackedClientErrors()
+    @State var viewModel: ViewModel
     @Environment(\.dismiss) var dismiss
+
+    init(viewModel: ViewModel = ViewModel()) {
+        _viewModel = State(initialValue: viewModel)
+    }
 
     var body: some View {
         NavigationStack {
@@ -19,21 +22,21 @@ struct SignupView: View {
                     .autocorrectionDisabled()
                     .autocapitalization(.none)
                     .listRowBackground(Color.init(uiColor: .systemGray6))
-                    .formFieldError($errors, "email")
+                    .formFieldError($viewModel.errors, "email")
                 SecureField("Password", text: $viewModel.password1)
                     .listRowBackground(Color.init(uiColor: .systemGray6))
-                    .formFieldError($errors, "password1")
+                    .formFieldError($viewModel.errors, "password1")
                 SecureField("Confirm password", text: $viewModel.password2)
                     .listRowBackground(Color.init(uiColor: .systemGray6))
-                    .formFieldError($errors, "password2")
+                    .formFieldError($viewModel.errors, "password2")
 
-                FormErrors(errors: $errors)
+                FormErrors(errors: $viewModel.errors)
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
                         Task {
-                            guard await viewModel.attemptSignup(errors: $errors) else {
+                            guard await viewModel.attemptSignup() else {
                                 return
                             }
                             dismiss()
@@ -52,5 +55,5 @@ struct SignupView: View {
 }
 
 #Preview {
-    SignupView()
+    SignupView(viewModel: SignupView.ViewModel(api: MockAuthAPI()))
 }

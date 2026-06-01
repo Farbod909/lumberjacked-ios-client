@@ -14,15 +14,32 @@ extension MovementCatalogView {
         var isLoading = true
         var searchText = ""
         var showCreateMovementSheet = false
-        
-        func attemptGetMovements(errors: Binding<LumberjackedClientErrors>) async {
+        var errors = LumberjackedClientErrors()
+
+        private let api: MovementAPIProtocol
+
+        init(api: MovementAPIProtocol = LiveMovementAPI()) {
+            self.api = api
+        }
+
+        func attemptGetMovements() async {
             isLoading = true
-            if let response = await LumberjackedClient(errors: errors).getMovements() {
+            errors.messages = [:]
+            do {
+                let response = try await api.getMovements()
                 movements = response.results
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
             isLoading = false
         }
-        
+
         var filteredMovements: [Movement] {
             if searchText.isEmpty {
                 return movements

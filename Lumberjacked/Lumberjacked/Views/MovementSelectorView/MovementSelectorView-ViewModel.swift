@@ -16,64 +16,115 @@ extension MovementSelectorView {
         var isLoading = true
         var isLoadingToolbarAction = false
         var showCreateMovementSheet = false
-        
-        init(workout: Workout? = nil) {
+        var errors = LumberjackedClientErrors()
+
+        private let workoutAPI: WorkoutAPIProtocol
+        private let movementAPI: MovementAPIProtocol
+
+        init(
+            workout: Workout? = nil,
+            selectedMovements: [Movement] = [],
+            workoutAPI: WorkoutAPIProtocol = LiveWorkoutAPI(),
+            movementAPI: MovementAPIProtocol = LiveMovementAPI()
+        ) {
             self.workout = workout
-            if let movements_details = workout?.movements_details {
+            self.workoutAPI = workoutAPI
+            self.movementAPI = movementAPI
+            if !selectedMovements.isEmpty {
+                self.selectedMovements = selectedMovements
+            } else if let movements_details = workout?.movements_details {
                 self.selectedMovements = movements_details
             } else {
                 self.selectedMovements = []
             }
         }
-        
-        func attemptGetMovements(errors: Binding<LumberjackedClientErrors>) async {
+
+        func attemptGetMovements() async {
             isLoading = true
-            if let response = await LumberjackedClient(errors: errors).getMovements() {
+            errors.messages = [:]
+            do {
+                let response = try await movementAPI.getMovements()
                 allMovements = response.results
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
             isLoading = false
         }
-        
+
         @MainActor
-        func attemptCreateWorkout(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
+        func attemptCreateWorkout(dismissAction: () -> Void) async {
             isLoadingToolbarAction = true
-            if let _ = await LumberjackedClient(errors: errors).createWorkout(
-                movements: selectedMovements.map() { $0.id! }) {
+            errors.messages = [:]
+            do {
+                _ = try await workoutAPI.createWorkout(
+                    movements: selectedMovements.map { $0.id! })
                 dismissAction()
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
             isLoadingToolbarAction = false
         }
-        
+
         @MainActor
-        func attemptEditWorkout(errors: Binding<LumberjackedClientErrors>, dismissAction: () -> Void) async {
+        func attemptEditWorkout(dismissAction: () -> Void) async {
+            guard let workoutId = workout?.id else { return }
             isLoadingToolbarAction = true
-            if let _ = await LumberjackedClient(errors: errors).updateWorkout(
-                workoutId: (workout?.id)!,
-                movements: selectedMovements.map() { $0.id! }) {
+            errors.messages = [:]
+            do {
+                _ = try await workoutAPI.updateWorkout(
+                    workoutId: workoutId,
+                    movements: selectedMovements.map { $0.id! })
                 dismissAction()
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
             isLoadingToolbarAction = false
         }
-        
+
         @MainActor
-        func attemptQuickAddMovement(movementName: String, errors: Binding<LumberjackedClientErrors>) async -> Movement? {
+        func attemptQuickAddMovement(movementName: String) async -> Movement? {
             isLoadingToolbarAction = true
-            if let movement = await LumberjackedClient(errors: errors)
-                .createMovement(
-                    movement: Movement.init(
+            errors.messages = [:]
+            do {
+                let movement = try await movementAPI.createMovement(
+                    movement: Movement(
                         name: movementName,
                         category: "",
                         notes: "",
                         recommended_warmup_sets: "",
                         recommended_working_sets: "",
                         recommended_rep_range: "",
-                        recommended_rpe: "")) {
+                        recommended_rpe: ""))
                 return movement
+            } catch let error as RemoteNetworkingError {
+                if let messages = error.messages {
+                    errors.messages = messages
+                } else {
+                    errors.messages["detail"] = "Unknown error"
+                }
+            } catch {
+                errors.messages["detail"] = "Unknown error"
             }
             isLoadingToolbarAction = false
             return nil
         }
-
-
     }
 }

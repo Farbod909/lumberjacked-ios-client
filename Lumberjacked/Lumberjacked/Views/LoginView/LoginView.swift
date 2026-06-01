@@ -8,9 +8,12 @@
 import SwiftUI
 
 struct LoginView: View {
-    @State var viewModel = ViewModel()
-    @State var errors = LumberjackedClientErrors()
+    @State var viewModel: ViewModel
     @Environment(\.dismiss) var dismiss
+
+    init(viewModel: ViewModel = ViewModel()) {
+        _viewModel = State(initialValue: viewModel)
+    }
 
     var body: some View {
         NavigationStack {
@@ -19,20 +22,20 @@ struct LoginView: View {
                     .autocorrectionDisabled()
                     .autocapitalization(.none)
                     .listRowBackground(Color.init(uiColor: .systemGray6))
-                    .formFieldError($errors, "email")
+                    .formFieldError($viewModel.errors, "email")
                     .accessibilityIdentifier("loginEmailField")
                 SecureField("Password", text: $viewModel.password)
                     .listRowBackground(Color.init(uiColor: .systemGray6))
-                    .formFieldError($errors, "password")
+                    .formFieldError($viewModel.errors, "password")
                     .accessibilityIdentifier("loginPasswordField")
-                
-                FormErrors(errors: $errors)
+
+                FormErrors(errors: $viewModel.errors)
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
                         Task {
-                            guard await viewModel.attemptLogin(errors: $errors) else {
+                            guard await viewModel.attemptLogin() else {
                                 return
                             }
                             dismiss()
@@ -52,5 +55,5 @@ struct LoginView: View {
 }
 
 #Preview {
-    LoginView()
+    LoginView(viewModel: LoginView.ViewModel(api: MockAuthAPI()))
 }

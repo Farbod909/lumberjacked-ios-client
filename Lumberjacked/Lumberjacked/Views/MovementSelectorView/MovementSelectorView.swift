@@ -8,18 +8,22 @@
 import SwiftUI
 
 struct MovementSelectorView: View {
-    @State var viewModel = ViewModel()
-    @State var errors = LumberjackedClientErrors()
+    @State var viewModel: ViewModel
     @State var searchText = ""
     // Keeps track of the most recently added new movement,
     // if the user adds a new movement from within the selector view.
     @State var newlyAddedMovement: Movement?
     @Environment(\.dismiss) var dismiss
     var dismissAction: (() -> Void)? = nil
-    
+
+    init(viewModel: ViewModel = ViewModel(), dismissAction: (() -> Void)? = nil) {
+        _viewModel = State(initialValue: viewModel)
+        self.dismissAction = dismissAction
+    }
+
     var body: some View {
         List {
-            FormErrors(errors: $errors)
+            FormErrors(errors: $viewModel.errors)
             if !viewModel.selectedMovements.isEmpty {
                 Section("Selected exercises") {
                     ForEach($viewModel.selectedMovements, id: \.self, editActions: .all) { $movement in
@@ -49,11 +53,10 @@ struct MovementSelectorView: View {
                         Button {
                             Task {
                                 if let newMovement = await viewModel.attemptQuickAddMovement(
-                                    movementName: formattedSearchText,
-                                    errors: $errors) {
+                                    movementName: formattedSearchText) {
                                     viewModel.selectedMovements.append(newMovement)
                                     searchText = ""
-                                    await viewModel.attemptGetMovements(errors: $errors)
+                                    await viewModel.attemptGetMovements()
                                 }
                             }
                         } label: {
@@ -105,21 +108,21 @@ struct MovementSelectorView: View {
                     Button("Save") {
                         Task {
                             await viewModel.attemptEditWorkout(
-                                errors: $errors, dismissAction: dismissAction ?? { dismiss() })
+                                dismissAction: dismissAction ?? { dismiss() })
                         }
                     }
                 } else {
                     Button("Start Workout") {
                         Task {
                             await viewModel.attemptCreateWorkout(
-                                errors: $errors, dismissAction: dismissAction ?? { dismiss() })
+                                dismissAction: dismissAction ?? { dismiss() })
                         }
                     }
                 }
             }
         }
         .task {
-            await viewModel.attemptGetMovements(errors: $errors)
+            await viewModel.attemptGetMovements()
         }
         .sheet(
             isPresented: $viewModel.showCreateMovementSheet,
@@ -130,7 +133,7 @@ struct MovementSelectorView: View {
                         newlyAddedMovement = nil
                         searchText = ""
                     }
-                    await viewModel.attemptGetMovements(errors: $errors)
+                    await viewModel.attemptGetMovements()
                 }
             }
             ) {
@@ -147,9 +150,8 @@ struct MovementSelectorView: View {
             }
         .animation(.default, value: viewModel.allMovements)
         .animation(.default, value: viewModel.selectedMovements)
-
     }
-    
+
     var searchResults: [Movement] {
         if searchText.isEmpty {
             return []
@@ -159,9 +161,26 @@ struct MovementSelectorView: View {
             }
         }
     }
-    
-    var formattedSearchText: String {
-        return searchText.trimmingCharacters(in: [" "]) .capitalized
-    }
 
+    var formattedSearchText: String {
+        return searchText.trimmingCharacters(in: CharacterSet(charactersIn: " ")).capitalized
+    }
 }
+
+#if DEBUG
+#Preview("New Workout") {
+    NavigationStack {
+        MovementSelectorView(viewModel: MovementSelectorView.ViewModel(
+            selectedMovements: [PreviewData.benchPress, PreviewData.squat],
+            movementAPI: MockMovementAPI()))
+    }
+}
+
+#Preview("Edit Existing Workout") {
+    NavigationStack {
+        MovementSelectorView(viewModel: MovementSelectorView.ViewModel(
+            workout: PreviewData.pastWorkout_today,
+            movementAPI: MockMovementAPI()))
+    }
+}
+#endif

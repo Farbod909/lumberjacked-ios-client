@@ -9,7 +9,6 @@ import SwiftUI
 
 struct WorkoutDetailView: View {
     @State var viewModel: ViewModel
-    @State var errors = LumberjackedClientErrors()
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -90,7 +89,7 @@ struct WorkoutDetailView: View {
             .padding(.horizontal, 10)
         }
         .task {
-            await viewModel.attemptRefreshWorkout(errors: $errors)
+            await viewModel.attemptRefreshWorkout()
         }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -111,7 +110,7 @@ struct WorkoutDetailView: View {
         .alert("Delete", isPresented: $viewModel.showDeleteConfirmationAlert) {
             Button("Delete", role: .destructive) {
                 Task {
-                    guard await viewModel.attemptDeleteWorkout(errors: $errors) else {
+                    guard await viewModel.attemptDeleteWorkout() else {
                         return
                     }
                     dismiss()
@@ -125,13 +124,17 @@ struct WorkoutDetailView: View {
 #if DEBUG
 #Preview("Recent Workout") {
     NavigationStack {
-        WorkoutDetailView(viewModel: WorkoutDetailView.ViewModel(workout: PreviewData.pastWorkout_today))
+        WorkoutDetailView(viewModel: WorkoutDetailView.ViewModel(
+            workout: PreviewData.pastWorkout_today,
+            api: MockWorkoutAPI()))
     }
 }
 
 #Preview("Older Workout") {
     NavigationStack {
-        WorkoutDetailView(viewModel: WorkoutDetailView.ViewModel(workout: PreviewData.pastWorkout_2weeksAgo))
+        WorkoutDetailView(viewModel: WorkoutDetailView.ViewModel(
+            workout: PreviewData.pastWorkout_2weeksAgo,
+            api: MockWorkoutAPI()))
     }
 }
 #endif

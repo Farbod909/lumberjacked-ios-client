@@ -9,7 +9,6 @@ import SwiftUI
 
 struct WorkoutHistoryView: View {
     @State var viewModel: ViewModel
-    @State var errors = LumberjackedClientErrors()
 
     init(viewModel: ViewModel = ViewModel()) {
         _viewModel = State(initialValue: viewModel)
@@ -34,7 +33,7 @@ struct WorkoutHistoryView: View {
             .navigationTitle("Workout History")
             .navigationBarTitleDisplayMode(.inline)
             .task {
-                await viewModel.attemptGetWorkouts(errors: $errors)
+                await viewModel.attemptGetWorkouts()
             }
         }
     }
@@ -42,11 +41,6 @@ struct WorkoutHistoryView: View {
 
 #if DEBUG
 #Preview {
-    let vm = WorkoutHistoryView.ViewModel()
-    vm.workouts = PreviewData.pastWorkouts
-    vm.isLoading = false
-    return NavigationStack {
-        WorkoutHistoryView(viewModel: vm)
-    }
+    WorkoutHistoryView(viewModel: WorkoutHistoryView.ViewModel(api: MockWorkoutAPI()))
 }
 #endif
