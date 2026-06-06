@@ -10,6 +10,6 @@ import SwiftUI
 extension ContentView {
     @Observable
     class ViewModel {
-
+        var alert: AppAlert?
     }
 }

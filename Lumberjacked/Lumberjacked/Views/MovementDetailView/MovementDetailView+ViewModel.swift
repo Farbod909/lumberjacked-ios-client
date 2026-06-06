@@ -18,7 +18,7 @@ extension MovementDetailView {
         var workout: Workout?
         var showDeleteConfirmationAlert = false
         var showEditSheet = false
-        var errors = LumberjackedClientErrors()
+        var alert: AppAlert?
 
         private let movementAPI: MovementAPIProtocol
         private let movementLogAPI: MovementLogAPIProtocol
@@ -38,18 +38,13 @@ extension MovementDetailView {
         func attemptGetMovementLogs() async {
             guard let id = movement.id else { return }
             try? await withLoading(.logs) {
-                self.errors.messages = [:]
                 do {
                     let response = try await self.movementLogAPI.getMovementLogs(movementId: id)
                     self.movementLogs = response.results
                 } catch let error as RemoteNetworkingError {
-                    if let messages = error.messages {
-                        self.errors.messages = messages
-                    } else {
-                        self.errors.messages["detail"] = "Unknown error"
-                    }
+                    self.handleNetworkError(error)
                 } catch {
-                    self.errors.messages["detail"] = "Unknown error"
+                    self.alert = AppAlert(title: "Error", message: error.localizedDescription)
                 }
             }
         }
@@ -58,35 +53,39 @@ extension MovementDetailView {
             guard let id = movement.id else { return false }
             loadingKeys.insert(.delete)
             defer { loadingKeys.remove(.delete) }
-            errors.messages = [:]
             do {
                 try await movementAPI.deleteMovement(movementId: id)
                 return true
             } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
-                }
+                handleNetworkError(error)
             } catch {
-                errors.messages["detail"] = "Unknown error"
+                alert = AppAlert(title: "Error", message: error.localizedDescription)
             }
             return false
         }
 
         func attemptGetMovementDetail(id: UInt64) async {
-            errors.messages = [:]
             do {
                 movement = try await movementAPI.getMovement(movementId: id)
             } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
-                }
+                handleNetworkError(error)
             } catch {
-                errors.messages["detail"] = "Unknown error"
+                alert = AppAlert(title: "Error", message: error.localizedDescription)
             }
+        }
+
+        private func handleNetworkError(_ error: RemoteNetworkingError) {
+            guard let messages = error.messages else {
+                alert = AppAlert(title: "Error", message: "Unknown error")
+                return
+            }
+            let msg = messages.values.compactMap { value -> String? in
+                if let arr = value as? NSArray {
+                    return arr.compactMap { $0 as? String }.joined(separator: "\n")
+                }
+                return value as? String
+            }.joined(separator: "\n")
+            alert = AppAlert(title: "Error", message: msg.isEmpty ? "Unknown error" : msg)
         }
     }
 }

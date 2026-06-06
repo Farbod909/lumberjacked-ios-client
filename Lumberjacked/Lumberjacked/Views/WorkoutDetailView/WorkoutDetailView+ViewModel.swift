@@ -11,7 +11,7 @@ extension WorkoutDetailView {
     @Observable
     class ViewModel {
         var workout: Workout
-        var errors = LumberjackedClientErrors()
+        var alert: AppAlert?
 
         var showDeleteConfirmationAlert = false
         var deleteActionLoading = false
@@ -26,19 +26,14 @@ extension WorkoutDetailView {
         func attemptDeleteWorkout() async -> Bool {
             guard let id = workout.id else { return false }
             deleteActionLoading = true
-            errors.messages = [:]
             do {
                 try await api.deleteWorkout(id: id)
                 deleteActionLoading = false
                 return true
             } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
-                }
+                handleNetworkError(error)
             } catch {
-                errors.messages["detail"] = "Unknown error"
+                alert = AppAlert(title: "Error", message: error.localizedDescription)
             }
             deleteActionLoading = false
             return false
@@ -46,18 +41,27 @@ extension WorkoutDetailView {
 
         func attemptRefreshWorkout() async {
             guard let id = workout.id else { return }
-            errors.messages = [:]
             do {
                 workout = try await api.getWorkout(workoutId: id)
             } catch let error as RemoteNetworkingError {
-                if let messages = error.messages {
-                    errors.messages = messages
-                } else {
-                    errors.messages["detail"] = "Unknown error"
-                }
+                handleNetworkError(error)
             } catch {
-                errors.messages["detail"] = "Unknown error"
+                alert = AppAlert(title: "Error", message: error.localizedDescription)
             }
+        }
+
+        private func handleNetworkError(_ error: RemoteNetworkingError) {
+            guard let messages = error.messages else {
+                alert = AppAlert(title: "Error", message: "Unknown error")
+                return
+            }
+            let msg = messages.values.compactMap { value -> String? in
+                if let arr = value as? NSArray {
+                    return arr.compactMap { $0 as? String }.joined(separator: "\n")
+                }
+                return value as? String
+            }.joined(separator: "\n")
+            alert = AppAlert(title: "Error", message: msg.isEmpty ? "Unknown error" : msg)
         }
     }
 }

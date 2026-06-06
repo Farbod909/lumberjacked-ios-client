@@ -15,52 +15,51 @@ struct MovementInputView: View {
     var body: some View {
         NavigationStack {
             Form {
-                FormErrors(errors: $viewModel.errors)
                 Section {
                     MovementInputTextFieldView(
                         placeholderText: "Movement name",
                         stickyText: "Name",
                         text: $viewModel.movement.name,
                         capitalizeWords: true)
-                    .formFieldError($viewModel.errors, "name")
+                    .fieldError(viewModel.fieldErrors["name"])
                     MovementInputTextFieldView(
                         placeholderText: "Category",
                         stickyText: "Category",
                         text: $viewModel.movement.category,
                         capitalizeWords: true)
-                    .formFieldError($viewModel.errors, "category")
+                    .fieldError(viewModel.fieldErrors["category"])
                     MovementInputTextFieldView(
                         placeholderText: "Notes",
                         stickyText: "Notes",
                         text: $viewModel.movement.notes)
-                    .formFieldError($viewModel.errors, "notes")
+                    .fieldError(viewModel.fieldErrors["notes"])
                 }
                 Section("Recommendations (Optional)") {
                     MovementInputTextFieldView(
                         placeholderText: "Warmup sets",
                         stickyText: "Warmup sets",
                         text: $viewModel.movement.recommended_warmup_sets)
-                    .formFieldError($viewModel.errors, "recommended_warmup_sets")
+                    .fieldError(viewModel.fieldErrors["recommended_warmup_sets"])
                     MovementInputTextFieldView(
                         placeholderText: "Working sets",
                         stickyText: "Working sets",
                         text: $viewModel.movement.recommended_working_sets)
-                    .formFieldError($viewModel.errors, "recommended_working_sets")
+                    .fieldError(viewModel.fieldErrors["recommended_working_sets"])
                     MovementInputTextFieldView(
                         placeholderText: "Rep range",
                         stickyText: "Rep range",
                         text: $viewModel.movement.recommended_rep_range)
-                    .formFieldError($viewModel.errors, "recommended_rep_range")
+                    .fieldError(viewModel.fieldErrors["recommended_rep_range"])
                     MovementInputTextFieldView(
                         placeholderText: "RPE",
                         stickyText: "RPE",
                         text: $viewModel.movement.recommended_rpe)
-                    .formFieldError($viewModel.errors, "recommended_rpe")
+                    .fieldError(viewModel.fieldErrors["recommended_rpe"])
                     MovementInputIntFieldView(
                         placeholderText: "Rest time (in seconds)",
                         stickyText: "Rest seconds",
                         value: $viewModel.movement.recommended_rest_time)
-                    .formFieldError($viewModel.errors, "recommended_rest_time")
+                    .fieldError(viewModel.fieldErrors["recommended_rest_time"])
                 }
             }
             .listRowSpacing(10)
@@ -106,6 +105,7 @@ struct MovementInputView: View {
                     recommended_rpe: "")
             }
             .interactiveDismissDisabled()
+            .alert(item: $viewModel.alert)
         }
     }
 }

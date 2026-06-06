@@ -18,8 +18,21 @@ final class CurrentWorkoutViewModelTests: XCTestCase {
         XCTAssertTrue(vm.isLoading(.movements))
     }
 
-    func testShowFinishWorkoutAlertStartsFalse() {
+    func testAlertStartsNil() {
         let vm = CurrentWorkoutView.ViewModel()
-        XCTAssertFalse(vm.showFinishWorkoutConfirmationAlert)
+        XCTAssertNil(vm.alert)
+    }
+
+    func testSettingAlertMakesItNonNil() {
+        let vm = CurrentWorkoutView.ViewModel()
+        vm.alert = AppAlert(title: "Test")
+        XCTAssertNotNil(vm.alert)
+    }
+
+    func testClearingAlertMakesItNil() {
+        let vm = CurrentWorkoutView.ViewModel()
+        vm.alert = AppAlert(title: "Test")
+        vm.alert = nil
+        XCTAssertNil(vm.alert)
     }
 }

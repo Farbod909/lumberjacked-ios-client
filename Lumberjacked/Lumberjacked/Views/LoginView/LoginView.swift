@@ -22,14 +22,12 @@ struct LoginView: View {
                     .autocorrectionDisabled()
                     .autocapitalization(.none)
                     .listRowBackground(Color.init(uiColor: .systemGray6))
-                    .formFieldError($viewModel.errors, "email")
+                    .fieldError(viewModel.fieldErrors["email"])
                     .accessibilityIdentifier("loginEmailField")
                 SecureField("Password", text: $viewModel.password)
                     .listRowBackground(Color.init(uiColor: .systemGray6))
-                    .formFieldError($viewModel.errors, "password")
+                    .fieldError(viewModel.fieldErrors["password"])
                     .accessibilityIdentifier("loginPasswordField")
-
-                FormErrors(errors: $viewModel.errors)
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -50,6 +48,7 @@ struct LoginView: View {
                     .accessibilityIdentifier("loginButton")
                 }
             }
+            .alert(item: $viewModel.alert)
         }
     }
 }

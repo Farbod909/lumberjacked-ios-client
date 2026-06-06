@@ -16,7 +16,7 @@ extension MovementCatalogView {
         var movements = [Movement]()
         var searchText = ""
         var showCreateMovementSheet = false
-        var errors = LumberjackedClientErrors()
+        var alert: AppAlert?
 
         private let api: MovementAPIProtocol
 
@@ -26,18 +26,13 @@ extension MovementCatalogView {
 
         func attemptGetMovements() async {
             try? await withLoading(.load) {
-                self.errors.messages = [:]
                 do {
                     let response = try await self.api.getMovements()
                     self.movements = response.results
                 } catch let error as RemoteNetworkingError {
-                    if let messages = error.messages {
-                        self.errors.messages = messages
-                    } else {
-                        self.errors.messages["detail"] = "Unknown error"
-                    }
+                    self.handleNetworkError(error)
                 } catch {
-                    self.errors.messages["detail"] = "Unknown error"
+                    self.alert = AppAlert(title: "Error", message: error.localizedDescription)
                 }
             }
         }
@@ -48,6 +43,20 @@ extension MovementCatalogView {
             } else {
                 return movements.filter { $0.name.lowercased().contains(searchText.lowercased()) }
             }
+        }
+
+        private func handleNetworkError(_ error: RemoteNetworkingError) {
+            guard let messages = error.messages else {
+                alert = AppAlert(title: "Error", message: "Unknown error")
+                return
+            }
+            let msg = messages.values.compactMap { value -> String? in
+                if let arr = value as? NSArray {
+                    return arr.compactMap { $0 as? String }.joined(separator: "\n")
+                }
+                return value as? String
+            }.joined(separator: "\n")
+            alert = AppAlert(title: "Error", message: msg.isEmpty ? "Unknown error" : msg)
         }
     }
 }

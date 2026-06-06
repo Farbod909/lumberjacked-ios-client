@@ -108,7 +108,15 @@ struct CurrentWorkoutView: View {
 
     var endWorkoutButton: some View {
         Button {
-            viewModel.showFinishWorkoutConfirmationAlert = true
+            viewModel.alert = AppAlert(
+                title: "Finish Workout",
+                message: "If you haven't recorded a log for a movement it will be marked as skipped.",
+                confirmAction: { Task { await viewModel.attemptEndCurrentWorkout() } },
+                confirmLabel: "Save Workout",
+                cancelLabel: "Cancel",
+                destructiveAction: { Task { await viewModel.attemptDeleteCurrentWorkout() } },
+                destructiveLabel: "Discard Workout"
+            )
         } label: {
             Label("Finish", systemImage: "flag.pattern.checkered")
                 .font(.headline)
@@ -374,7 +382,12 @@ struct CurrentWorkoutView: View {
                             }
 
                             Button(role: .destructive) {
-                                viewModel.showCancelConfirmationAlert = true
+                                viewModel.alert = AppAlert(
+                                    title: "Cancel Workout",
+                                    confirmAction: { Task { await viewModel.attemptDeleteCurrentWorkout() } },
+                                    confirmLabel: "Yes",
+                                    cancelLabel: "No"
+                                )
                             } label: {
                                 Label("Cancel workout", systemImage: "trash")
                             }
@@ -384,31 +397,7 @@ struct CurrentWorkoutView: View {
                     }
                 }
             }
-            .alert("Cancel Workout", isPresented: $viewModel.showCancelConfirmationAlert) {
-                Button("Yes", role: .destructive) {
-                    Task {
-                        await viewModel.attemptDeleteCurrentWorkout()
-                    }
-                }
-                Button("No", role: .cancel) {}
-            }
-            .alert("Finish Workout", isPresented: $viewModel.showFinishWorkoutConfirmationAlert) {
-                Button("Save Workout") {
-                    Task {
-                        await viewModel.attemptEndCurrentWorkout()
-                    }
-                }
-                Button("Discard Workout", role: .destructive) {
-                    Task {
-                        await viewModel.attemptDeleteCurrentWorkout()
-                    }
-                }
-                Button("Cancel", role: .cancel) {
-
-                }
-            } message: {
-                Text("If you haven't recorded a log for a movement it will be marked as skipped.")
-            }
+            .alert(item: $viewModel.alert)
         }
     }
 }

@@ -22,15 +22,13 @@ struct SignupView: View {
                     .autocorrectionDisabled()
                     .autocapitalization(.none)
                     .listRowBackground(Color.init(uiColor: .systemGray6))
-                    .formFieldError($viewModel.errors, "email")
+                    .fieldError(viewModel.fieldErrors["email"])
                 SecureField("Password", text: $viewModel.password1)
                     .listRowBackground(Color.init(uiColor: .systemGray6))
-                    .formFieldError($viewModel.errors, "password1")
+                    .fieldError(viewModel.fieldErrors["password1"])
                 SecureField("Confirm password", text: $viewModel.password2)
                     .listRowBackground(Color.init(uiColor: .systemGray6))
-                    .formFieldError($viewModel.errors, "password2")
-
-                FormErrors(errors: $viewModel.errors)
+                    .fieldError(viewModel.fieldErrors["password2"])
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -50,6 +48,7 @@ struct SignupView: View {
                     }
                 }
             }
+            .alert(item: $viewModel.alert)
         }
     }
 }

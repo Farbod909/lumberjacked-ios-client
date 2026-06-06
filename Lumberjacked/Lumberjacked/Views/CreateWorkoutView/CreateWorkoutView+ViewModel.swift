@@ -14,7 +14,7 @@ extension CreateWorkoutView {
         var loadingKeys: Set<LoadingKey> = []
 
         var templateWorkout: Workout?
-        var errors = LumberjackedClientErrors()
+        var alert: AppAlert?
 
         private let api: WorkoutAPIProtocol
 
@@ -29,21 +29,30 @@ extension CreateWorkoutView {
             }
 
             try? await withLoading(.action) {
-                self.errors.messages = [:]
                 do {
                     _ = try await self.api.createWorkout(
                         movements: selectedMovements.map { $0.id! })
                     dismissAction()
                 } catch let error as RemoteNetworkingError {
-                    if let messages = error.messages {
-                        self.errors.messages = messages
-                    } else {
-                        self.errors.messages["detail"] = "Unknown error"
-                    }
+                    self.handleNetworkError(error)
                 } catch {
-                    self.errors.messages["detail"] = "Unknown error"
+                    self.alert = AppAlert(title: "Error", message: error.localizedDescription)
                 }
             }
+        }
+
+        private func handleNetworkError(_ error: RemoteNetworkingError) {
+            guard let messages = error.messages else {
+                alert = AppAlert(title: "Error", message: "Unknown error")
+                return
+            }
+            let msg = messages.values.compactMap { value -> String? in
+                if let arr = value as? NSArray {
+                    return arr.compactMap { $0 as? String }.joined(separator: "\n")
+                }
+                return value as? String
+            }.joined(separator: "\n")
+            alert = AppAlert(title: "Error", message: msg.isEmpty ? "Unknown error" : msg)
         }
     }
 }

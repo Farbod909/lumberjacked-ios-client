@@ -23,7 +23,6 @@ struct MovementSelectorView: View {
 
     var body: some View {
         List {
-            FormErrors(errors: $viewModel.errors)
             if !viewModel.selectedMovements.isEmpty {
                 Section("Selected exercises") {
                     ForEach($viewModel.selectedMovements, id: \.self, editActions: .all) { $movement in
@@ -150,6 +149,7 @@ struct MovementSelectorView: View {
             }
         .animation(.default, value: viewModel.allMovements)
         .animation(.default, value: viewModel.selectedMovements)
+        .alert(item: $viewModel.alert)
     }
 
     var searchResults: [Movement] {

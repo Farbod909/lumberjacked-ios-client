@@ -1,33 +1,31 @@
 //
-//  FormFieldError.swift
+//  FieldErrorModifier.swift
 //  Lumberjacked
-//
-//  Created by Farbod Rafezy on 1/29/25.
 //
 
 import SwiftUI
 
-extension View {
-    func formFieldError(_ errors: Binding<LumberjackedClientErrors>, _ key: String) -> some View {
-        return modifier(FormFieldError(errors: errors, key: key))
+struct FieldErrorModifier: ViewModifier {
+    let message: String?
+
+    func body(content: Content) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            content
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(message != nil ? Color.red : Color.clear, lineWidth: 1)
+                )
+            if let message {
+                Text(message)
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
+        }
     }
 }
 
-struct FormFieldError: ViewModifier {
-    @Binding var errors: LumberjackedClientErrors
-    var key: String
-    
-    func body(content: Content) -> some View {
-        Group {
-            content
-            if errors.hasError(key: key) {
-                Label(errors.errorMessage(key: key), systemImage: "x.circle.fill")
-                    .labelStyle(CustomLabelSpacing(spacing: 4))
-                    .foregroundStyle(.red)
-                    .listRowBackground(Color.init(uiColor: .systemGray6))
-                    .font(.caption)
-                    .padding(.bottom)
-            }
-        }
+extension View {
+    func fieldError(_ message: String?) -> some View {
+        modifier(FieldErrorModifier(message: message))
     }
 }

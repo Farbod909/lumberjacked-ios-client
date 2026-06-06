@@ -11,5 +11,6 @@ extension AuthView {
     @Observable
     class ViewModel {
         var showSignup = false
+        var alert: AppAlert?
     }
 }

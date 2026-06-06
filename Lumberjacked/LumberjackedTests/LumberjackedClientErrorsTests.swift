@@ -1,113 +1,110 @@
 //
-//  LumberjackedClientErrorsTests.swift
+//  FieldErrorsTests.swift
 //  LumberjackedTests
+//
+//  Tests for the fieldErrors + AppAlert error extraction logic in form ViewModels.
+//
 
 import XCTest
 @testable import Lumberjacked
 
-final class LumberjackedClientErrorsTests: XCTestCase {
+// MARK: - Test helpers
 
-    // MARK: - hasError
+private final class ThrowingAuthAPI: AuthAPIProtocol {
+    let error: Error
 
-    func testHasError_missingKey_returnsFalse() {
-        let errors = LumberjackedClientErrors()
-        XCTAssertFalse(errors.hasError(key: "non_field_errors"))
+    init(error: Error) {
+        self.error = error
     }
 
-    func testHasError_emptyArray_returnsFalse() {
-        var errors = LumberjackedClientErrors()
-        errors.messages["non_field_errors"] = NSArray()
-        XCTAssertFalse(errors.hasError(key: "non_field_errors"))
+    func login(email: String, password: String) async throws -> LoginResponse {
+        throw error
     }
 
-    func testHasError_nsArrayWithStrings_returnsTrue() {
-        var errors = LumberjackedClientErrors()
-        errors.messages["non_field_errors"] = NSArray(array: ["Unable to log in with provided credentials."])
-        XCTAssertTrue(errors.hasError(key: "non_field_errors"))
+    func signup(email: String, password1: String, password2: String) async throws -> SignupResponse {
+        throw error
     }
 
-    func testHasError_swiftStringArray_returnsTrue() {
-        var errors = LumberjackedClientErrors()
-        errors.messages["detail"] = ["Not found."]
-        XCTAssertTrue(errors.hasError(key: "detail"))
+    func logout() async throws {
+        throw error
     }
+}
 
-    func testHasError_emptyDict_returnsFalse() {
-        var errors = LumberjackedClientErrors()
-        errors.messages["field"] = [String: Any]()
-        XCTAssertFalse(errors.hasError(key: "field"))
-    }
+// MARK: - FieldErrorsTests
 
-    func testHasError_nonEmptyDict_returnsTrue() {
-        var errors = LumberjackedClientErrors()
-        errors.messages["email"] = ["email": ["Enter a valid email address."]]
-        XCTAssertTrue(errors.hasError(key: "email"))
-    }
+final class FieldErrorsTests: XCTestCase {
 
-    // MARK: - errorMessage
-
-    func testErrorMessage_missingKey_returnsEmpty() {
-        let errors = LumberjackedClientErrors()
-        XCTAssertEqual(errors.errorMessage(key: "non_field_errors"), "")
-    }
-
-    func testErrorMessage_nsArrayFromJSONSerialization_returnsJoinedString() throws {
-        // Simulates exactly what JSONSerialization produces from a DRF 400 response body.
-        let json = #"{"non_field_errors": ["Unable to log in with provided credentials."]}"#.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: json) as! [String: Any]
-
-        var errors = LumberjackedClientErrors()
-        errors.messages = parsed
-
-        XCTAssertEqual(
-            errors.errorMessage(key: "non_field_errors"),
-            "Unable to log in with provided credentials."
-        )
-    }
-
-    func testErrorMessage_nsArrayMultipleMessages_returnsNewlineSeparated() throws {
-        let json = #"{"non_field_errors": ["Error one.", "Error two."]}"#.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: json) as! [String: Any]
-
-        var errors = LumberjackedClientErrors()
-        errors.messages = parsed
-
-        XCTAssertEqual(errors.errorMessage(key: "non_field_errors"), "Error one.\nError two.")
-    }
-
-    func testErrorMessage_detailString_returnsString() throws {
-        let json = #"{"detail": "Authentication credentials were not provided."}"#.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: json) as! [String: Any]
-
-        var errors = LumberjackedClientErrors()
-        errors.messages = parsed
-
-        XCTAssertEqual(
-            errors.errorMessage(key: "detail"),
-            "Authentication credentials were not provided."
-        )
-    }
-
-    func testErrorMessage_detailPlainString_returnsString() throws {
-        // Some dj-rest-auth versions return {"detail": "..."} as a plain string, not an array
-        let json = #"{"detail": "Unable to log in with provided credentials."}"#.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: json) as! [String: Any]
-
-        var errors = LumberjackedClientErrors()
-        errors.messages = parsed
-
-        XCTAssertTrue(errors.hasError(key: "detail"))
-        XCTAssertEqual(errors.errorMessage(key: "detail"), "Unable to log in with provided credentials.")
-    }
-
-    func testErrorMessage_nestedFieldErrors_returnsMessages() throws {
+    func testFieldError_nsArrayValue_populatesFieldErrors() async {
         let json = #"{"email": ["Enter a valid email address."]}"#.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: json) as! [String: Any]
+        let parsed = try! JSONSerialization.jsonObject(with: json) as! [String: Any]
+        let api = ThrowingAuthAPI(error: RemoteNetworkingError(statusCode: 400, messages: parsed))
+        let vm = LoginView.ViewModel(api: api)
 
-        var errors = LumberjackedClientErrors()
-        errors.messages = parsed
+        _ = await vm.attemptLogin()
 
-        XCTAssertTrue(errors.hasError(key: "email"))
-        XCTAssertEqual(errors.errorMessage(key: "email"), "Enter a valid email address.")
+        XCTAssertEqual(vm.fieldErrors["email"], "Enter a valid email address.")
+        XCTAssertNil(vm.alert)
+    }
+
+    func testFieldError_multipleMessages_joinedByNewline() async {
+        let json = #"{"email": ["Error one.", "Error two."]}"#.data(using: .utf8)!
+        let parsed = try! JSONSerialization.jsonObject(with: json) as! [String: Any]
+        let api = ThrowingAuthAPI(error: RemoteNetworkingError(statusCode: 400, messages: parsed))
+        let vm = LoginView.ViewModel(api: api)
+
+        _ = await vm.attemptLogin()
+
+        XCTAssertEqual(vm.fieldErrors["email"], "Error one.\nError two.")
+    }
+
+    func testDetailError_routesToAlert() async {
+        let json = #"{"detail": "Unable to log in with provided credentials."}"#.data(using: .utf8)!
+        let parsed = try! JSONSerialization.jsonObject(with: json) as! [String: Any]
+        let api = ThrowingAuthAPI(error: RemoteNetworkingError(statusCode: 400, messages: parsed))
+        let vm = LoginView.ViewModel(api: api)
+
+        _ = await vm.attemptLogin()
+
+        XCTAssertNotNil(vm.alert)
+        XCTAssertEqual(vm.alert?.message, "Unable to log in with provided credentials.")
+        XCTAssertTrue(vm.fieldErrors.isEmpty)
+    }
+
+    func testNonFieldErrors_routesToAlert() async {
+        let json = #"{"non_field_errors": ["Unable to log in with provided credentials."]}"#.data(using: .utf8)!
+        let parsed = try! JSONSerialization.jsonObject(with: json) as! [String: Any]
+        let api = ThrowingAuthAPI(error: RemoteNetworkingError(statusCode: 400, messages: parsed))
+        let vm = LoginView.ViewModel(api: api)
+
+        _ = await vm.attemptLogin()
+
+        XCTAssertNotNil(vm.alert)
+        XCTAssertEqual(vm.alert?.message, "Unable to log in with provided credentials.")
+        XCTAssertTrue(vm.fieldErrors.isEmpty)
+    }
+
+    func testNilMessages_setsGenericAlert() async {
+        let api = ThrowingAuthAPI(error: RemoteNetworkingError(statusCode: 500, messages: nil))
+        let vm = LoginView.ViewModel(api: api)
+
+        _ = await vm.attemptLogin()
+
+        XCTAssertNotNil(vm.alert)
+        XCTAssertEqual(vm.alert?.message, "Unknown error")
+        XCTAssertTrue(vm.fieldErrors.isEmpty)
+    }
+
+    func testFieldErrorsClearedOnResubmit() async {
+        let json = #"{"email": ["Enter a valid email address."]}"#.data(using: .utf8)!
+        let parsed = try! JSONSerialization.jsonObject(with: json) as! [String: Any]
+        let api = ThrowingAuthAPI(error: RemoteNetworkingError(statusCode: 400, messages: parsed))
+        let vm = LoginView.ViewModel(api: api)
+
+        _ = await vm.attemptLogin()
+        XCTAssertFalse(vm.fieldErrors.isEmpty)
+
+        _ = await vm.attemptLogin()
+        // fieldErrors is cleared at start of submit, then repopulated from the same error
+        XCTAssertEqual(vm.fieldErrors["email"], "Enter a valid email address.")
     }
 }
