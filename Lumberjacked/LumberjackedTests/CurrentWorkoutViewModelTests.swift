@@ -35,4 +35,25 @@ final class CurrentWorkoutViewModelTests: XCTestCase {
         vm.alert = nil
         XCTAssertNil(vm.alert)
     }
+
+    func testDestinationStartsNil() {
+        let vm = CurrentWorkoutView.ViewModel()
+        XCTAssertNil(vm.destination)
+    }
+
+    func testSettingsTappedSetsDestination() {
+        let vm = CurrentWorkoutView.ViewModel()
+
+        vm.settingsTapped()
+
+        XCTAssertEqual(vm.destination, .settings)
+    }
+
+    func testEditWorkoutTappedSetsDestination() {
+        let vm = CurrentWorkoutView.ViewModel()
+
+        vm.editWorkoutTapped()
+
+        XCTAssertEqual(vm.destination, .editWorkout)
+    }
 }

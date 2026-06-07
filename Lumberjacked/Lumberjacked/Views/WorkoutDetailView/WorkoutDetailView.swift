@@ -47,11 +47,9 @@ struct WorkoutDetailView: View {
                     VStack(alignment: .leading) {
                         ForEach(viewModel.workout.movements_details ?? [], id:\.self) { movement in
                             if let movementLog = movement.recorded_log {
-                                NavigationLink(destination: MovementLogInputView(
-                                    viewModel: MovementLogInputView.ViewModel(
-                                        movementLog: movementLog,
-                                        movement: movement,
-                                        workout: viewModel.workout))) {
+                                Button {
+                                    viewModel.movementLogTapped(movementLog, movement: movement)
+                                } label: {
                                     HStack(alignment: .top) {
                                         VStack(alignment: .leading) {
                                             Text(movement.name)
@@ -90,6 +88,16 @@ struct WorkoutDetailView: View {
         }
         .task {
             await viewModel.attemptRefreshWorkout()
+        }
+        .navigationDestination(item: $viewModel.destination) { dest in
+            switch dest {
+            case .movementLogInput(let log, let movement):
+                MovementLogInputView(
+                    viewModel: MovementLogInputView.ViewModel(
+                        movementLog: log,
+                        movement: movement,
+                        workout: viewModel.workout))
+            }
         }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {

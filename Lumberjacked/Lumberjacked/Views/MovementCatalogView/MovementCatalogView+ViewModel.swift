@@ -13,6 +13,16 @@ extension MovementCatalogView {
         enum LoadingKey { case load }
         var loadingKeys: Set<LoadingKey> = [.load]
 
+        enum Destination: Identifiable, Hashable {
+            case movementDetail(Movement)
+            var id: String {
+                switch self {
+                case .movementDetail(let m): return "movementDetail-\(m.id ?? 0)"
+                }
+            }
+        }
+        var destination: Destination?
+
         var movements = [Movement]()
         var searchText = ""
         var showCreateMovementSheet = false
@@ -22,6 +32,10 @@ extension MovementCatalogView {
 
         init(api: MovementAPIProtocol = LiveMovementAPI()) {
             self.api = api
+        }
+
+        func movementTapped(_ movement: Movement) {
+            destination = .movementDetail(movement)
         }
 
         func attemptGetMovements() async {

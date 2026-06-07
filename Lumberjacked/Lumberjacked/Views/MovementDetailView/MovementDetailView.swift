@@ -57,7 +57,7 @@ struct MovementDetailView: View {
                 }
 
                 if !viewModel.movementLogs.isEmpty {
-                    LogListView(movementLogs: viewModel.movementLogs)
+                    LogListView(movementLogs: viewModel.movementLogs, onLogTap: viewModel.logTapped)
                 } else {
                     if viewModel.isLoading(.logs) {
                         HStack {
@@ -91,8 +91,8 @@ struct MovementDetailView: View {
                 }
                 if viewModel.workout != nil {
                     ToolbarItem(placement: .primaryAction) {
-                        NavigationLink() {
-                            Text("new log page")
+                        Button {
+                            viewModel.newLogTapped()
                         } label: {
                             Label("New log", systemImage: "plus.square.fill")
                         }
@@ -115,12 +115,21 @@ struct MovementDetailView: View {
                     }
                 }
             }
-            .navigationDestination(for: MovementLog.self) { movementLog in
-                MovementLogInputView(
-                    viewModel: MovementLogInputView.ViewModel(
-                        movementLog: movementLog,
-                        movement: viewModel.movement,
-                        workout: nil))
+            .navigationDestination(item: $viewModel.destination) { dest in
+                switch dest {
+                case .editLog(let log):
+                    MovementLogInputView(
+                        viewModel: MovementLogInputView.ViewModel(
+                            movementLog: log,
+                            movement: viewModel.movement,
+                            workout: nil))
+                case .newLog:
+                    MovementLogInputView(
+                        viewModel: MovementLogInputView.ViewModel(
+                            movementLog: MovementLog(reps: [], loads: [], notes: ""),
+                            movement: viewModel.movement,
+                            workout: viewModel.workout))
+                }
             }
             .sheet(isPresented: $viewModel.showEditSheet, onDismiss: {
                 Task {
@@ -269,6 +278,7 @@ struct RecommendationsView: View {
 
 struct LogListView: View {
     var movementLogs: [MovementLog]
+    var onLogTap: (MovementLog) -> Void
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -282,7 +292,7 @@ struct LogListView: View {
                     ),
                     id: \.self
                 ) { log in
-                    LogItem(movementLog: log)
+                    LogItem(movementLog: log, onTap: onLogTap)
                     .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
                     .listRowBackground(Color.clear)
                 }
@@ -297,9 +307,12 @@ struct LogListView: View {
 
 struct LogItem: View {
     let movementLog: MovementLog
+    let onTap: (MovementLog) -> Void
 
     var body: some View {
-        NavigationLink(value: movementLog) {
+        Button {
+            onTap(movementLog)
+        } label: {
             HStack(alignment: .top) {
                 if let timestamp = movementLog.timestamp {
                     Text(timestamp.formatted(date: .abbreviated, time: .omitted))
@@ -314,6 +327,7 @@ struct LogItem: View {
                 .textCase(.uppercase)
             }
         }
+        .foregroundStyle(.primary)
     }
 }
 

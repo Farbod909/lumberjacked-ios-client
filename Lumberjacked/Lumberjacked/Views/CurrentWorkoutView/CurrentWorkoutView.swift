@@ -358,10 +358,20 @@ struct CurrentWorkoutView: View {
                         movement: movementLogDestination.movement,
                         workout: viewModel.currentWorkout!))
             }
+            .navigationDestination(item: $viewModel.destination) { dest in
+                switch dest {
+                case .settings:
+                    SettingsView()
+                case .editWorkout:
+                    MovementSelectorView(
+                        viewModel: MovementSelectorView.ViewModel(workout: viewModel.currentWorkout)
+                    )
+                }
+            }
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
-                    NavigationLink {
-                        SettingsView()
+                    Button {
+                        viewModel.settingsTapped()
                     } label: {
                         Image(systemName: "gearshape")
                     }
@@ -373,10 +383,8 @@ struct CurrentWorkoutView: View {
                         }
                     } else if viewModel.currentWorkout != nil {
                         Menu {
-                            NavigationLink {
-                                MovementSelectorView(
-                                    viewModel: MovementSelectorView.ViewModel(workout: viewModel.currentWorkout)
-                                )
+                            Button {
+                                viewModel.editWorkoutTapped()
                             } label: {
                                 Label("Edit workout", systemImage: "pencil.circle")
                             }

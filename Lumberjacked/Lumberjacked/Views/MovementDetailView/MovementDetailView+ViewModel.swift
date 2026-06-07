@@ -13,6 +13,18 @@ extension MovementDetailView {
         enum LoadingKey { case logs, delete }
         var loadingKeys: Set<LoadingKey> = [.logs]
 
+        enum Destination: Identifiable, Hashable {
+            case editLog(MovementLog)
+            case newLog
+            var id: String {
+                switch self {
+                case .editLog(let log): return "editLog-\(log.id ?? 0)"
+                case .newLog: return "newLog"
+                }
+            }
+        }
+        var destination: Destination?
+
         var movement: Movement
         var movementLogs = [MovementLog]()
         var workout: Workout?
@@ -33,6 +45,14 @@ extension MovementDetailView {
             self.movementLogs = movementLogs
             self.movementAPI = movementAPI
             self.movementLogAPI = movementLogAPI
+        }
+
+        func logTapped(_ log: MovementLog) {
+            destination = .editLog(log)
+        }
+
+        func newLogTapped() {
+            destination = .newLog
         }
 
         func attemptGetMovementLogs() async {

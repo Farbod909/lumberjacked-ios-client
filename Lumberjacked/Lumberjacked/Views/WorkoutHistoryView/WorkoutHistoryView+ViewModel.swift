@@ -13,6 +13,16 @@ extension WorkoutHistoryView {
         enum LoadingKey { case load }
         var loadingKeys: Set<LoadingKey> = [.load]
 
+        enum Destination: Identifiable, Hashable {
+            case workoutDetail(Workout)
+            var id: String {
+                switch self {
+                case .workoutDetail(let w): return "detail-\(w.id ?? 0)"
+                }
+            }
+        }
+        var destination: Destination?
+
         var workouts = [Workout]()
         var alert: AppAlert?
 
@@ -24,6 +34,10 @@ extension WorkoutHistoryView {
 
         init(api: WorkoutAPIProtocol = LiveWorkoutAPI()) {
             self.api = api
+        }
+
+        func workoutTapped(_ workout: Workout) {
+            destination = .workoutDetail(workout)
         }
 
         func attemptGetWorkouts() async {

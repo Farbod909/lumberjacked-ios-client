@@ -30,4 +30,26 @@ final class MovementDetailViewModelTests: XCTestCase {
         let vm = MovementDetailView.ViewModel(movement: makeMovement())
         XCTAssertFalse(vm.showDeleteConfirmationAlert)
     }
+
+    func testDestinationStartsNil() {
+        let vm = MovementDetailView.ViewModel(movement: makeMovement())
+        XCTAssertNil(vm.destination)
+    }
+
+    func testLogTappedSetsEditLogDestination() {
+        let vm = MovementDetailView.ViewModel(movement: makeMovement())
+        let log = MovementLog(id: 7, movement: 1, reps: [8], loads: [100], notes: "")
+
+        vm.logTapped(log)
+
+        XCTAssertEqual(vm.destination, .editLog(log))
+    }
+
+    func testNewLogTappedSetsNewLogDestination() {
+        let vm = MovementDetailView.ViewModel(movement: makeMovement())
+
+        vm.newLogTapped()
+
+        XCTAssertEqual(vm.destination, .newLog)
+    }
 }

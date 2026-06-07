@@ -36,4 +36,18 @@ final class MovementCatalogViewModelTests: XCTestCase {
 
         XCTAssertTrue(vm.filteredMovements.isEmpty)
     }
+
+    func testMovementTappedSetsDestination() {
+        let vm = MovementCatalogView.ViewModel()
+        let movement = makeMovement(id: 3, name: "Deadlift")
+
+        vm.movementTapped(movement)
+
+        XCTAssertEqual(vm.destination, .movementDetail(movement))
+    }
+
+    func testDestinationStartsNil() {
+        let vm = MovementCatalogView.ViewModel()
+        XCTAssertNil(vm.destination)
+    }
 }

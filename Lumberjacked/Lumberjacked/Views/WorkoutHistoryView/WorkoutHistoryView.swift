@@ -18,11 +18,10 @@ struct WorkoutHistoryView: View {
         NavigationStack {
             List {
                 ForEach(viewModel.pastWorkouts, id: \.self) { workout in
-                    ZStack {
+                    Button {
+                        viewModel.workoutTapped(workout)
+                    } label: {
                         WorkoutOverviewView(workout: workout)
-                        NavigationLink(destination: WorkoutDetailView(viewModel: .init(workout: workout))) {
-                            EmptyView()
-                        }.opacity(0)
                     }
                     .listRowBackground(Color.brandSecondary)
                 }
@@ -34,6 +33,12 @@ struct WorkoutHistoryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .task {
                 await viewModel.attemptGetWorkouts()
+            }
+            .navigationDestination(item: $viewModel.destination) { dest in
+                switch dest {
+                case .workoutDetail(let workout):
+                    WorkoutDetailView(viewModel: .init(workout: workout))
+                }
             }
         }
     }

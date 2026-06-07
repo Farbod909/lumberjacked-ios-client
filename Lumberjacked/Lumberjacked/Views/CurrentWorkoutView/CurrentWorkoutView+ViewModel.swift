@@ -13,6 +13,18 @@ extension CurrentWorkoutView {
         enum LoadingKey { case currentWorkout, movements, addMovement, endWorkout, deleteWorkout }
         var loadingKeys: Set<LoadingKey> = [.currentWorkout, .movements]
 
+        enum Destination: Identifiable, Hashable {
+            case settings
+            case editWorkout
+            var id: String {
+                switch self {
+                case .settings: return "settings"
+                case .editWorkout: return "editWorkout"
+                }
+            }
+        }
+        var destination: Destination?
+
         var currentWorkout: Workout?
         var showCreateWorkoutSheet = false
         var alert: AppAlert?
@@ -34,6 +46,14 @@ extension CurrentWorkoutView {
         ) {
             self.workoutAPI = workoutAPI
             self.movementAPI = movementAPI
+        }
+
+        func settingsTapped() {
+            destination = .settings
+        }
+
+        func editWorkoutTapped() {
+            destination = .editWorkout
         }
 
         func attemptGetCurrentWorkout() async {

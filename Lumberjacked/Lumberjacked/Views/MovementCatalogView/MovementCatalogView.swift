@@ -18,7 +18,9 @@ struct MovementCatalogView: View {
         NavigationStack {
             List {
                 ForEach(viewModel.filteredMovements, id: \.self) { movement in
-                    NavigationLink(value: movement) {
+                    Button {
+                        viewModel.movementTapped(movement)
+                    } label: {
                         Text(movement.name)
                     }
                     .listRowBackground(Color.clear)
@@ -32,8 +34,11 @@ struct MovementCatalogView: View {
             .task {
                 await viewModel.attemptGetMovements()
             }
-            .navigationDestination(for: Movement.self) { movement in
-                MovementDetailView(viewModel: MovementDetailView.ViewModel(movement: movement))
+            .navigationDestination(item: $viewModel.destination) { dest in
+                switch dest {
+                case .movementDetail(let movement):
+                    MovementDetailView(viewModel: MovementDetailView.ViewModel(movement: movement))
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {

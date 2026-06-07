@@ -23,4 +23,18 @@ final class WorkoutHistoryViewModelTests: XCTestCase {
 
         XCTAssertTrue(vm.pastWorkouts.isEmpty)
     }
+
+    func testWorkoutTappedSetsDestination() {
+        let vm = WorkoutHistoryView.ViewModel()
+        let workout = Workout(id: 5, start_timestamp: Date(), end_timestamp: Date())
+
+        vm.workoutTapped(workout)
+
+        XCTAssertEqual(vm.destination, .workoutDetail(workout))
+    }
+
+    func testDestinationStartsNil() {
+        let vm = WorkoutHistoryView.ViewModel()
+        XCTAssertNil(vm.destination)
+    }
 }

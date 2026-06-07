@@ -10,6 +10,16 @@ import SwiftUI
 extension WorkoutDetailView {
     @Observable
     class ViewModel {
+        enum Destination: Identifiable, Hashable {
+            case movementLogInput(MovementLog, Movement)
+            var id: String {
+                switch self {
+                case .movementLogInput(let log, _): return "movementLogInput-\(log.id ?? 0)"
+                }
+            }
+        }
+        var destination: Destination?
+
         var workout: Workout
         var alert: AppAlert?
 
@@ -21,6 +31,10 @@ extension WorkoutDetailView {
         init(workout: Workout, api: WorkoutAPIProtocol = LiveWorkoutAPI()) {
             self.workout = workout
             self.api = api
+        }
+
+        func movementLogTapped(_ log: MovementLog, movement: Movement) {
+            destination = .movementLogInput(log, movement)
         }
 
         func attemptDeleteWorkout() async -> Bool {
