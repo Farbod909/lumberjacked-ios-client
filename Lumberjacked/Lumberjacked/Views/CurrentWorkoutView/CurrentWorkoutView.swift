@@ -338,6 +338,7 @@ struct CurrentWorkoutView: View {
             .animation(.default, value: viewModel.currentWorkout)
             .animation(.spring(duration: 0.3, bounce: 0.05), value: viewModel.showAddMovementOverlay)
             .task(id: appEnvironment.isNotAuthenticated) {
+                guard !appEnvironment.isNotAuthenticated else { return }
                 await viewModel.attemptGetCurrentWorkout()
                 await viewModel.attemptGetMovements()
             }

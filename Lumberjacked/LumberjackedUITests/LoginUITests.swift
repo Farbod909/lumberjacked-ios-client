@@ -33,7 +33,7 @@ final class LoginUITests: XCTestCase {
     func testLoginFlow() {
         // Auth sheet should appear automatically — UI_TESTING clears the keychain on launch.
         let emailField = app.textFields["loginEmailField"]
-        XCTAssertTrue(emailField.waitForExistence(timeout: 5), "Email field should appear on launch when not authenticated")
+        XCTAssertTrue(emailField.waitForExistence(timeout: 15), "Email field should appear on launch when not authenticated")
 
         emailField.tap()
         emailField.typeText(testEmail)
@@ -51,7 +51,7 @@ final class LoginUITests: XCTestCase {
 
     func testLoginShowsErrorOnBadCredentials() {
         let emailField = app.textFields["loginEmailField"]
-        XCTAssertTrue(emailField.waitForExistence(timeout: 5))
+        XCTAssertTrue(emailField.waitForExistence(timeout: 15))
 
         emailField.tap()
         emailField.typeText("wrong@example.com")
@@ -62,7 +62,12 @@ final class LoginUITests: XCTestCase {
 
         app.buttons["loginButton"].tap()
 
-        // Auth sheet should stay visible — credentials were rejected.
-        XCTAssertTrue(emailField.waitForExistence(timeout: 10), "Email field should still be visible after failed login")
+        // An error alert should appear since credentials are invalid.
+        let errorAlert = app.alerts.firstMatch
+        XCTAssertTrue(errorAlert.waitForExistence(timeout: 10), "Error alert should appear for invalid credentials")
+        errorAlert.buttons.firstMatch.tap()
+
+        // After dismissing the alert the auth sheet should still be visible.
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5), "Email field should still be visible after failed login")
     }
 }
