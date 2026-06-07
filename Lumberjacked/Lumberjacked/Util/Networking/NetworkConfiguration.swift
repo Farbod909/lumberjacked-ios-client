@@ -10,7 +10,7 @@ enum NetworkConfiguration {
             return envURL
         }
         #if DEBUG
-        return "http://localhost:8000"
+        return "http://192.168.86.30:8000"
         #else
         return "https://lumberjacked-dev-2-1029906100530.us-west2.run.app"
         #endif
