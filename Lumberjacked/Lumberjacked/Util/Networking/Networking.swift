@@ -112,20 +112,21 @@ class Networking {
         var data = Data()
                 
         if let requestBody = options.body {
+            let encoded: Data
             do {
-                let encoded = try JSONEncoder().encode(requestBody)
-                do {
-                    (data, response) = try await session.upload(for: request, from: encoded)
-                } catch {
-                    if let urlError = error as? URLError, urlError.code == .cancelled {
-                        // Expected when user switches tabs / cancels a task
-                        return nil
-                    }
-                    throw error // rethrow unexpected errors
-                }
+                encoded = try JSONEncoder().encode(requestBody)
             } catch {
                 assertionFailure("Failed to encode data: \(error)")
                 return nil
+            }
+            do {
+                (data, response) = try await session.upload(for: request, from: encoded)
+            } catch {
+                if let urlError = error as? URLError, urlError.code == .cancelled {
+                    // Expected when user switches tabs / cancels a task
+                    return nil
+                }
+                throw error // rethrow unexpected errors
             }
         } else {
             do {
