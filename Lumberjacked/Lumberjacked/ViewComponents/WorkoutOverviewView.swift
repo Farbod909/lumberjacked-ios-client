@@ -23,7 +23,7 @@ struct WorkoutOverviewView: View {
                         Spacer()
                         Group {
                             if let recorded_log = movement.recorded_log {
-                                if let setsNum = recorded_log.reps?.count {
+                                if let setsNum = recorded_log.sets?.count {
                                     if setsNum > 1 {
                                         Text("\(setsNum) Sets")
                                     } else {

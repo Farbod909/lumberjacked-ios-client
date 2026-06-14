@@ -48,6 +48,11 @@ final class MockWorkoutAPI: WorkoutAPIProtocol {
         return PreviewData.activeWorkout
     }
 
+    func createWorkout(fromTemplate templateId: UInt64) async throws -> Workout {
+        if let error = errorToThrow { throw error }
+        return PreviewData.activeWorkout
+    }
+
     func updateWorkout(workoutId: UInt64, movements: [UInt64]) async throws -> Workout {
         if let error = errorToThrow { throw error }
         return PreviewData.activeWorkout
@@ -96,7 +101,7 @@ final class MockMovementLogAPI: MovementLogAPIProtocol {
 
     func getMovementLogs(movementId: UInt64) async throws -> APIResponseList<MovementLog> {
         if let error = errorToThrow { throw error }
-        let logs = PreviewData.benchPressLogs.filter { $0.movement == movementId }
+        let logs = PreviewData.benchPressLogs
         return APIResponseList(count: logs.count, results: logs)
     }
 

@@ -168,16 +168,8 @@ struct CurrentWorkoutView: View {
                         CurrentWorkoutMovementView(movement: movement)
                     }
                     // placeholder list item so that the view is already at the correct width.
-                    CurrentWorkoutMovementView(
-                        movement: Movement(
-                            name: "",
-                            category: "",
-                            notes: "",
-                            recommended_warmup_sets: "",
-                            recommended_working_sets: "",
-                            recommended_rep_range: "",
-                            recommended_rpe: ""))
-                    .hidden()
+                    CurrentWorkoutMovementView(movement: Movement(name: "", notes: ""))
+                        .hidden()
                     Spacer().frame(height: 50)
                 }
                 .scrollIndicators(.hidden)

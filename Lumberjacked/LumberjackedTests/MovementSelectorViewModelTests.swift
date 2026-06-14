@@ -8,9 +8,7 @@ import XCTest
 final class MovementSelectorViewModelTests: XCTestCase {
 
     private func makeMovement(id: UInt64, name: String) -> Movement {
-        Movement(id: id, name: name, category: "", notes: "",
-                 recommended_warmup_sets: "", recommended_working_sets: "",
-                 recommended_rep_range: "", recommended_rpe: "")
+        Movement(id: id, name: name, notes: "")
     }
 
     func testInitWithoutWorkoutHasEmptySelection() {

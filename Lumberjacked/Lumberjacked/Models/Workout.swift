@@ -10,12 +10,11 @@ import Foundation
 struct Workout: Codable, Hashable {
     var id: UInt64?
     var user: UInt64?
-    var movements: [UInt64]?
     var start_timestamp: Date?
     var end_timestamp: Date?
-    
+
     var movements_details: [Movement]?
-    
+
     var humanReadableStartTimestamp: String? {
         guard let start_timestamp else {
             return nil
@@ -24,7 +23,6 @@ struct Workout: Codable, Hashable {
         let calendar = Calendar.current
         let dateFormatter = DateFormatter()
 
-        // Handle "Today" and "Yesterday" first
         if calendar.isDateInToday(start_timestamp) {
             return "Today"
         }
@@ -47,5 +45,6 @@ extension Workout {
 }
 
 struct CreateOrEditWorkoutRequest: Codable {
-    var movements: [UInt64]
+    var movements: [UInt64]?
+    var template: UInt64?
 }

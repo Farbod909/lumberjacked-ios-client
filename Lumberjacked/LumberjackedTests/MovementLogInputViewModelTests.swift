@@ -8,9 +8,7 @@ import XCTest
 final class MovementLogInputViewModelTests: XCTestCase {
 
     private func makeMovement() -> Movement {
-        Movement(id: 1, name: "Bench Press", category: "", notes: "",
-                 recommended_warmup_sets: "", recommended_working_sets: "",
-                 recommended_rep_range: "", recommended_rpe: "")
+        Movement(id: 1, name: "Bench Press", notes: "")
     }
 
     func testCanSaveReturnsFalseWhenFieldsNil() {

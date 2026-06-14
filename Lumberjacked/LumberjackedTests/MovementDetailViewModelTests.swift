@@ -8,9 +8,7 @@ import XCTest
 final class MovementDetailViewModelTests: XCTestCase {
 
     private func makeMovement() -> Movement {
-        Movement(id: 1, name: "Bench Press", category: "Chest", notes: "",
-                 recommended_warmup_sets: "", recommended_working_sets: "",
-                 recommended_rep_range: "", recommended_rpe: "")
+        Movement(id: 1, name: "Bench Press", notes: "")
     }
 
     func testInitStoresMovement() {
@@ -21,7 +19,7 @@ final class MovementDetailViewModelTests: XCTestCase {
     }
 
     func testInitWithLogsStoresLogs() {
-        let log = MovementLog(id: 1, movement: 1, reps: [10, 10], loads: [135, 135], notes: "")
+        let log = MovementLog(id: 1, workout_movement: 1, sets: [LogSet(reps: 10, load: 135, type: "working"), LogSet(reps: 10, load: 135, type: "working")], notes: "")
         let vm = MovementDetailView.ViewModel(movement: makeMovement(), movementLogs: [log])
         XCTAssertEqual(vm.movementLogs.count, 1)
     }
@@ -38,7 +36,7 @@ final class MovementDetailViewModelTests: XCTestCase {
 
     func testLogTappedSetsEditLogDestination() {
         let vm = MovementDetailView.ViewModel(movement: makeMovement())
-        let log = MovementLog(id: 7, movement: 1, reps: [8], loads: [100], notes: "")
+        let log = MovementLog(id: 7, workout_movement: 1, sets: [LogSet(reps: 8, load: 100, type: "working")], notes: "")
 
         vm.logTapped(log)
 

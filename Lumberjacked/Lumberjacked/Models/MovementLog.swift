@@ -7,22 +7,24 @@
 
 import Foundation
 
+struct LogSet: Codable, Hashable {
+    var reps: Int
+    var load: Double?
+    var type: String
+    var rest_time: Int?
+}
+
 struct MovementLog: Codable, Hashable {
     var id: UInt64?
-    var movement: UInt64?
-    var workout: UInt64?
-    var reps: [UInt16]?
-    var loads: [Double]?
+    var workout_movement: UInt64?
+    var sets: [LogSet]?
     var notes: String
     var timestamp: Date?
-    
+
     var for_current_workout: Bool?
 }
 
 extension MovementLog {
-    /**
-     *  Helper functions/properties for representing MovementLog data more easily in the UI.
-     */
     func roundDouble(_ double: Double) -> String {
         let roundedValue = (double * 10).rounded() / 10
         if roundedValue.truncatingRemainder(dividingBy: 1) == 0 {
@@ -31,130 +33,81 @@ extension MovementLog {
             return String(format: "%.1f", roundedValue)
         }
     }
-    
-    var repsAllEqual: Bool {
-        guard let reps = reps else {
-            return true
-        }
-        
-        for (idx, r) in reps.enumerated() {
-            if idx < reps.count - 1 {
-                if r != reps[idx + 1] {
-                    return false
-                }
-            }
-        }
-        return true
-    }
-    
-    var loadsAllEqual: Bool {
-        guard let loads = loads else {
-            return true
-        }
-        for (idx, l) in loads.enumerated() {
-            if idx < loads.count - 1 {
-                if l != loads[idx + 1] {
-                    return false
-                }
-            }
-        }
-        return true
+
+    private var allSameReps: Bool {
+        guard let sets = sets, !sets.isEmpty else { return true }
+        return sets.allSatisfy { $0.reps == sets[0].reps }
     }
 
-    var setsAndRepsString: String {
-        guard let reps = reps else {
-            return ""
-        }
-                
-        if repsAllEqual {
-            return "\(reps.count) × \(reps[0])"
-        } else {
-            return reps.map { String($0) }.joined(separator: ", ")
-        }
-            
+    private var allSameLoad: Bool {
+        guard let sets = sets, !sets.isEmpty else { return true }
+        return sets.allSatisfy { $0.load == sets[0].load }
     }
-    
-    var loadsString: String {
-        guard let loads = loads else {
-            return ""
-        }
-        
-        if loadsAllEqual {
-            return roundDouble(loads[0]) + "\u{FEFF} \u{FEFF}lb"
-        } else {
-            return loads.map { roundDouble($0) + "\u{FEFF} \u{FEFF}lb" }.joined(separator: ", ")
-        }
-    }
-    
+
     var summary: [String] {
-        /**
-         * Return strings that represent a summary of the MovementLog.
-         * If the reps and loads are all equal, each element is: X sets of, Y reps, Z load (e.g. ["3 sets of", "10 reps", "50 lb"]
-         * If the reps and loads are different, each element is a set in the format: set X: Y x Z (e.g. ["10 x 50 lb", "9 x 55 lb", "8 x 60 lb"]
-         */
-        var summaryList = [String]()
+        guard let sets = sets, !sets.isEmpty else { return [] }
 
-        if repsAllEqual && loadsAllEqual {
-            summaryList.append("\(reps!.count)\u{FEFF} \u{FEFF}sets")
-            summaryList.append("\(reps![0])\u{FEFF} \u{FEFF}reps")
-            summaryList.append("\(roundDouble(loads![0]))\u{FEFF} \u{FEFF}lb")
-            return summaryList
+        if allSameReps && allSameLoad {
+            var result = ["\(sets.count)\u{FEFF} \u{FEFF}sets"]
+            result.append("\(sets[0].reps)\u{FEFF} \u{FEFF}reps")
+            if let load = sets[0].load {
+                result.append("\(roundDouble(load))\u{FEFF} \u{FEFF}lb")
+            }
+            return result
         }
-        
-        if let reps = reps, let loads = loads {
-            for i in 0...(reps.count - 1) {
-                summaryList.append("\(reps[i])\u{FEFF} \u{FEFF}reps × \(roundDouble(loads[i]))\u{FEFF} \u{FEFF}lb")
+
+        return sets.map { set in
+            if let load = set.load {
+                return "\(set.reps)\u{FEFF} \u{FEFF}reps × \(roundDouble(load))\u{FEFF} \u{FEFF}lb"
+            } else {
+                return "\(set.reps)\u{FEFF} \u{FEFF}reps"
             }
         }
-        return summaryList
     }
-    
+
     var shorterSummary: [String] {
-        /**
-         * Same as above but slightly shorter version.
-         * If the reps and loads are all equal, each element is: X, Y reps x Z load (e.g. ["3×", "10 reps × 50 lb"]
-         * If the reps and loads are different, each element is a set in the format: ["10 × 50 lb", "9 × 55 lb", "8 × 60 lb"]
-         */
-        var summaryList = [String]()
+        guard let sets = sets, !sets.isEmpty else { return [] }
 
-        if repsAllEqual && loadsAllEqual {
-            summaryList.append("\(reps!.count)×")
-            summaryList.append("\(reps![0])\u{FEFF} \u{FEFF}reps × \(roundDouble(loads![0]))\u{FEFF} \u{FEFF}lb")
-            return summaryList
+        if allSameReps && allSameLoad {
+            var result = ["\(sets.count)×"]
+            if let load = sets[0].load {
+                result.append("\(sets[0].reps)\u{FEFF} \u{FEFF}reps × \(roundDouble(load))\u{FEFF} \u{FEFF}lb")
+            } else {
+                result.append("\(sets[0].reps)\u{FEFF} \u{FEFF}reps")
+            }
+            return result
         }
-        
-        if let reps = reps, let loads = loads {
-            for i in 0...(reps.count - 1) {
-                summaryList.append("\(reps[i])\u{FEFF} \u{FEFF}reps × \(roundDouble(loads[i]))\u{FEFF} \u{FEFF}lb")
+
+        return sets.map { set in
+            if let load = set.load {
+                return "\(set.reps)\u{FEFF} \u{FEFF}reps × \(roundDouble(load))\u{FEFF} \u{FEFF}lb"
+            } else {
+                return "\(set.reps)\u{FEFF} \u{FEFF}reps"
             }
         }
-        return summaryList
     }
 
-    
     var conciseSummaryString: String {
-        if repsAllEqual && loadsAllEqual {
-            return "\(reps!.count) × \(reps![0]) × \(roundDouble(loads![0]))\u{FEFF} \u{FEFF}lb"
-        }
-        
-        if let reps = reps, let loads = loads {
-            var summaryList = [String]()
-            for i in 0...(reps.count - 1) {
-                summaryList.append("\(reps[i]) × \(roundDouble(loads[i]))\u{FEFF} \u{FEFF}lb")
+        guard let sets = sets, !sets.isEmpty else { return "N/A" }
+
+        if allSameReps && allSameLoad {
+            if let load = sets[0].load {
+                return "\(sets.count) × \(sets[0].reps) × \(roundDouble(load))\u{FEFF} \u{FEFF}lb"
+            } else {
+                return "\(sets.count) × \(sets[0].reps)"
             }
-            return summaryList.joined(separator: ", ")
         }
-        
-        return "N/A"
+
+        return sets.map { set in
+            if let load = set.load {
+                return "\(set.reps) × \(roundDouble(load))\u{FEFF} \u{FEFF}lb"
+            } else {
+                return "\(set.reps)"
+            }
+        }.joined(separator: ", ")
     }
-    
+
     var withJustInputFields: MovementLog {
-        /**
-         * Returns a MovementLog instance that just pre-populates input fields, except notes.
-         */
-        return MovementLog(reps: reps, loads: loads, notes: "")
+        return MovementLog(sets: sets, notes: "")
     }
-
-
-
 }

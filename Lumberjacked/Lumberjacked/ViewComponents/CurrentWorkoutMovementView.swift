@@ -10,72 +10,19 @@ import SwiftUI
 struct CurrentWorkoutMovementView: View {
     @State var movement: Movement
     @State var isExpanded = false
-    
+
     var movementDone: Bool {
         if let for_current_workout = latestLog?.for_current_workout {
             return for_current_workout
         }
         return false
     }
-    
+
     var latestLog: MovementLog? {
-        if let latest_log = movement.latest_log {
-            return latest_log
-        }
-        return nil
+        return movement.latest_log
     }
-    
-    var version1: some View {
-        HStack {
-            NavigationLink(value: movement) {
-                Image(systemName: "info.circle")
-                    .font(.title2)
-            }
-            Spacer()
-            VStack {
-                Text(movement.name)
-                    .font(.title3)
-                    .fontWeight(.bold)
-                Group {
-                    if movementDone {
-                        Text("Today")
-                    } else {
-                        Text("Most Recent")
-                    }
-                }
-                .font(.footnote)
-                .fontWidth(.condensed)
-                .fontWeight(.semibold)
-                .textCase(.uppercase)
-                Group {
-                    if let latestLog = movement.latest_log {
-                        ForEach(latestLog.summary, id: \.self) { item in
-                            Text(item)
-                        }
-                    } else {
-                        Text("N/A")
-                    }
-                }
-                .font(.footnote)
-            }
-            Spacer()
-            NavigationLink(
-                value: MovementLogDestination(
-                    log: movementDone ? movement.latest_log! : movement.latest_log?.withJustInputFields ?? MovementLog(reps: [], loads: [], notes: ""),
-                    movement: movement))
-            {
-                Image(systemName: movementDone ? "checkmark" : "square.and.pencil")
-                    .font(.title2)
-            }
-        }
-        .padding()
-        .background(.regularMaterial)
-        .background(movementDone ? .green : .clear)
-        .foregroundStyle(.primary)
-        .clipShape(.rect(cornerRadius: 20))
-    }
-    
-    var version2: some View {
+
+    var body: some View {
         VStack {
             HStack {
                 if movementDone {
@@ -98,7 +45,9 @@ struct CurrentWorkoutMovementView: View {
                 Spacer()
                 NavigationLink(
                     value: MovementLogDestination(
-                        log: movementDone ? movement.latest_log! : movement.latest_log?.withJustInputFields ?? MovementLog(reps: [], loads: [], notes: ""),
+                        log: movementDone
+                            ? movement.latest_log!
+                            : movement.latest_log?.withJustInputFields ?? MovementLog(notes: ""),
                         movement: movement))
                 {
                     HStack {
@@ -133,33 +82,11 @@ struct CurrentWorkoutMovementView: View {
                             }
                         }
                         Spacer()
-                        VStack(alignment: .trailing) {
-                            if movement.hasAnyRecommendations {
-                                Text("Recommended")
-                                    .fontWeight(.semibold)
-                                    .textCase(.uppercase)
-                                Group {
-                                    if !movement.recommended_warmup_sets.isEmpty {
-                                        Text(movement.recommended_warmup_sets + " Warmup set(s)")
-                                            .textCase(.uppercase)
-                                    }
-                                    if !movement.recommended_working_sets.isEmpty {
-                                        Text(movement.recommended_working_sets + " Working set(s)")
-                                            .textCase(.uppercase)
-                                    }
-                                    if !movement.recommended_rep_range.isEmpty {
-                                        Text(movement.recommended_rep_range + " Reps")
-                                            .textCase(.uppercase)
-                                    }
-                                }
-                            }
-                        }
                     }
                     HStack {
                         Spacer()
                         NavigationLink(value: movement) {
                             Label("See more...", systemImage: "info.circle")
-                            
                         }
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -167,7 +94,6 @@ struct CurrentWorkoutMovementView: View {
                     .padding(EdgeInsets(top: 2, leading: 0, bottom: 0, trailing: 0))
                 }
                 .padding(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
-
             }
         }
         .padding(EdgeInsets(top: 4, leading: 0, bottom: 14, trailing: 0))
@@ -175,13 +101,10 @@ struct CurrentWorkoutMovementView: View {
             Divider().background(.foreground).frame(height: 2).overlay(.foreground),
             alignment: .bottom)
     }
-    
-    var body: some View {
-        version2
-    }
-    
 }
 
+#if DEBUG
 #Preview {
-    CurrentWorkoutMovementView(movement: Movement.init(name: "Example", category: "Lower Body", notes: "", recommended_warmup_sets: "", recommended_working_sets: "", recommended_rep_range: "", recommended_rpe: ""), isExpanded: true)
+    CurrentWorkoutMovementView(movement: PreviewData.benchPress, isExpanded: true)
 }
+#endif

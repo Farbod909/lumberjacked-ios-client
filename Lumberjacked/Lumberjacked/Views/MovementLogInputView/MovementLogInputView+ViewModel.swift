@@ -23,27 +23,25 @@ extension MovementLogInputView {
         var movementLogInput: MovementLog? {
             var result = movementLog
 
-            // We do not explicitly set these values in the client.
             result.for_current_workout = nil
             result.timestamp = nil
 
             if selectedInputStyle == "Equal Sets" {
-                result.reps = Array(
-                    repeating: equalSetsMovementLogInput.reps ?? 0,
-                    count: Int(equalSetsMovementLogInput.sets ?? 0))
-                result.loads = Array(
-                    repeating: equalSetsMovementLogInput.load ?? 0,
-                    count: Int(equalSetsMovementLogInput.sets ?? 0))
+                let setCount = Int(equalSetsMovementLogInput.sets ?? 0)
+                let reps = Int(equalSetsMovementLogInput.reps ?? 0)
+                let load = equalSetsMovementLogInput.load
+                result.sets = Array(repeating: LogSet(reps: reps, load: load, type: "working"), count: setCount)
             } else if selectedInputStyle == "Custom Sets" {
-                result.reps = customSetsMovementLogInput.reps
-                result.loads = customSetsMovementLogInput.loads
+                result.sets = customSetsMovementLogInput.sets
             } else {
                 return nil
             }
-            if let workout = workout {
-                result.workout = workout.id
+
+            // For new logs, workout_movement comes from the movement in the current workout.
+            if movementLog.id == nil {
+                result.workout_movement = movement.workout_movement_id
             }
-            result.movement = movement.id
+
             return result
         }
 
@@ -72,8 +70,7 @@ extension MovementLogInputView {
                 return false
             } else if selectedInputStyle == "Equal Sets" {
                 if let sets = equalSetsMovementLogInput.sets,
-                   let reps = equalSetsMovementLogInput.reps,
-                   equalSetsMovementLogInput.load != nil {
+                   let reps = equalSetsMovementLogInput.reps {
                     return sets > 0 && reps > 0
                 }
                 return false

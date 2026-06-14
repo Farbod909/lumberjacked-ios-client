@@ -139,12 +139,7 @@ struct MovementSelectorView: View {
                 MovementInputView(
                     viewModel: MovementInputView.ViewModel(movement: Movement(
                         name: formattedSearchText,
-                        category: "",
-                        notes: "",
-                        recommended_warmup_sets: "",
-                        recommended_working_sets: "",
-                        recommended_rep_range: "",
-                        recommended_rpe: "")),
+                        notes: "")),
                     newlyAddedMovement: $newlyAddedMovement)
             }
         .animation(.default, value: viewModel.allMovements)

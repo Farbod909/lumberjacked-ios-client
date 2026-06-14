@@ -96,14 +96,7 @@ extension MovementSelectorView {
             fieldErrors = [:]
             do {
                 let movement = try await movementAPI.createMovement(
-                    movement: Movement(
-                        name: movementName,
-                        category: "",
-                        notes: "",
-                        recommended_warmup_sets: "",
-                        recommended_working_sets: "",
-                        recommended_rep_range: "",
-                        recommended_rpe: ""))
+                    movement: Movement(name: movementName, notes: ""))
                 return movement
             } catch let error as RemoteNetworkingError {
                 handleNetworkError(error)

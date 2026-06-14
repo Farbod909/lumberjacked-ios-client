@@ -20,24 +20,11 @@ struct MovementDetailView: View {
                     .font(.title)
                     .fontWeight(.semibold)
                     .padding(EdgeInsets(top: 0, leading: 6, bottom: 0, trailing: 6))
-                if !viewModel.movement.hasNotes &&
-                    !viewModel.movement.hasCategory &&
-                    !viewModel.movement.hasAnyRecommendations {
-                    HStack {
-                        Text("\(Image(systemName: "info.circle")) Edit this movement to add useful information like notes or recommendations to help you during your workouts.")
-                        Spacer()
-                    }
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
-                }
 
-                if viewModel.movement.hasCategory {
+                if !viewModel.movement.hasNotes {
                     HStack {
-                        Text("category")
-                            .textCase(.uppercase)
-                            .font(.headline)
-                        Text(viewModel.movement.category)
-                            .foregroundColor(.primary)
+                        Text("\(Image(systemName: "info.circle")) Edit this movement to add notes to help you during your workouts.")
+                        Spacer()
                     }
                     .padding()
                     .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
@@ -45,15 +32,6 @@ struct MovementDetailView: View {
 
                 if viewModel.movement.hasNotes {
                     NotesView(notes: viewModel.movement.notes, maxHeight: 100)
-                }
-
-                if viewModel.movement.hasAnyRecommendations {
-                    HStack {
-                        RecommendationsView(movement: viewModel.movement)
-                        Spacer()
-                    }
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
                 }
 
                 if !viewModel.movementLogs.isEmpty {
@@ -126,7 +104,7 @@ struct MovementDetailView: View {
                 case .newLog:
                     MovementLogInputView(
                         viewModel: MovementLogInputView.ViewModel(
-                            movementLog: MovementLog(reps: [], loads: [], notes: ""),
+                            movementLog: MovementLog(notes: ""),
                             movement: viewModel.movement,
                             workout: viewModel.workout))
                 }
@@ -216,66 +194,6 @@ private struct HeightKey: PreferenceKey {
     }
 }
 
-struct RecommendationsView: View {
-    let movement: Movement
-
-    struct Recommendation: Hashable, Equatable {
-        let name: String
-        let value: String
-    }
-
-    var recommendations: [Recommendation] {
-        var result = [Recommendation]()
-        if !movement.recommended_warmup_sets.isEmpty {
-            result.append(Recommendation(name: "Warmup Sets", value: movement.recommended_warmup_sets))
-        }
-        if !movement.recommended_working_sets.isEmpty {
-            result.append(Recommendation(name: "Working Sets", value: movement.recommended_working_sets))
-        }
-        if !movement.recommended_rep_range.isEmpty {
-            result.append(Recommendation(name: "Rep Range", value: movement.recommended_rep_range))
-        }
-        if !movement.recommended_rpe.isEmpty {
-            result.append(Recommendation(name: "RPE", value: movement.recommended_rpe))
-        }
-        if let restTime = movement.recommended_rest_time {
-            let minutes: UInt16 = restTime / 60
-            let seconds: UInt16 = restTime % 60
-            var value = ""
-            if minutes > 0 {
-                value.append("\(minutes)m")
-            }
-            if seconds > 0 {
-                value.append("\(seconds)s")
-            }
-            result.append(Recommendation(name: "Rest", value: value))
-        }
-        return result
-    }
-
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text("Recommendations")
-                .textCase(.uppercase)
-                .font(.headline)
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(recommendations, id: \.self) { recommendation in
-                    HStack {
-                        Text(recommendation.name)
-                            .textCase(.uppercase)
-                            .font(.subheadline)
-                            .fontWidth(.condensed)
-                            .fontWeight(.semibold)
-                        Text(recommendation.value)
-                    }
-                    .padding(0)
-                }
-            }
-            .foregroundColor(.primary)
-        }
-    }
-}
-
 struct LogListView: View {
     var movementLogs: [MovementLog]
     var onLogTap: (MovementLog) -> Void
@@ -341,10 +259,7 @@ struct LogItem: View {
 }
 
 #Preview("Minimal Details, No Logs") {
-    let movement = Movement(
-        id: 8, name: "Seated Cable Row", category: "", notes: "",
-        recommended_warmup_sets: "", recommended_working_sets: "",
-        recommended_rep_range: "", recommended_rpe: "")
+    let movement = Movement(id: 8, name: "Seated Cable Row", notes: "")
     return NavigationStack {
         MovementDetailView(viewModel: MovementDetailView.ViewModel(
             movement: movement,

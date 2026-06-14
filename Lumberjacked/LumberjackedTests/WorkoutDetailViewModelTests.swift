@@ -26,10 +26,8 @@ final class WorkoutDetailViewModelTests: XCTestCase {
 
     func testMovementLogTappedSetsDestination() {
         let vm = WorkoutDetailView.ViewModel(workout: Workout(id: 1, start_timestamp: Date()))
-        let log = MovementLog(id: 3, movement: 1, reps: [10], loads: [135], notes: "")
-        let movement = Movement(id: 1, name: "Bench Press", category: "", notes: "",
-                                recommended_warmup_sets: "", recommended_working_sets: "",
-                                recommended_rep_range: "", recommended_rpe: "")
+        let log = MovementLog(id: 3, workout_movement: 1, sets: [LogSet(reps: 10, load: 135, type: "working")], notes: "")
+        let movement = Movement(id: 1, name: "Bench Press", notes: "")
 
         vm.movementLogTapped(log, movement: movement)
 

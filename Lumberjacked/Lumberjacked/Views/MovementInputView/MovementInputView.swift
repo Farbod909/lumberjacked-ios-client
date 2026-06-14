@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MovementInputView: View {
     @State var viewModel: ViewModel
-    @Binding var newlyAddedMovement: Movement? // Binding to tell parent view about a new movement.
+    @Binding var newlyAddedMovement: Movement?
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -23,43 +23,10 @@ struct MovementInputView: View {
                         capitalizeWords: true)
                     .fieldError(viewModel.fieldErrors["name"])
                     MovementInputTextFieldView(
-                        placeholderText: "Category",
-                        stickyText: "Category",
-                        text: $viewModel.movement.category,
-                        capitalizeWords: true)
-                    .fieldError(viewModel.fieldErrors["category"])
-                    MovementInputTextFieldView(
                         placeholderText: "Notes",
                         stickyText: "Notes",
                         text: $viewModel.movement.notes)
                     .fieldError(viewModel.fieldErrors["notes"])
-                }
-                Section("Recommendations (Optional)") {
-                    MovementInputTextFieldView(
-                        placeholderText: "Warmup sets",
-                        stickyText: "Warmup sets",
-                        text: $viewModel.movement.recommended_warmup_sets)
-                    .fieldError(viewModel.fieldErrors["recommended_warmup_sets"])
-                    MovementInputTextFieldView(
-                        placeholderText: "Working sets",
-                        stickyText: "Working sets",
-                        text: $viewModel.movement.recommended_working_sets)
-                    .fieldError(viewModel.fieldErrors["recommended_working_sets"])
-                    MovementInputTextFieldView(
-                        placeholderText: "Rep range",
-                        stickyText: "Rep range",
-                        text: $viewModel.movement.recommended_rep_range)
-                    .fieldError(viewModel.fieldErrors["recommended_rep_range"])
-                    MovementInputTextFieldView(
-                        placeholderText: "RPE",
-                        stickyText: "RPE",
-                        text: $viewModel.movement.recommended_rpe)
-                    .fieldError(viewModel.fieldErrors["recommended_rpe"])
-                    MovementInputIntFieldView(
-                        placeholderText: "Rest time (in seconds)",
-                        stickyText: "Rest seconds",
-                        value: $viewModel.movement.recommended_rest_time)
-                    .fieldError(viewModel.fieldErrors["recommended_rest_time"])
                 }
             }
             .listRowSpacing(10)
@@ -95,14 +62,7 @@ struct MovementInputView: View {
                 }
             }
             .onDisappear() {
-                viewModel.movement = Movement(
-                    name: "",
-                    category: "",
-                    notes: "",
-                    recommended_warmup_sets: "",
-                    recommended_working_sets: "",
-                    recommended_rep_range: "",
-                    recommended_rpe: "")
+                viewModel.movement = Movement(name: "", notes: "")
             }
             .interactiveDismissDisabled()
             .alert(item: $viewModel.alert)
@@ -136,14 +96,7 @@ struct MovementInputTextFieldView: View {
 #Preview("New Movement") {
     MovementInputView(
         viewModel: MovementInputView.ViewModel(
-            movement: Movement(
-                name: "",
-                category: "",
-                notes: "",
-                recommended_warmup_sets: "",
-                recommended_working_sets: "",
-                recommended_rep_range: "",
-                recommended_rpe: ""),
+            movement: Movement(name: "", notes: ""),
             api: MockMovementAPI()),
         newlyAddedMovement: .constant(nil))
 }
@@ -160,23 +113,3 @@ struct MovementInputTextFieldView: View {
         newlyAddedMovement: .constant(nil))
 }
 #endif
-
-struct MovementInputIntFieldView: View {
-    var placeholderText: String
-    var stickyText: String
-    @Binding var value: UInt16?
-
-    var body: some View {
-        HStack {
-            TextField(placeholderText, value: $value, format: .number)
-                .textFieldStyle(.plain)
-            if value != nil {
-                Text(stickyText)
-                    .textCase(.uppercase)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-            }
-        }
-        .animation(.default, value: value)
-    }
-}
