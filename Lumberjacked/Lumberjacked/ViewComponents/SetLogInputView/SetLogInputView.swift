@@ -52,6 +52,8 @@ private enum Col {
 struct SetLogInputView: View {
 
     let mode: SetLogInputMode
+    var isEmbedded: Bool = false
+    var readOnly: Bool = false
 
     @Binding var logSets:      [LogSet]
     @Binding var templateSets: [TemplateSet]
@@ -82,18 +84,26 @@ struct SetLogInputView: View {
 
     init(mode: SetLogInputMode,
          logSets: Binding<[LogSet]>,
-         templateSets: Binding<[TemplateSet]> = .constant([])) {
+         templateSets: Binding<[TemplateSet]> = .constant([]),
+         isEmbedded: Bool = false,
+         readOnly: Bool = false) {
         self.mode          = mode
         self._logSets      = logSets
         self._templateSets = templateSets
+        self.isEmbedded    = isEmbedded
+        self.readOnly      = readOnly
     }
 
     init(mode: SetLogInputMode,
          templateSets: Binding<[TemplateSet]>,
-         logSets: Binding<[LogSet]> = .constant([])) {
+         logSets: Binding<[LogSet]> = .constant([]),
+         isEmbedded: Bool = false,
+         readOnly: Bool = false) {
         self.mode          = mode
         self._logSets      = logSets
         self._templateSets = templateSets
+        self.isEmbedded    = isEmbedded
+        self.readOnly      = readOnly
     }
 
     // MARK: - Body
@@ -101,30 +111,10 @@ struct SetLogInputView: View {
     var body: some View {
         VStack(spacing: 0) {
             headerRow
-            ScrollView {
-                VStack(spacing: 0) {
-                    ForEach(Array(editableSets.enumerated()), id: \.element.id) { index, _ in
-                        // Rest time pill between row (index-1) and row (index).
-                        // Negative vertical padding makes it reduce its layout footprint
-                        // so it visually overlaps both neighbors. zIndex(10) ensures it
-                        // paints on top of both adjacent content rows (which use zIndex(1)).
-                        if index > 0 {
-                            restTimePill($editableSets[index - 1])
-                                .padding(.vertical, -pillHalfHeight)
-                                .zIndex(10)
-                        }
-                        setRow($editableSets[index], index: index)
-                            .zIndex(1)
-                            // Instant insertion prevents the red delete button from
-                            // flashing through the content HStack during fade-in.
-                            .transition(.asymmetric(insertion: .identity, removal: .opacity))
-                    }
-
-                    // "+" button with the same overlap treatment as the pill.
-                    addSetButton
-                        .padding(.top, editableSets.isEmpty ? 0 : -pillHalfHeight)
-                        .zIndex(10)
-                }
+            if isEmbedded {
+                rowsContent
+            } else {
+                ScrollView { rowsContent }
             }
         }
         .alert("Rest time is up!", isPresented: Binding(
@@ -143,6 +133,39 @@ struct SetLogInputView: View {
                 restTimeText = restTimer.formattedTime(set.rest_time ?? 0)
             }
         }
+    }
+
+    // MARK: - Rows content (shared between standalone and embedded modes)
+
+    @ViewBuilder
+    private var rowsContent: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(editableSets.enumerated()), id: \.element.id) { index, _ in
+                if index > 0 && !readOnly {
+                    // Rest time pill between row (index-1) and row (index).
+                    // Negative vertical padding makes it reduce its layout footprint
+                    // so it visually overlaps both neighbors. zIndex(10) ensures it
+                    // paints on top of both adjacent content rows (which use zIndex(1)).
+                    restTimePill($editableSets[index - 1])
+                        .padding(.vertical, -pillHalfHeight)
+                        .zIndex(10)
+                }
+                setRow($editableSets[index], index: index)
+                    .zIndex(1)
+                    // Instant insertion prevents the red delete button from
+                    // flashing through the content HStack during fade-in.
+                    .transition(.asymmetric(insertion: .identity, removal: .opacity))
+            }
+            if !readOnly {
+                // "+" button with the same overlap treatment as the pill.
+                addSetButton
+                    .padding(.top, editableSets.isEmpty ? 0 : -pillHalfHeight)
+                    .zIndex(10)
+            }
+        }
+        // Explicit background ensures the gap between rows shows brandBackground so
+        // the brandBackground capsule fill blends in correctly.
+        .background(Color.brandBackground)
     }
 
     // MARK: - Header row
@@ -185,6 +208,52 @@ struct SetLogInputView: View {
 
     @ViewBuilder
     private func setRow(_ set: Binding<EditableSet>, index: Int) -> some View {
+        if readOnly {
+            readOnlySetRow(set, index: index)
+        } else {
+            editableSetRow(set, index: index)
+        }
+    }
+
+    private func readOnlySetRow(_ set: Binding<EditableSet>, index: Int) -> some View {
+        let s = set.wrappedValue
+        let workingIdx = editableSets.workingSetIndex(for: s.id)
+        return HStack(spacing: 0) {
+            Text(s.displayLabel(workingSetIndex: workingIdx))
+                .font(.headline)
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.secondary.opacity(0.35), lineWidth: 1)
+                )
+                .frame(width: Col.set, alignment: .leading)
+            Spacer()
+            Text(s.reps.isEmpty ? "–" : s.reps)
+                .multilineTextAlignment(.center)
+                .frame(width: Col.reps)
+            if mode.showsLoad {
+                Text(formatLoad(s.load))
+                    .multilineTextAlignment(.center)
+                    .frame(width: Col.load)
+                    .padding(.leading, 8)
+            }
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .background(Color(.systemGray6))
+    }
+
+    private func formatLoad(_ load: Double?) -> String {
+        guard let load else { return "–" }
+        let rounded = (load * 10).rounded() / 10
+        return rounded.truncatingRemainder(dividingBy: 1) == 0
+            ? String(Int(rounded)) : String(format: "%.1f", rounded)
+    }
+
+    @ViewBuilder
+    private func editableSetRow(_ set: Binding<EditableSet>, index: Int) -> some View {
         let s = set.wrappedValue
         let workingIdx = editableSets.workingSetIndex(for: s.id)
         let previousSet = previousSetFor(s)

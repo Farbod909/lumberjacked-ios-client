@@ -10,7 +10,8 @@ import SwiftUI
 @main
 struct LumberjackedApp: App {
     @StateObject var appEnvironment = LumberjackedAppEnvironment()
-        
+    @State private var restTimer = RestTimerEnvironment()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -21,6 +22,7 @@ struct LumberjackedApp: App {
                     AuthView()
                 }
                 .environmentObject(appEnvironment)
+                .environment(restTimer)
                 .alert(appEnvironment.alertMessage, isPresented: $appEnvironment.showAlert) {
                     Button("OK") { }
                 }

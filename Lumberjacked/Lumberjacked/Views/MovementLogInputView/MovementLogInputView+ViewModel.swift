@@ -1,8 +1,6 @@
 //
-//  MovementLogInputView-ViewModel.swift
+//  MovementLogInputView+ViewModel.swift
 //  Lumberjacked
-//
-//  Created by Farbod Rafezy on 1/22/25.
 //
 
 import SwiftUI
@@ -12,44 +10,22 @@ extension MovementLogInputView {
     class ViewModel {
         var movement: Movement
         var movementLog: MovementLog
-        var workout: Workout?
 
-        var selectedInputStyle = "Equal Sets"
-        let inputStyles = ["Equal Sets", "Custom Sets"]
-
-        var equalSetsMovementLogInput: EqualSetsMovementLogInput
-        var customSetsMovementLogInput: CustomSetsMovementLogInput
-
-        var movementLogInput: MovementLog? {
-            var result = movementLog
-
-            result.for_current_workout = nil
-            result.timestamp = nil
-
-            if selectedInputStyle == "Equal Sets" {
-                let setCount = Int(equalSetsMovementLogInput.sets ?? 0)
-                let reps = Int(equalSetsMovementLogInput.reps ?? 0)
-                let load = equalSetsMovementLogInput.load
-                result.sets = Array(repeating: LogSet(reps: reps, load: load, type: "working"), count: setCount)
-            } else if selectedInputStyle == "Custom Sets" {
-                result.sets = customSetsMovementLogInput.sets
-            } else {
-                return nil
-            }
-
-            // For new logs, workout_movement comes from the movement in the current workout.
-            if movementLog.id == nil {
-                result.workout_movement = movement.workout_movement_id
-            }
-
-            return result
-        }
+        // The sets being edited — two-way bound to SetLogInputView.
+        var sets: [LogSet]
 
         var toolbarActionLoading = false
-        var fieldErrors: [String: String] = [:]
         var alert: AppAlert?
 
+        private let workout: Workout?
         private let api: MovementLogAPIProtocol
+
+        var inputMode: SetLogInputMode {
+            if workout != nil {
+                return .activeWorkout(previousSets: movement.latest_log?.sets)
+            }
+            return .editLog
+        }
 
         init(
             movementLog: MovementLog,
@@ -58,46 +34,17 @@ extension MovementLogInputView {
             api: MovementLogAPIProtocol = LiveMovementLogAPI()
         ) {
             self.movementLog = movementLog
-            self.movement = movement
-            self.workout = workout
-            self.api = api
-            self.equalSetsMovementLogInput = .init(movementLog: movementLog)
-            self.customSetsMovementLogInput = .init(movementLog: movementLog)
+            self.movement    = movement
+            self.workout     = workout
+            self.api         = api
+            self.sets        = movementLog.sets ?? []
         }
 
         func canSave() -> Bool {
-            if selectedInputStyle == "Custom Sets" {
-                return false
-            } else if selectedInputStyle == "Equal Sets" {
-                if let sets = equalSetsMovementLogInput.sets,
-                   let reps = equalSetsMovementLogInput.reps {
-                    return sets > 0 && reps > 0
-                }
-                return false
-            }
-            return false
+            !sets.isEmpty && sets.allSatisfy { $0.reps > 0 }
         }
 
-        @MainActor
-        func attemptDeleteLog(dismissAction: () -> Void) async {
-            guard let movementLogId = movementLog.id else {
-                print("No Movement ID")
-                return
-            }
-            toolbarActionLoading = true
-            fieldErrors = [:]
-            do {
-                try await api.deleteLog(movementLogId: movementLogId)
-                toolbarActionLoading = false
-                dismissAction()
-            } catch let error as RemoteNetworkingError {
-                handleNetworkError(error)
-                toolbarActionLoading = false
-            } catch {
-                alert = AppAlert(title: "Error", message: error.localizedDescription)
-                toolbarActionLoading = false
-            }
-        }
+        // MARK: - Save / Delete
 
         @MainActor
         func formSubmit(dismissAction: () -> Void) async {
@@ -109,45 +56,58 @@ extension MovementLogInputView {
                 success = await attemptUpdateLog()
             }
             toolbarActionLoading = false
-            if success {
+            if success { dismissAction() }
+        }
+
+        @MainActor
+        func attemptDeleteLog(dismissAction: () -> Void) async {
+            guard let id = movementLog.id else { return }
+            toolbarActionLoading = true
+            do {
+                try await api.deleteLog(movementLogId: id)
+                toolbarActionLoading = false
                 dismissAction()
+            } catch let error as RemoteNetworkingError {
+                handleNetworkError(error)
+                toolbarActionLoading = false
+            } catch {
+                alert = AppAlert(title: "Error", message: error.localizedDescription)
+                toolbarActionLoading = false
             }
         }
 
-        func attemptUpdateLog() async -> Bool {
-            guard let movementLogId = movementLog.id else {
-                print("No Movement ID")
-                return false
+        private func buildLogForSubmission() -> MovementLog {
+            var result = movementLog
+            result.sets = sets
+            result.for_current_workout = nil
+            result.timestamp = nil
+            if movementLog.id == nil {
+                result.workout_movement = movement.workout_movement_id
             }
-            guard let movementLogInput = movementLogInput else {
-                print("Input cannot be unwrapped")
-                return false
-            }
-            fieldErrors = [:]
+            return result
+        }
+
+        private func attemptSaveNewLog() async -> Bool {
             do {
-                _ = try await api.updateLog(movementLogId: movementLogId, movementLog: movementLogInput)
+                _ = try await api.createLog(movementLog: buildLogForSubmission())
                 return true
             } catch let error as RemoteNetworkingError {
                 handleNetworkError(error)
             } catch {
-                alert = AppAlert(title: "Error", message: error.localizedDescription)
+                await MainActor.run { alert = AppAlert(title: "Error", message: error.localizedDescription) }
             }
             return false
         }
 
-        func attemptSaveNewLog() async -> Bool {
-            guard let movementLogInput = movementLogInput else {
-                print("Input cannot be unwrapped")
-                return false
-            }
-            fieldErrors = [:]
+        private func attemptUpdateLog() async -> Bool {
+            guard let id = movementLog.id else { return false }
             do {
-                _ = try await api.createLog(movementLog: movementLogInput)
+                _ = try await api.updateLog(movementLogId: id, movementLog: buildLogForSubmission())
                 return true
             } catch let error as RemoteNetworkingError {
                 handleNetworkError(error)
             } catch {
-                alert = AppAlert(title: "Error", message: error.localizedDescription)
+                await MainActor.run { alert = AppAlert(title: "Error", message: error.localizedDescription) }
             }
             return false
         }
@@ -162,7 +122,7 @@ extension MovementLogInputView {
                 if key == "detail" || key == "non_field_errors" {
                     alert = AppAlert(title: "Error", message: message)
                 } else {
-                    fieldErrors[key] = message
+                    alert = AppAlert(title: "Error (\(key))", message: message)
                 }
             }
         }

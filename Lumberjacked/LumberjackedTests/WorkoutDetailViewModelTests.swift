@@ -7,30 +7,52 @@ import XCTest
 
 final class WorkoutDetailViewModelTests: XCTestCase {
 
+    private func makeWorkout(withMovements movements: [Movement] = []) -> Workout {
+        Workout(id: 42, start_timestamp: Date(), end_timestamp: Date(), movements_details: movements)
+    }
+
     func testInitWithWorkoutStoresWorkout() {
-        let workout = Workout(id: 42, start_timestamp: Date(), end_timestamp: Date())
-        let vm = WorkoutDetailView.ViewModel(workout: workout)
+        let vm = WorkoutDetailView.ViewModel(workout: makeWorkout())
         XCTAssertEqual(vm.workout.id, 42)
     }
 
     func testShowDeleteConfirmationAlertStartsFalse() {
-        let workout = Workout(id: 1, start_timestamp: Date())
-        let vm = WorkoutDetailView.ViewModel(workout: workout)
+        let vm = WorkoutDetailView.ViewModel(workout: makeWorkout())
         XCTAssertFalse(vm.showDeleteConfirmationAlert)
     }
 
-    func testDestinationStartsNil() {
-        let vm = WorkoutDetailView.ViewModel(workout: Workout(id: 1, start_timestamp: Date()))
-        XCTAssertNil(vm.destination)
+    func testIsDirtyStartsFalse() {
+        let log = MovementLog(id: 1, sets: [LogSet(reps: 10, load: 135, type: "working")], notes: "")
+        let movement = Movement(id: 1, name: "Bench Press", notes: "", recorded_log: log)
+        let vm = WorkoutDetailView.ViewModel(workout: makeWorkout(withMovements: [movement]))
+        XCTAssertFalse(vm.isDirty)
     }
 
-    func testMovementLogTappedSetsDestination() {
-        let vm = WorkoutDetailView.ViewModel(workout: Workout(id: 1, start_timestamp: Date()))
-        let log = MovementLog(id: 3, workout_movement: 1, sets: [LogSet(reps: 10, load: 135, type: "working")], notes: "")
-        let movement = Movement(id: 1, name: "Bench Press", notes: "")
+    func testIsDirtyAfterChangingLogNotes() {
+        let log = MovementLog(id: 1, sets: [], notes: "original")
+        let movement = Movement(id: 1, name: "Bench Press", notes: "", recorded_log: log)
+        let vm = WorkoutDetailView.ViewModel(workout: makeWorkout(withMovements: [movement]))
+        vm.editableEntries[0].logNotes = "changed"
+        XCTAssertTrue(vm.isDirty)
+    }
 
-        vm.movementLogTapped(log, movement: movement)
+    func testIsDirtyAfterChangingLogSets() {
+        let log = MovementLog(id: 1, sets: [LogSet(reps: 10, load: 135, type: "working")], notes: "")
+        let movement = Movement(id: 1, name: "Bench Press", notes: "", recorded_log: log)
+        let vm = WorkoutDetailView.ViewModel(workout: makeWorkout(withMovements: [movement]))
+        vm.editableEntries[0].logSets = [LogSet(reps: 12, load: 135, type: "working")]
+        XCTAssertTrue(vm.isDirty)
+    }
 
-        XCTAssertEqual(vm.destination, .movementLogInput(log, movement))
+    func testEditableEntriesInitializedFromRecordedLog() {
+        let sets = [LogSet(reps: 8, load: 225, type: "working")]
+        let log = MovementLog(id: 5, sets: sets, notes: "felt strong")
+        let movement = Movement(id: 1, name: "Deadlift", notes: "", recorded_log: log)
+        let vm = WorkoutDetailView.ViewModel(workout: makeWorkout(withMovements: [movement]))
+
+        XCTAssertEqual(vm.editableEntries.count, 1)
+        XCTAssertEqual(vm.editableEntries[0].logSets, sets)
+        XCTAssertEqual(vm.editableEntries[0].logNotes, "felt strong")
+        XCTAssertEqual(vm.editableEntries[0].existingLogId, 5)
     }
 }

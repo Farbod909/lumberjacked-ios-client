@@ -2,12 +2,46 @@
 //  CurrentWorkout-ViewModel.swift
 //  Lumberjacked
 //
-//  Created by Farbod Rafezy on 1/21/25.
-//
 
 import SwiftUI
 
+// MARK: - Editable movement entry
+
 extension CurrentWorkoutView {
+
+    struct EditableMovementEntry: Identifiable {
+        let movement: Movement
+        var movementNotes: String
+        var logSets: [LogSet]
+        var logNotes: String
+        var existingLogId: UInt64?
+
+        var id: UInt64 { movement.id ?? 0 }
+
+        init(from movement: Movement) {
+            self.movement = movement
+            self.movementNotes = movement.notes
+            if let log = movement.latest_log, log.for_current_workout == true {
+                // In-progress session: restore exactly what was saved
+                self.logSets       = log.sets ?? []
+                self.logNotes      = log.notes
+                self.existingLogId = log.id
+            } else if let previousSets = movement.latest_log?.sets, !previousSets.isEmpty {
+                // Pre-populate from previous log (same count, reps, and load)
+                self.logSets       = previousSets
+                self.logNotes      = ""
+                self.existingLogId = nil
+            } else {
+                // No previous log: seed one empty working set
+                self.logSets       = [LogSet(reps: 0, load: nil, type: "working", rest_time: nil)]
+                self.logNotes      = ""
+                self.existingLogId = nil
+            }
+        }
+    }
+
+    // MARK: - ViewModel
+
     @Observable
     class ViewModel: LoadingTrackable {
         enum LoadingKey { case currentWorkout, movements, addMovement, endWorkout, deleteWorkout }
@@ -26,6 +60,7 @@ extension CurrentWorkoutView {
         var destination: Destination?
 
         var currentWorkout: Workout?
+        var editableEntries: [EditableMovementEntry] = []
         var showCreateWorkoutSheet = false
         var alert: AppAlert?
 
@@ -39,31 +74,32 @@ extension CurrentWorkoutView {
 
         private let workoutAPI: WorkoutAPIProtocol
         private let movementAPI: MovementAPIProtocol
+        private let movementLogAPI: MovementLogAPIProtocol
 
         init(
             workoutAPI: WorkoutAPIProtocol = LiveWorkoutAPI(),
-            movementAPI: MovementAPIProtocol = LiveMovementAPI()
+            movementAPI: MovementAPIProtocol = LiveMovementAPI(),
+            movementLogAPI: MovementLogAPIProtocol = LiveMovementLogAPI()
         ) {
             self.workoutAPI = workoutAPI
             self.movementAPI = movementAPI
+            self.movementLogAPI = movementLogAPI
         }
 
-        func settingsTapped() {
-            destination = .settings
-        }
+        func settingsTapped() { destination = .settings }
+        func editWorkoutTapped() { destination = .editWorkout }
 
-        func editWorkoutTapped() {
-            destination = .editWorkout
-        }
+        // MARK: - Workout loading
 
         func attemptGetCurrentWorkout() async {
             try? await withLoading(.currentWorkout) {
                 do {
                     self.currentWorkout = try await self.workoutAPI.getCurrentWorkout()
+                    self.refreshEditableEntries(from: self.currentWorkout!)
                 } catch let error as RemoteNetworkingError {
-                    // 404 means no active workout — not a true error
                     if error.statusCode == 404 {
                         self.currentWorkout = nil
+                        self.editableEntries = []
                     } else {
                         self.handleNetworkError(error)
                     }
@@ -73,12 +109,51 @@ extension CurrentWorkoutView {
             }
         }
 
+        // Merges server state into editableEntries, preserving in-progress edits for
+        // movements already known. New movements (e.g. just added) start fresh.
+        private func refreshEditableEntries(from workout: Workout) {
+            let movements = workout.movements_details ?? []
+            editableEntries = movements.map { movement in
+                if let existing = editableEntries.first(where: { $0.movement.id == movement.id }) {
+                    return existing
+                }
+                return EditableMovementEntry(from: movement)
+            }
+        }
+
+        // MARK: - Finish workout (saves all logs + notes, then ends)
+
         func attemptEndCurrentWorkout() async {
-            guard let id = currentWorkout?.id else { return }
+            guard let workoutId = currentWorkout?.id else { return }
             try? await withLoading(.endWorkout) {
                 do {
-                    try await self.workoutAPI.endWorkout(id: id)
+                    // 1. Save any changed movement notes
+                    for entry in self.editableEntries {
+                        guard let movementId = entry.movement.id,
+                              entry.movementNotes != entry.movement.notes else { continue }
+                        var updated = entry.movement
+                        updated.notes = entry.movementNotes
+                        _ = try await self.movementAPI.updateMovement(movementId: movementId, movement: updated)
+                    }
+                    // 2. Save movement logs for entries that have at least one set with reps > 0
+                    for entry in self.editableEntries {
+                        let validSets = entry.logSets.filter { $0.reps > 0 }
+                        guard !validSets.isEmpty else { continue }
+                        var log = MovementLog(sets: validSets, notes: entry.logNotes)
+                        log.for_current_workout = nil
+                        log.timestamp = nil
+                        if let existingId = entry.existingLogId {
+                            _ = try await self.movementLogAPI.updateLog(
+                                movementLogId: existingId, movementLog: log)
+                        } else {
+                            log.workout_movement = entry.movement.workout_movement_id
+                            _ = try await self.movementLogAPI.createLog(movementLog: log)
+                        }
+                    }
+                    // 3. End the workout
+                    try await self.workoutAPI.endWorkout(id: workoutId)
                     self.currentWorkout = nil
+                    self.editableEntries = []
                 } catch let error as RemoteNetworkingError {
                     self.handleNetworkError(error)
                 } catch {
@@ -93,6 +168,7 @@ extension CurrentWorkoutView {
                 do {
                     try await self.workoutAPI.deleteWorkout(id: id)
                     self.currentWorkout = nil
+                    self.editableEntries = []
                 } catch let error as RemoteNetworkingError {
                     self.handleNetworkError(error)
                 } catch {
@@ -100,6 +176,16 @@ extension CurrentWorkoutView {
                 }
             }
         }
+
+        // MARK: - Movement reorder
+
+        func persistMovementOrder() async {
+            guard let workoutId = currentWorkout?.id else { return }
+            let movementIds = editableEntries.compactMap { $0.movement.id }
+            _ = try? await workoutAPI.updateWorkout(workoutId: workoutId, movements: movementIds)
+        }
+
+        // MARK: - Movements catalog
 
         func attemptGetMovements() async {
             try? await withLoading(.movements) {

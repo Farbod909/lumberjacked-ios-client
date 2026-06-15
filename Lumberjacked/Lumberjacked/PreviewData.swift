@@ -9,9 +9,67 @@ enum PreviewData {
 
     // MARK: - Log Sets
 
-    static func workingSets(reps: Int, load: Double, count: Int) -> [LogSet] {
-        Array(repeating: LogSet(reps: reps, load: load, type: "working"), count: count)
+    static func workingSets(reps: Int, load: Double, count: Int, restTime: Int? = nil) -> [LogSet] {
+        Array(repeating: LogSet(reps: reps, load: load, type: "working", rest_time: restTime), count: count)
     }
+
+    static let setsWithRestTime: [LogSet] = [
+        LogSet(reps: 8,  load: 135, type: "warmup",  rest_time: 60),
+        LogSet(reps: 10, load: 155, type: "working", rest_time: 120),
+        LogSet(reps: 10, load: 155, type: "working", rest_time: 120),
+        LogSet(reps: 8,  load: 155, type: "failure", rest_time: nil),
+    ]
+
+    static let mixedTypeSets: [LogSet] = [
+        LogSet(reps: 5,  load: 225, type: "warmup",  rest_time: 60),
+        LogSet(reps: 5,  load: 275, type: "working", rest_time: 180),
+        LogSet(reps: 5,  load: 275, type: "working", rest_time: 180),
+        LogSet(reps: 5,  load: 275, type: "working", rest_time: 180),
+        LogSet(reps: 3,  load: 275, type: "failure", rest_time: nil),
+    ]
+
+    // MARK: - Movement Log Templates
+
+    static let benchPressTemplate = MovementLogTemplate(
+        id: 1,
+        author: 1,
+        name: "Bench 3×10",
+        movement: 1,
+        sets: [
+            TemplateSet(reps: "8",    type: "warmup",  rest_time: 60),
+            TemplateSet(reps: "8-10", type: "working", rest_time: 120),
+            TemplateSet(reps: "8-10", type: "working", rest_time: 120),
+            TemplateSet(reps: "8-10", type: "working", rest_time: 120),
+        ]
+    )
+
+    static let squatTemplate = MovementLogTemplate(
+        id: 2,
+        author: 1,
+        name: "Squat 5×5",
+        movement: 2,
+        sets: [
+            TemplateSet(reps: "5",   type: "warmup",  rest_time: 90),
+            TemplateSet(reps: "5",   type: "working", rest_time: 180),
+            TemplateSet(reps: "5",   type: "working", rest_time: 180),
+            TemplateSet(reps: "5",   type: "working", rest_time: 180),
+            TemplateSet(reps: "5",   type: "working", rest_time: 180),
+            TemplateSet(reps: "5",   type: "working", rest_time: 180),
+        ]
+    )
+
+    static let myorepTemplate = MovementLogTemplate(
+        id: 3,
+        author: 1,
+        name: "Cable Row Myoreps",
+        movement: 8,
+        sets: [
+            TemplateSet(reps: "15",  type: "working", rest_time: 90),
+            TemplateSet(reps: "5+",  type: "myoreps", rest_time: 30),
+            TemplateSet(reps: "5+",  type: "myoreps", rest_time: 30),
+            TemplateSet(reps: "5+",  type: "myoreps", rest_time: nil),
+        ]
+    )
 
     // MARK: - Movement Logs
 

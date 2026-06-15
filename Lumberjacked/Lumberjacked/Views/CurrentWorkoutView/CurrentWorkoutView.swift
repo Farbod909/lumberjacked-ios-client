@@ -11,7 +11,14 @@ struct CurrentWorkoutView: View {
     @State var viewModel: ViewModel
     @State var timeElapsed: String = "00:00"
     @EnvironmentObject var appEnvironment: LumberjackedAppEnvironment
+    @Environment(RestTimerEnvironment.self) private var restTimer
     @FocusState var addMovementTextFieldFocusState: Bool
+
+    // Movement drag-to-reorder state
+    @State private var isReordering = false
+    @State private var reorderDraggingIndex: Int? = nil
+    @State private var reorderDragStartIndex: Int = 0
+    private let reorderRowHeight: CGFloat = 52
 
     init(viewModel: ViewModel = ViewModel()) {
         _viewModel = State(initialValue: viewModel)
@@ -23,6 +30,74 @@ struct CurrentWorkoutView: View {
         addMovementTextFieldFocusState = false
         viewModel.showAddMovementOverlay = false
     }
+
+    // MARK: - Floating buttons
+
+    var addMovementButton: some View {
+        Button {
+            Task {
+                viewModel.searchText = ""
+                viewModel.showAddMovementOverlay = true
+                addMovementTextFieldFocusState = true
+                await viewModel.attemptGetMovements()
+            }
+        } label: {
+            Label("Add Movement", systemImage: "plus")
+                .font(.headline)
+        }
+        .padding()
+        .background(.ultraThinMaterial)
+        .foregroundStyle(Color.brandPrimaryText)
+        .clipShape(RoundedRectangle(cornerRadius: 25))
+    }
+
+    var endWorkoutButton: some View {
+        Button {
+            viewModel.alert = AppAlert(
+                title: "Finish Workout",
+                message: "If you haven't recorded a log for a movement it will be marked as skipped.",
+                confirmAction: { Task { await viewModel.attemptEndCurrentWorkout() } },
+                confirmLabel: "Save Workout",
+                cancelLabel: "Cancel",
+                destructiveAction: { Task { await viewModel.attemptDeleteCurrentWorkout() } },
+                destructiveLabel: "Discard Workout"
+            )
+        } label: {
+            Label("Finish", systemImage: "flag.pattern.checkered")
+                .font(.headline)
+        }
+        .padding()
+        .background(.ultraThinMaterial)
+        .foregroundStyle(Color.accentColor)
+        .clipShape(RoundedRectangle(cornerRadius: 25))
+    }
+
+    // MARK: - Timer chip
+
+    var timerView: some View {
+        HStack(alignment: .bottom) {
+            Text(timeElapsed)
+                .font(.largeTitle)
+                .onReceive(timer) { _ in
+                    let interval = Date.now.timeIntervalSince(
+                        viewModel.currentWorkout?.start_timestamp ?? Date.now)
+                    let totalMinutes = Int(interval / 60)
+                    let hours = totalMinutes / 60
+                    let minutes = totalMinutes % 60
+                    timeElapsed = hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+                }
+            Text("elapsed")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .textCase(.uppercase)
+                .padding(.bottom, 6)
+        }
+        .padding(EdgeInsets(top: 8, leading: 18, bottom: 8, trailing: 18))
+        .background(.thinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 25))
+    }
+
+    // MARK: - New workout options
 
     var newWorkoutOptionsView: some View {
         VStack {
@@ -52,23 +127,134 @@ struct CurrentWorkoutView: View {
         }
     }
 
-    var addMovementButton: some View {
-        Button {
-            Task {
-                viewModel.searchText = ""
-                viewModel.showAddMovementOverlay = true
-                addMovementTextFieldFocusState = true
-                await viewModel.attemptGetMovements()
+    // MARK: - Active workout view
+
+    var currentWorkoutView: some View {
+        ZStack {
+            VStack {
+                ScrollView {
+                    // Hidden duplicate keeps the scroll area the right width
+                    // so the fixed timer chip doesn't shift content on appear.
+                    timerView
+                        .padding(.top, 10)
+                        .padding(.bottom, 20)
+                        .hidden()
+
+                    if isReordering {
+                        // Compact name-only rows for drag-to-reorder
+                        VStack(spacing: 8) {
+                            ForEach(
+                                Array(viewModel.editableEntries.enumerated()),
+                                id: \.element.id
+                            ) { index, entry in
+                                compactReorderRow(entry, index: index)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                    } else {
+                        ForEach($viewModel.editableEntries) { $entry in
+                            InlineMovementLogView(
+                                movement: entry.movement,
+                                movementNotes: $entry.movementNotes,
+                                logNotes: $entry.logNotes,
+                                logSets: $entry.logSets,
+                                mode: .activeWorkout(
+                                    previousSets: entry.movement.latest_log?.sets),
+                                movementNotesEditable: true,
+                                onReorderTapped: {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        isReordering = true
+                                    }
+                                }
+                            )
+                        }
+                    }
+
+                    Spacer().frame(height: 80)
+                }
+                .scrollIndicators(.hidden)
             }
-        } label: {
-            Label("Add Movement", systemImage: "plus")
-                .font(.headline)
+
+            VStack {
+                timerView
+                    .padding(.top, 10)
+                    .padding(.bottom, 20)
+                Spacer()
+            }
+
+            HStack {
+                Spacer().frame(width: 25)
+                VStack {
+                    Spacer()
+                    addMovementButton
+                    Spacer().frame(height: 20)
+                }
+                Spacer()
+                VStack {
+                    Spacer()
+                    endWorkoutButton
+                    Spacer().frame(height: 20)
+                }
+                Spacer().frame(width: 25)
+            }
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .foregroundStyle(Color.brandPrimaryText)
-        .clipShape(RoundedRectangle(cornerRadius: 25))
     }
+
+    // MARK: - Compact reorder row
+
+    private func compactReorderRow(
+        _ entry: EditableMovementEntry, index: Int
+    ) -> some View {
+        HStack(spacing: 12) {
+            Text(entry.movement.name)
+                .font(.headline)
+                .foregroundStyle(.primary)
+            Spacer()
+            Image(systemName: "line.3.horizontal")
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .shadow(
+            color: .black.opacity(reorderDraggingIndex == index ? 0.18 : 0),
+            radius: 6, y: 3
+        )
+        .gesture(
+            DragGesture(minimumDistance: 5, coordinateSpace: .global)
+                .onChanged { value in
+                    if reorderDraggingIndex == nil {
+                        reorderDraggingIndex = index
+                        reorderDragStartIndex = index
+                    }
+                    performMovementReorder(offset: value.translation.height)
+                }
+                .onEnded { _ in
+                    reorderDraggingIndex = nil
+                }
+        )
+    }
+
+    private func performMovementReorder(offset: CGFloat) {
+        guard let curIdx = reorderDraggingIndex else { return }
+        let steps = Int((offset / reorderRowHeight).rounded())
+        let targetIdx = max(
+            0,
+            min(viewModel.editableEntries.count - 1, reorderDragStartIndex + steps)
+        )
+        guard targetIdx != curIdx else { return }
+        withAnimation(.easeInOut(duration: 0.15)) {
+            viewModel.editableEntries.move(
+                fromOffsets: IndexSet(integer: curIdx),
+                toOffset: targetIdx > curIdx ? targetIdx + 1 : targetIdx
+            )
+        }
+        reorderDraggingIndex = targetIdx
+    }
+
+    // MARK: - Add movement overlay
 
     var addMovementSearchFieldView: some View {
         HStack {
@@ -76,7 +262,7 @@ struct CurrentWorkoutView: View {
                 "",
                 text: $viewModel.searchText,
                 prompt: Text("Enter movement name...")
-                .foregroundStyle(.brandPrimaryText.opacity(0.6))
+                    .foregroundStyle(.brandPrimaryText.opacity(0.6))
             )
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
@@ -98,105 +284,9 @@ struct CurrentWorkoutView: View {
             }
             .opacity(viewModel.searchText.isEmpty ? 0 : 1)
         }
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.brandSecondary)
-        )
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.brandSecondary))
         .padding(.horizontal, 16)
         .clipShape(RoundedRectangle(cornerRadius: 10))
-    }
-
-    var endWorkoutButton: some View {
-        Button {
-            viewModel.alert = AppAlert(
-                title: "Finish Workout",
-                message: "If you haven't recorded a log for a movement it will be marked as skipped.",
-                confirmAction: { Task { await viewModel.attemptEndCurrentWorkout() } },
-                confirmLabel: "Save Workout",
-                cancelLabel: "Cancel",
-                destructiveAction: { Task { await viewModel.attemptDeleteCurrentWorkout() } },
-                destructiveLabel: "Discard Workout"
-            )
-        } label: {
-            Label("Finish", systemImage: "flag.pattern.checkered")
-                .font(.headline)
-        }
-        .padding()
-        .background(.ultraThinMaterial)
-        .foregroundStyle(Color.accentColor)
-        .clipShape(RoundedRectangle(cornerRadius: 25))
-    }
-
-    var timerView: some View {
-        HStack(alignment: .bottom) {
-            Text(timeElapsed)
-                .font(.largeTitle)
-                .onReceive(timer) { _ in
-                    let interval = Date.now.timeIntervalSince(viewModel.currentWorkout?.start_timestamp ?? Date.now)
-
-                    let totalMinutes = Int(interval / 60)
-                    let hours = totalMinutes / 60
-                    let minutes = totalMinutes % 60
-
-                    if hours > 0 {
-                        timeElapsed = "\(hours)h \(minutes)m"
-                    } else {
-                        timeElapsed = "\(minutes)m"
-                    }
-                }
-            Text("elapsed")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .textCase(.uppercase)
-                .padding(.bottom, 6)
-        }
-        .padding(EdgeInsets(top: 8, leading: 18, bottom: 8, trailing: 18))
-        .background(.thinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 25))
-    }
-
-    var currentWorkoutView: some View {
-        ZStack {
-            VStack {
-                ScrollView {
-                    // hidden timerView so that it doesn't cover the scrollable items below it.
-                    timerView
-                        .padding(.top, 10)
-                        .padding(.bottom, 20)
-                        .hidden()
-                    ForEach(viewModel.currentWorkout?.movements_details ?? [], id: \.self) { movement in
-                        CurrentWorkoutMovementView(movement: movement)
-                    }
-                    // placeholder list item so that the view is already at the correct width.
-                    CurrentWorkoutMovementView(movement: Movement(name: "", notes: ""))
-                        .hidden()
-                    Spacer().frame(height: 50)
-                }
-                .scrollIndicators(.hidden)
-            }
-            .padding(.horizontal, 16)
-            VStack {
-                timerView
-                    .padding(.top, 10)
-                    .padding(.bottom, 20)
-                Spacer()
-            }
-            HStack {
-                Spacer().frame(width: 25)
-                VStack {
-                    Spacer()
-                    addMovementButton
-                    Spacer().frame(height: 20)
-                }
-                Spacer()
-                VStack {
-                    Spacer()
-                    endWorkoutButton
-                    Spacer().frame(height: 20)
-                }
-                Spacer().frame(width: 25)
-            }
-        }
     }
 
     var movementSearchResultsList: some View {
@@ -208,9 +298,11 @@ struct CurrentWorkoutView: View {
                             if let newMovement = await viewModel.attemptQuickAddMovement(
                                 movementName: formattedSearchText) {
                                 if let _ = viewModel.currentWorkout {
-                                    await viewModel.addMovementToCurrentWorkout(movementId: newMovement.id!)
+                                    await viewModel.addMovementToCurrentWorkout(
+                                        movementId: newMovement.id!)
                                 } else {
-                                    await viewModel.createWorkoutWithInitialMovement(movementId: newMovement.id!)
+                                    await viewModel.createWorkoutWithInitialMovement(
+                                        movementId: newMovement.id!)
                                 }
                                 await viewModel.attemptGetCurrentWorkout()
                             }
@@ -218,7 +310,10 @@ struct CurrentWorkoutView: View {
                         }
                     } label: {
                         VStack(alignment: .leading) {
-                            Label("Quick Add \"\(formattedSearchText)\"", systemImage: "plus")
+                            Label(
+                                "Quick Add \"\(formattedSearchText)\"",
+                                systemImage: "plus"
+                            )
                             Text("Quick-added movements can be edited later.")
                                 .foregroundStyle(.gray)
                                 .font(.caption2)
@@ -233,14 +328,17 @@ struct CurrentWorkoutView: View {
                 ForEach(Array(movementSearchResults), id: \.self) { (movement: Movement) in
                     Button {
                         Task {
-                            if let movementIds = self.viewModel.currentWorkout?.movements_details?.map({ $0.id }),
+                            if let movementIds = self.viewModel.currentWorkout?
+                                .movements_details?.map({ $0.id }),
                                movementIds.contains(movement.id) {
                                 return
                             }
                             if let _ = viewModel.currentWorkout {
-                                await viewModel.addMovementToCurrentWorkout(movementId: movement.id!)
+                                await viewModel.addMovementToCurrentWorkout(
+                                    movementId: movement.id!)
                             } else {
-                                await viewModel.createWorkoutWithInitialMovement(movementId: movement.id!)
+                                await viewModel.createWorkoutWithInitialMovement(
+                                    movementId: movement.id!)
                             }
                             await viewModel.attemptGetCurrentWorkout()
                             dismissAddMovementOverlay()
@@ -249,7 +347,8 @@ struct CurrentWorkoutView: View {
                         HStack {
                             Text(movement.name)
                             Spacer()
-                            if let movementIds = self.viewModel.currentWorkout?.movements_details?.map({ $0.id }),
+                            if let movementIds = self.viewModel.currentWorkout?
+                                .movements_details?.map({ $0.id }),
                                movementIds.contains(movement.id) {
                                 Text("Added").font(.caption2).textCase(.uppercase)
                             }
@@ -266,40 +365,37 @@ struct CurrentWorkoutView: View {
     }
 
     var movementSearchResults: [Movement] {
-        if viewModel.searchText.isEmpty {
-            return []
-        } else {
-            return viewModel.allMovements.filter {
-                $0.name.lowercased().contains(viewModel.searchText.lowercased())
-            }
+        viewModel.searchText.isEmpty ? [] : viewModel.allMovements.filter {
+            $0.name.lowercased().contains(viewModel.searchText.lowercased())
         }
     }
 
     var formattedSearchText: String {
-        return viewModel.searchText.trimmingCharacters(in: CharacterSet(charactersIn: " ")).capitalized
+        viewModel.searchText.trimmingCharacters(in: .whitespaces).capitalized
     }
 
-    var addMovementView : some View {
+    var addMovementView: some View {
         VStack {
             addMovementSearchFieldView
             if viewModel.searchText.isEmpty {
                 Spacer()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onEnded { value in
-                            if value.translation.height > 0 {
-                                dismissAddMovementOverlay()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onEnded { value in
+                                if value.translation.height > 0 {
+                                    dismissAddMovementOverlay()
+                                }
                             }
-                        }
-                )
-
+                    )
             } else {
                 movementSearchResultsList
             }
         }
     }
+
+    // MARK: - Body
 
     var body: some View {
         NavigationStack {
@@ -309,7 +405,10 @@ struct CurrentWorkoutView: View {
                 currentWorkoutView
                     .opacity(viewModel.currentWorkout != nil ? 1 : 0)
                 ProgressView()
-                    .opacity(viewModel.currentWorkout == nil && viewModel.isLoading(.currentWorkout) ? 1 : 0)
+                    .opacity(
+                        viewModel.currentWorkout == nil && viewModel.isLoading(.currentWorkout)
+                            ? 1 : 0
+                    )
 
                 if viewModel.currentWorkout == nil && !viewModel.isLoading(.currentWorkout) {
                     newWorkoutOptionsView
@@ -324,32 +423,30 @@ struct CurrentWorkoutView: View {
                 if viewModel.showAddMovementOverlay {
                     addMovementView
                         .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .background(.ultraThinMaterial.opacity(viewModel.showAddMovementOverlay ? 1 : 0))
+                        .background(
+                            .ultraThinMaterial.opacity(
+                                viewModel.showAddMovementOverlay ? 1 : 0))
                 }
             }
             .animation(.default, value: viewModel.currentWorkout)
-            .animation(.spring(duration: 0.3, bounce: 0.05), value: viewModel.showAddMovementOverlay)
+            .animation(
+                .spring(duration: 0.3, bounce: 0.05),
+                value: viewModel.showAddMovementOverlay
+            )
             .task(id: appEnvironment.isNotAuthenticated) {
                 guard !appEnvironment.isNotAuthenticated else { return }
                 await viewModel.attemptGetCurrentWorkout()
                 await viewModel.attemptGetMovements()
             }
-            .sheet(isPresented: $viewModel.showCreateWorkoutSheet, onDismiss: {
-                Task {
-                    await viewModel.attemptGetCurrentWorkout()
-                }
-            }) {
+            .sheet(
+                isPresented: $viewModel.showCreateWorkoutSheet,
+                onDismiss: { Task { await viewModel.attemptGetCurrentWorkout() } }
+            ) {
                 CreateWorkoutView()
             }
             .navigationDestination(for: Movement.self) { movement in
-                MovementDetailView(viewModel: MovementDetailView.ViewModel(movement: movement))
-            }
-            .navigationDestination(for: MovementLogDestination.self) { movementLogDestination in
-                MovementLogInputView(
-                    viewModel: MovementLogInputView.ViewModel(
-                        movementLog: movementLogDestination.log,
-                        movement: movementLogDestination.movement,
-                        workout: viewModel.currentWorkout!))
+                MovementDetailView(
+                    viewModel: MovementDetailView.ViewModel(movement: movement))
             }
             .navigationDestination(item: $viewModel.destination) { dest in
                 switch dest {
@@ -357,35 +454,38 @@ struct CurrentWorkoutView: View {
                     SettingsView()
                 case .editWorkout:
                     MovementSelectorView(
-                        viewModel: MovementSelectorView.ViewModel(workout: viewModel.currentWorkout)
-                    )
+                        viewModel: MovementSelectorView.ViewModel(
+                            workout: viewModel.currentWorkout))
                 }
             }
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
-                    Button {
-                        viewModel.settingsTapped()
-                    } label: {
+                    Button { viewModel.settingsTapped() } label: {
                         Image(systemName: "gearshape")
                     }
                 }
+                ToolbarItem(placement: .principal) {
+                    if restTimer.isRunning {
+                        RestTimerNavBarView()
+                    }
+                }
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    if viewModel.showAddMovementOverlay {
-                        Button("Dismiss") {
-                            dismissAddMovementOverlay()
+                    if isReordering {
+                        Button("Done") {
+                            withAnimation(.easeInOut(duration: 0.2)) { isReordering = false }
+                            Task { await viewModel.persistMovementOrder() }
                         }
+                        .fontWeight(.semibold)
+                    } else if viewModel.showAddMovementOverlay {
+                        Button("Dismiss") { dismissAddMovementOverlay() }
                     } else if viewModel.currentWorkout != nil {
                         Menu {
-                            Button {
-                                viewModel.editWorkoutTapped()
-                            } label: {
-                                Label("Edit workout", systemImage: "pencil.circle")
-                            }
-
                             Button(role: .destructive) {
                                 viewModel.alert = AppAlert(
                                     title: "Cancel Workout",
-                                    confirmAction: { Task { await viewModel.attemptDeleteCurrentWorkout() } },
+                                    confirmAction: {
+                                        Task { await viewModel.attemptDeleteCurrentWorkout() }
+                                    },
                                     confirmLabel: "Yes",
                                     cancelLabel: "No"
                                 )
@@ -412,6 +512,7 @@ struct CurrentWorkoutView: View {
             movementAPI: MockMovementAPI()))
     }
     .environmentObject(LumberjackedAppEnvironment())
+    .environment(RestTimerEnvironment())
 }
 
 #Preview("No Workout Yet") {
@@ -421,5 +522,6 @@ struct CurrentWorkoutView: View {
             movementAPI: MockMovementAPI()))
     }
     .environmentObject(LumberjackedAppEnvironment())
+    .environment(RestTimerEnvironment())
 }
 #endif

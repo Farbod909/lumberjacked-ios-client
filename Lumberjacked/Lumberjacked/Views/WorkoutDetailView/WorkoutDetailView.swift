@@ -43,45 +43,23 @@ struct WorkoutDetailView: View {
                     .padding()
                     .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
                 }
+                .padding(.horizontal, 6)
                 ScrollView {
-                    VStack(alignment: .leading) {
-                        ForEach(viewModel.workout.movements_details ?? [], id:\.self) { movement in
-                            if let movementLog = movement.recorded_log {
-                                Button {
-                                    viewModel.movementLogTapped(movementLog, movement: movement)
-                                } label: {
-                                    HStack(alignment: .top) {
-                                        VStack(alignment: .leading) {
-                                            Text(movement.name)
-                                                .multilineTextAlignment(.leading)
-                                                .font(.headline)
-                                            VStack {
-                                                Spacer()
-                                                Text(movementLog.notes)
-                                                    .multilineTextAlignment(.leading)
-                                                    .font(.subheadline)
-                                                Spacer()
-                                            }
-                                        }
-                                        Spacer()
-                                        VStack(alignment: .trailing) {
-                                            ForEach(movementLog.summary, id:\.self) { item in
-                                                Text(item)
-                                            }
-                                        }
-                                        .textCase(.uppercase)
-                                    }
-                                    .padding()
-                                    .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
-                                }
-                                .foregroundStyle(Color.brandPrimaryText)
-                            }
+                    VStack(spacing: 0) {
+                        ForEach($viewModel.editableEntries) { $entry in
+                            InlineMovementLogView(
+                                movement: entry.movement,
+                                movementNotes: .constant(entry.movement.notes),
+                                logNotes: $entry.logNotes,
+                                logSets: $entry.logSets,
+                                mode: .editLog,
+                                movementNotesEditable: false
+                            )
                         }
+                        Spacer().frame(height: 80)
                     }
                 }
                 .scrollIndicators(.hidden)
-
-                Spacer()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 10)
@@ -89,18 +67,15 @@ struct WorkoutDetailView: View {
         .task {
             await viewModel.attemptRefreshWorkout()
         }
-        .navigationDestination(item: $viewModel.destination) { dest in
-            switch dest {
-            case .movementLogInput(let log, let movement):
-                MovementLogInputView(
-                    viewModel: MovementLogInputView.ViewModel(
-                        movementLog: log,
-                        movement: movement,
-                        workout: viewModel.workout))
-            }
-        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
+                if viewModel.isSaving {
+                    ProgressView()
+                } else if viewModel.isDirty {
+                    Button("Save") {
+                        Task { await viewModel.attemptSaveChanges() }
+                    }
+                }
                 if viewModel.deleteActionLoading {
                     ProgressView()
                 }
@@ -118,9 +93,7 @@ struct WorkoutDetailView: View {
         .alert("Delete", isPresented: $viewModel.showDeleteConfirmationAlert) {
             Button("Delete", role: .destructive) {
                 Task {
-                    guard await viewModel.attemptDeleteWorkout() else {
-                        return
-                    }
+                    guard await viewModel.attemptDeleteWorkout() else { return }
                     dismiss()
                 }
             }
@@ -134,15 +107,19 @@ struct WorkoutDetailView: View {
     NavigationStack {
         WorkoutDetailView(viewModel: WorkoutDetailView.ViewModel(
             workout: PreviewData.pastWorkout_today,
-            api: MockWorkoutAPI()))
+            workoutAPI: MockWorkoutAPI(),
+            movementLogAPI: MockMovementLogAPI()))
     }
+    .environment(RestTimerEnvironment())
 }
 
 #Preview("Older Workout") {
     NavigationStack {
         WorkoutDetailView(viewModel: WorkoutDetailView.ViewModel(
             workout: PreviewData.pastWorkout_2weeksAgo,
-            api: MockWorkoutAPI()))
+            workoutAPI: MockWorkoutAPI(),
+            movementLogAPI: MockMovementLogAPI()))
     }
+    .environment(RestTimerEnvironment())
 }
 #endif
