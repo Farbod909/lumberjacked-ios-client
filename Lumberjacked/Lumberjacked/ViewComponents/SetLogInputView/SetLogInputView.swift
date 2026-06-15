@@ -339,7 +339,7 @@ struct SetLogInputView: View {
             withAnimation { set.wrappedValue.isChecked = !wasChecked }
             if wasChecked {
                 restTimer.cancel()
-            } else if let rt = restTime, rt > 0 {
+            } else if let rt = restTime, rt > 0, editableSets.last?.id != setId {
                 restTimer.start(seconds: rt, setId: setId)
             }
         } label: {
