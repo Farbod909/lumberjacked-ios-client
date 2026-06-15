@@ -115,6 +115,9 @@ struct SetLogInputView: View {
                         }
                         setRow($editableSets[index], index: index)
                             .zIndex(1)
+                            // Instant insertion prevents the red delete button from
+                            // flashing through the content HStack during fade-in.
+                            .transition(.asymmetric(insertion: .identity, removal: .opacity))
                     }
 
                     // "+" button with the same overlap treatment as the pill.
@@ -163,10 +166,12 @@ struct SetLogInputView: View {
             if mode.showsLoad {
                 Text("lbs")
                     .frame(width: Col.load, alignment: .center)
+                    .padding(.leading, 8)   // matches loadField's padding(.leading, 8) in the row
             }
 
             if mode.showsCheckbox {
                 Spacer().frame(width: Col.checkbox)
+                    .padding(.leading, 8)   // matches checkboxButton's padding(.leading, 8) in the row
             }
         }
         .font(.caption)
@@ -185,6 +190,10 @@ struct SetLogInputView: View {
         let previousSet = previousSetFor(s)
 
         ZStack(alignment: .trailing) {
+            // Opaque base — prevents the red delete button from flashing through
+            // during row insertion animations before the content HStack renders.
+            Color(.systemGray6)
+
             // Red delete button, revealed when the content slides left.
             Button(role: .destructive) {
                 withAnimation {
@@ -266,7 +275,8 @@ struct SetLogInputView: View {
             .offset(x: swipeOffsets[s.id] ?? 0)
         }
         .clipped()
-        .overlay { dragHandle(s) }   // centered over the full row width — matches pill alignment
+        // Offset matches the content HStack so the handle slides with the row during swipe-to-delete.
+        .overlay { dragHandle(s).offset(x: swipeOffsets[s.id] ?? 0) }
         .shadow(color: .black.opacity(reorderDraggingId == s.id ? 0.18 : 0), radius: 6, y: 3)
         .gesture(
             DragGesture(minimumDistance: 20)
@@ -351,15 +361,10 @@ struct SetLogInputView: View {
             ? restTimer.formattedTimeRemaining
             : restTimer.formattedTime(s.rest_time ?? 0)
 
-        // Pill always uses the page background color so it looks like an absence of
-        // color rather than a filled capsule — the "alt style" is now permanent.
-        let pillFill: Color  = Color.brandBackground
-        let textColor: Color = Color.primary
-
         return HStack {
             Spacer()
             ZStack {
-                Capsule().fill(pillFill)
+                Capsule().fill(Color.brandBackground)
 
                 if editingRestTimeId == setId {
                     TextField("m:ss", text: $restTimeText)
@@ -370,14 +375,15 @@ struct SetLogInputView: View {
                         .onSubmit { focusedField = nil }
                         .selectAllTextOnFocus()
                         .font(.subheadline.monospacedDigit())
-                        .foregroundStyle(textColor)
+                        .foregroundStyle(.primary)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 6)
                 } else {
                     Button { beginRestTimeEdit(s) } label: {
                         Text(displayText)
                             .font(.subheadline.monospacedDigit())
-                            .foregroundStyle(textColor)
+                            .fontWeight(isActive ? .bold : .regular)
+                            .foregroundStyle(isActive ? Color.red : Color.primary)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 6)
                     }
