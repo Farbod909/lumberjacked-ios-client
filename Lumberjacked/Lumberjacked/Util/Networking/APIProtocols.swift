@@ -16,6 +16,7 @@ protocol WorkoutAPIProtocol {
     func createWorkout(movements: [UInt64]) async throws -> Workout
     func createWorkout(fromTemplate templateId: UInt64) async throws -> Workout
     func updateWorkout(workoutId: UInt64, movements: [UInt64]) async throws -> Workout
+    func updateWorkoutTimestamps(workoutId: UInt64, startTimestamp: Date?, endTimestamp: Date?) async throws -> Workout
 }
 
 // MARK: - Movement
@@ -131,6 +132,19 @@ struct LiveWorkoutAPI: WorkoutAPIProtocol {
 
     func updateWorkout(workoutId: UInt64, movements: [UInt64]) async throws -> Workout {
         let body = CreateOrEditWorkoutRequest(movements: movements)
+        let options = Networking.RequestOptions(
+            url: "/api/workouts/\(workoutId)/",
+            body: body,
+            method: .PATCH,
+            headers: [("application/json", "Content-Type")])
+        guard let result: Workout = try await Networking.shared.request(options: options) else {
+            throw RemoteNetworkingError(statusCode: 0, messages: nil)
+        }
+        return result
+    }
+
+    func updateWorkoutTimestamps(workoutId: UInt64, startTimestamp: Date?, endTimestamp: Date?) async throws -> Workout {
+        let body = UpdateWorkoutTimestampsRequest(startTimestamp: startTimestamp, endTimestamp: endTimestamp)
         let options = Networking.RequestOptions(
             url: "/api/workouts/\(workoutId)/",
             body: body,

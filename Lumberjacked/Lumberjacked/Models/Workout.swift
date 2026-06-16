@@ -48,3 +48,19 @@ struct CreateOrEditWorkoutRequest: Codable {
     var movements: [UInt64]?
     var template: UInt64?
 }
+
+struct UpdateWorkoutTimestampsRequest: Encodable {
+    var start_timestamp: String?
+    var end_timestamp: String?
+
+    private static let formatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withColonSeparatorInTimeZone]
+        return f
+    }()
+
+    init(startTimestamp: Date? = nil, endTimestamp: Date? = nil) {
+        self.start_timestamp = startTimestamp.map { Self.formatter.string(from: $0) }
+        self.end_timestamp   = endTimestamp.map   { Self.formatter.string(from: $0) }
+    }
+}

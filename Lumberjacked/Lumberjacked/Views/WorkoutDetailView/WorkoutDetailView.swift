@@ -179,37 +179,37 @@ struct WorkoutDetailView: View {
         ZStack {
             Color.brandBackground.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 12) {
-                Text(viewModel.workout.humanReadableStartTimestamp ?? "Unknown")
-                    .font(.title)
-                    .fontWeight(.semibold)
-                    .padding(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-                HStack {
-                    HStack {
-                        if let startTimestamp = viewModel.workout.start_timestamp {
-                            Text("Start")
-                                .textCase(.uppercase)
-                                .font(.headline)
-                            Text(startTimestamp.formatted(.dateTime.hour().minute()))
-                                .foregroundColor(.primary)
-                        }
-                    }
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
-                    HStack {
-                        if let endTimestamp = viewModel.workout.end_timestamp {
-                            Text("End")
-                                .textCase(.uppercase)
-                                .font(.headline)
-                            Text(endTimestamp.formatted(.dateTime.hour().minute()))
-                                .foregroundColor(.primary)
-                        }
-                    }
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
-                }
-                .padding(.horizontal, 16)
                 ScrollView {
-                    VStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(viewModel.workout.humanReadableStartTimestamp ?? "Unknown")
+                            .font(.title)
+                            .fontWeight(.semibold)
+                            .padding(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                        HStack(spacing: 16) {
+                            HStack {
+                                Text("Start")
+                                    .textCase(.uppercase)
+                                    .font(.headline)
+                                DatePicker(
+                                    "",
+                                    selection: $viewModel.editableStartTimestamp,
+                                    displayedComponents: .hourAndMinute
+                                )
+                                .labelsHidden()
+                            }
+                            HStack {
+                                Text("End")
+                                    .textCase(.uppercase)
+                                    .font(.headline)
+                                DatePicker(
+                                    "",
+                                    selection: $viewModel.editableEndTimestamp,
+                                    displayedComponents: .hourAndMinute
+                                )
+                                .labelsHidden()
+                            }
+                        }
+                        .padding(.horizontal, 16)
                         if isReordering {
                             VStack(spacing: 8) {
                                 ForEach(

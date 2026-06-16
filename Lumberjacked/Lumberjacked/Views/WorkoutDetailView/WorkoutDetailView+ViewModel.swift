@@ -38,6 +38,8 @@ extension WorkoutDetailView {
     class ViewModel {
         var workout: Workout
         var editableEntries: [EditableMovementEntry] = []
+        var editableStartTimestamp: Date = Date()
+        var editableEndTimestamp: Date = Date()
         var alert: AppAlert?
         var showDeleteConfirmationAlert = false
         var deleteActionLoading = false
@@ -47,7 +49,13 @@ extension WorkoutDetailView {
         var allMovements = [Movement]()
         var searchText = ""
 
-        var isDirty: Bool { editableEntries.contains { $0.isDirty } }
+        var isDirty: Bool {
+            editableEntries.contains { $0.isDirty } ||
+            (workout.start_timestamp != nil &&
+             !Calendar.current.isDate(editableStartTimestamp, equalTo: workout.start_timestamp!, toGranularity: .minute)) ||
+            (workout.end_timestamp != nil &&
+             !Calendar.current.isDate(editableEndTimestamp, equalTo: workout.end_timestamp!, toGranularity: .minute))
+        }
 
         func canSave() -> Bool {
             editableEntries.filter { $0.isDirty && !$0.isRemoved }.allSatisfy { entry in
@@ -65,11 +73,13 @@ extension WorkoutDetailView {
             movementLogAPI: MovementLogAPIProtocol = LiveMovementLogAPI(),
             movementAPI: MovementAPIProtocol = LiveMovementAPI()
         ) {
-            self.workout        = workout
-            self.workoutAPI     = workoutAPI
-            self.movementLogAPI = movementLogAPI
-            self.movementAPI    = movementAPI
-            self.editableEntries = (workout.movements_details ?? []).map { EditableMovementEntry(from: $0) }
+            self.workout             = workout
+            self.workoutAPI          = workoutAPI
+            self.movementLogAPI      = movementLogAPI
+            self.movementAPI         = movementAPI
+            self.editableEntries       = (workout.movements_details ?? []).map { EditableMovementEntry(from: $0) }
+            self.editableStartTimestamp = workout.start_timestamp ?? Date()
+            self.editableEndTimestamp   = workout.end_timestamp ?? Date()
         }
 
         // MARK: - Save
@@ -77,6 +87,21 @@ extension WorkoutDetailView {
         func attemptSaveChanges() async {
             isSaving = true
             do {
+                let savedStartTimestamp = editableStartTimestamp
+                var savedEndTimestamp = editableEndTimestamp
+
+                // If start is after end (cross-midnight workout), push end to the next day.
+                if savedStartTimestamp > savedEndTimestamp {
+                    savedEndTimestamp = Calendar.current.date(
+                        byAdding: .day, value: 1, to: savedEndTimestamp) ?? savedEndTimestamp
+                    editableEndTimestamp = savedEndTimestamp
+                }
+
+                let startTimestampChanged = workout.start_timestamp != nil &&
+                    !Calendar.current.isDate(savedStartTimestamp, equalTo: workout.start_timestamp!, toGranularity: .minute)
+                let endTimestampChanged = workout.end_timestamp != nil &&
+                    !Calendar.current.isDate(savedEndTimestamp, equalTo: workout.end_timestamp!, toGranularity: .minute)
+
                 // Capture pending and dirty entries before any mutations
                 let pendingEntries = editableEntries.filter { $0.isPending }
                 let dirtyExistingEntries = editableEntries.filter { $0.isDirty && !$0.isRemoved && !$0.isPending }
@@ -121,7 +146,23 @@ extension WorkoutDetailView {
                     _ = try await movementLogAPI.createLog(movementLog: log)
                 }
 
+                if (startTimestampChanged || endTimestampChanged), let workoutId = workout.id {
+                    _ = try await workoutAPI.updateWorkoutTimestamps(
+                        workoutId: workoutId,
+                        startTimestamp: startTimestampChanged ? savedStartTimestamp : nil,
+                        endTimestamp:   endTimestampChanged   ? savedEndTimestamp   : nil)
+                }
+
                 await attemptRefreshWorkout()
+
+                if startTimestampChanged {
+                    editableStartTimestamp = savedStartTimestamp
+                    workout.start_timestamp = savedStartTimestamp
+                }
+                if endTimestampChanged {
+                    editableEndTimestamp = savedEndTimestamp
+                    workout.end_timestamp = savedEndTimestamp
+                }
             } catch let error as RemoteNetworkingError {
                 handleNetworkError(error)
             } catch {
@@ -197,6 +238,8 @@ extension WorkoutDetailView {
             do {
                 workout = try await workoutAPI.getWorkout(workoutId: id)
                 editableEntries = (workout.movements_details ?? []).map { EditableMovementEntry(from: $0) }
+                editableStartTimestamp = workout.start_timestamp ?? Date()
+                editableEndTimestamp   = workout.end_timestamp ?? Date()
             } catch let error as RemoteNetworkingError {
                 handleNetworkError(error)
             } catch {

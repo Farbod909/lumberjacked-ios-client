@@ -57,6 +57,11 @@ final class MockWorkoutAPI: WorkoutAPIProtocol {
         if let error = errorToThrow { throw error }
         return PreviewData.activeWorkout
     }
+
+    func updateWorkoutTimestamps(workoutId: UInt64, startTimestamp: Date?, endTimestamp: Date?) async throws -> Workout {
+        if let error = errorToThrow { throw error }
+        return PreviewData.activeWorkout
+    }
 }
 
 // MARK: - MockMovementAPI
