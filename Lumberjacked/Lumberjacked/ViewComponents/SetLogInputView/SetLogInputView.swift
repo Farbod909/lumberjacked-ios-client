@@ -406,6 +406,7 @@ struct SetLogInputView: View {
             let restTime  = set.wrappedValue.rest_time
             let setId     = set.wrappedValue.id
             withAnimation { set.wrappedValue.isChecked = !wasChecked }
+            syncToBinding()
             if wasChecked {
                 restTimer.cancel()
             } else if let rt = restTime, rt > 0, editableSets.last?.id != setId {

@@ -135,9 +135,9 @@ extension CurrentWorkoutView {
                         updated.notes = entry.movementNotes
                         _ = try await self.movementAPI.updateMovement(movementId: movementId, movement: updated)
                     }
-                    // 2. Save movement logs for entries that have at least one set with reps > 0
+                    // 2. Save movement logs for entries that have at least one checked set
                     for entry in self.editableEntries {
-                        let validSets = entry.logSets.filter { $0.reps > 0 }
+                        let validSets = entry.logSets.filter { $0.isChecked }
                         guard !validSets.isEmpty else { continue }
                         var log = MovementLog(sets: validSets, notes: entry.logNotes)
                         log.for_current_workout = nil
@@ -188,6 +188,23 @@ extension CurrentWorkoutView {
             do {
                 _ = try await workoutAPI.updateWorkout(workoutId: workoutId, movements: remaining)
                 editableEntries.removeAll { $0.movement.id == movementId }
+            } catch let error as RemoteNetworkingError {
+                handleNetworkError(error)
+            } catch {
+                alert = AppAlert(title: "Error", message: error.localizedDescription)
+            }
+        }
+
+        // MARK: - Movement replace
+
+        func replaceMovement(oldId: UInt64, newId: UInt64) async {
+            guard let workoutId = currentWorkout?.id else { return }
+            let movementIds = editableEntries
+                .compactMap { $0.movement.id }
+                .map { $0 == oldId ? newId : $0 }
+            do {
+                _ = try await workoutAPI.updateWorkout(workoutId: workoutId, movements: movementIds)
+                await attemptGetCurrentWorkout()
             } catch let error as RemoteNetworkingError {
                 handleNetworkError(error)
             } catch {

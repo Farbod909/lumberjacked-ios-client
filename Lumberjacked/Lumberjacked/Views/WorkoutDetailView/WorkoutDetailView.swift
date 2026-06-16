@@ -12,10 +12,70 @@ struct WorkoutDetailView: View {
     @Environment(\.dismiss) var dismiss
     @FocusState private var searchFieldFocused: Bool
 
+    @State private var isReordering = false
+    @State private var reorderDraggingIndex: Int? = nil
+    @State private var reorderDragStartIndex: Int = 0
+    private let reorderRowHeight: CGFloat = 52
+
+    @State private var replacingMovementId: UInt64? = nil
+
     func dismissAddMovementOverlay() {
         searchFieldFocused = false
         viewModel.showAddMovementOverlay = false
         viewModel.searchText = ""
+    }
+
+    // MARK: - Compact reorder row
+
+    private func compactReorderRow(
+        _ entry: EditableMovementEntry, index: Int
+    ) -> some View {
+        HStack(spacing: 12) {
+            Text(entry.movement.name)
+                .font(.headline)
+                .foregroundStyle(entry.isRemoved ? .secondary : .primary)
+            Spacer()
+            Image(systemName: "line.3.horizontal")
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .shadow(
+            color: .black.opacity(reorderDraggingIndex == index ? 0.18 : 0),
+            radius: 6, y: 3
+        )
+        .gesture(
+            DragGesture(minimumDistance: 5, coordinateSpace: .global)
+                .onChanged { value in
+                    if reorderDraggingIndex == nil {
+                        reorderDraggingIndex = index
+                        reorderDragStartIndex = index
+                    }
+                    performMovementReorder(offset: value.translation.height)
+                }
+                .onEnded { _ in
+                    reorderDraggingIndex = nil
+                }
+        )
+    }
+
+    private func performMovementReorder(offset: CGFloat) {
+        guard let curIdx = reorderDraggingIndex else { return }
+        let steps = Int((offset / reorderRowHeight).rounded())
+        let targetIdx = max(
+            0,
+            min(viewModel.editableEntries.count - 1, reorderDragStartIndex + steps)
+        )
+        guard targetIdx != curIdx else { return }
+        withAnimation(.easeInOut(duration: 0.15)) {
+            viewModel.editableEntries.move(
+                fromOffsets: IndexSet(integer: curIdx),
+                toOffset: targetIdx > curIdx ? targetIdx + 1 : targetIdx
+            )
+        }
+        reorderDraggingIndex = targetIdx
     }
 
     // MARK: - Add movement overlay
@@ -143,33 +203,54 @@ struct WorkoutDetailView: View {
                 .padding(.horizontal, 16)
                 ScrollView {
                     VStack(spacing: 0) {
-                        ForEach($viewModel.editableEntries) { $entry in
-                            if entry.isRemoved {
-                                HStack {
-                                    Text(entry.movement.name)
-                                        .font(.title2.bold())
-                                        .strikethrough()
-                                        .foregroundStyle(.secondary)
-                                    Spacer()
-                                    Button("Undo") {
-                                        entry.isRemoved = false
-                                    }
-                                    .foregroundStyle(Color.accentColor)
+                        if isReordering {
+                            VStack(spacing: 8) {
+                                ForEach(
+                                    Array(viewModel.editableEntries.enumerated()),
+                                    id: \.element.id
+                                ) { index, entry in
+                                    compactReorderRow(entry, index: index)
                                 }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 14)
-                            } else {
-                                InlineMovementLogView(
-                                    movement: entry.movement,
-                                    movementNotes: .constant(entry.movement.notes),
-                                    logNotes: $entry.logNotes,
-                                    logSets: $entry.logSets,
-                                    mode: .editLog,
-                                    movementNotesEditable: false,
-                                    onRemoveTapped: {
-                                        entry.isRemoved = true
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
+                        } else {
+                            ForEach($viewModel.editableEntries) { $entry in
+                                if entry.isRemoved {
+                                    HStack {
+                                        Text(entry.movement.name)
+                                            .font(.title2.bold())
+                                            .strikethrough()
+                                            .foregroundStyle(.secondary)
+                                        Spacer()
+                                        Button("Undo") {
+                                            entry.isRemoved = false
+                                        }
+                                        .foregroundStyle(Color.accentColor)
                                     }
-                                )
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 14)
+                                } else {
+                                    InlineMovementLogView(
+                                        movement: entry.movement,
+                                        movementNotes: .constant(entry.movement.notes),
+                                        logNotes: $entry.logNotes,
+                                        logSets: $entry.logSets,
+                                        mode: .editLog,
+                                        movementNotesEditable: false,
+                                        onReorderTapped: {
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                isReordering = true
+                                            }
+                                        },
+                                        onReplaceTapped: {
+                                            replacingMovementId = entry.movement.id
+                                        },
+                                        onRemoveTapped: {
+                                            entry.isRemoved = true
+                                        }
+                                    )
+                                }
                             }
                         }
                         Spacer().frame(height: 80)
@@ -200,9 +281,28 @@ struct WorkoutDetailView: View {
                 Task { await viewModel.attemptSaveChanges() }
             }
         }
+        .sheet(
+            isPresented: Binding(
+                get: { replacingMovementId != nil },
+                set: { if !$0 { replacingMovementId = nil } }
+            )
+        ) {
+            MovementReplaceSheet(allMovements: viewModel.allMovements) { movement in
+                if let id = replacingMovementId {
+                    viewModel.replaceEntry(at: id, with: movement)
+                }
+                replacingMovementId = nil
+            }
+        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                if viewModel.showAddMovementOverlay {
+                if isReordering {
+                    Button("Done") {
+                        withAnimation(.easeInOut(duration: 0.2)) { isReordering = false }
+                        Task { await viewModel.persistMovementOrder() }
+                    }
+                    .fontWeight(.semibold)
+                } else if viewModel.showAddMovementOverlay {
                     Button("Dismiss") {
                         dismissAddMovementOverlay()
                     }

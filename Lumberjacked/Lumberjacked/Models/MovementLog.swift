@@ -12,6 +12,11 @@ struct LogSet: Codable, Hashable {
     var load: Double?
     var type: String
     var rest_time: Int?
+    var isChecked: Bool = false
+
+    enum CodingKeys: String, CodingKey {
+        case reps, load, type, rest_time
+    }
 }
 
 struct MovementLog: Codable, Hashable {

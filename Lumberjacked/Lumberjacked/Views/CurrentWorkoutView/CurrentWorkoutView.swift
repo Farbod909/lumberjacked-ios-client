@@ -20,6 +20,8 @@ struct CurrentWorkoutView: View {
     @State private var reorderDragStartIndex: Int = 0
     private let reorderRowHeight: CGFloat = 52
 
+    @State private var replacingMovementId: UInt64? = nil
+
     init(viewModel: ViewModel = ViewModel()) {
         _viewModel = State(initialValue: viewModel)
     }
@@ -166,6 +168,9 @@ struct CurrentWorkoutView: View {
                                     withAnimation(.easeInOut(duration: 0.2)) {
                                         isReordering = true
                                     }
+                                },
+                                onReplaceTapped: {
+                                    replacingMovementId = entry.movement.id
                                 },
                                 onRemoveTapped: {
                                     if let id = entry.movement.id {
@@ -448,6 +453,19 @@ struct CurrentWorkoutView: View {
                 onDismiss: { Task { await viewModel.attemptGetCurrentWorkout() } }
             ) {
                 CreateWorkoutView()
+            }
+            .sheet(
+                isPresented: Binding(
+                    get: { replacingMovementId != nil },
+                    set: { if !$0 { replacingMovementId = nil } }
+                )
+            ) {
+                MovementReplaceSheet(allMovements: viewModel.allMovements) { movement in
+                    if let oldId = replacingMovementId, let newId = movement.id {
+                        Task { await viewModel.replaceMovement(oldId: oldId, newId: newId) }
+                    }
+                    replacingMovementId = nil
+                }
             }
             .navigationDestination(for: Movement.self) { movement in
                 MovementDetailView(

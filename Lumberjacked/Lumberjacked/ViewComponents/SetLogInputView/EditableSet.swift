@@ -63,10 +63,11 @@ extension EditableSet {
         reps      = logSet.reps > 0 ? String(logSet.reps) : ""
         load      = logSet.load
         rest_time = logSet.rest_time
+        isChecked = logSet.isChecked
     }
 
     var asLogSet: LogSet {
-        LogSet(reps: Int(reps) ?? 0, load: load, type: type, rest_time: rest_time)
+        LogSet(reps: Int(reps) ?? 0, load: load, type: type, rest_time: rest_time, isChecked: isChecked)
     }
 }
 

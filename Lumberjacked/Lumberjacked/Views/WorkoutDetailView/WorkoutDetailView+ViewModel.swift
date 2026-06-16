@@ -130,6 +130,26 @@ extension WorkoutDetailView {
             isSaving = false
         }
 
+        // MARK: - Reorder
+
+        func persistMovementOrder() async {
+            guard let workoutId = workout.id else { return }
+            let movementIds = editableEntries
+                .filter { !$0.isRemoved }
+                .compactMap { $0.movement.id }
+            _ = try? await workoutAPI.updateWorkout(workoutId: workoutId, movements: movementIds)
+        }
+
+        // MARK: - Replace
+
+        func replaceEntry(at id: UInt64, with newMovement: Movement) {
+            guard let idx = editableEntries.firstIndex(where: { $0.id == id }) else { return }
+            editableEntries[idx].isRemoved = true
+            var newEntry = EditableMovementEntry(from: newMovement)
+            newEntry.isPending = true
+            editableEntries.insert(newEntry, at: idx + 1)
+        }
+
         // MARK: - Add movement
 
         func attemptGetMovements() async {

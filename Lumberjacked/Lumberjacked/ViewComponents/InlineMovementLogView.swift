@@ -14,6 +14,7 @@ struct InlineMovementLogView: View {
     let movementNotesEditable: Bool
     var readOnly: Bool = false
     var onReorderTapped: (() -> Void)? = nil
+    var onReplaceTapped: (() -> Void)? = nil
     var onEditTapped: (() -> Void)? = nil
     var onRemoveTapped: (() -> Void)? = nil
 
@@ -80,6 +81,12 @@ struct InlineMovementLogView: View {
                         if let reorder = onReorderTapped {
                             Button("Reorder", systemImage: "line.3.horizontal") {
                                 reorder()
+                            }
+                        }
+
+                        if let replace = onReplaceTapped {
+                            Button("Replace", systemImage: "arrow.left.arrow.right") {
+                                replace()
                             }
                         }
 
