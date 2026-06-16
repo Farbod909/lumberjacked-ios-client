@@ -23,6 +23,7 @@ struct WorkoutHistoryView: View {
                     } label: {
                         WorkoutOverviewView(workout: workout)
                     }
+                    .foregroundStyle(.white)
                     .listRowBackground(Color.brandSecondary)
                 }
             }
