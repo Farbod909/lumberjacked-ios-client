@@ -34,26 +34,25 @@ struct MovementLogInputView: View {
                 .padding(.top, 12)
                 .padding(.bottom, 12)
 
-                SetLogInputView(
-                    mode: viewModel.inputMode,
-                    logSets: $viewModel.sets
-                )
-
                 // Notes field
                 TextField(
                     "",
                     text: $viewModel.movementLog.notes,
-                    prompt: Text("Notes").foregroundStyle(Color.brandPlaceholderText),
+                    prompt: Text("Notes...").foregroundStyle(.tertiary),
                     axis: .vertical
                 )
-                .padding()
-                .background(.brandSecondary)
-                .foregroundColor(Color.primary)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
                 .lineLimit(5)
                 .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 16)
+                .padding(.vertical, 8)
+                .background(Color(.systemGray6))
+                .padding(.bottom, 4)
+
+                SetLogInputView(
+                    mode: viewModel.inputMode,
+                    logSets: $viewModel.sets
+                )
             }
         }
         .toolbar {
