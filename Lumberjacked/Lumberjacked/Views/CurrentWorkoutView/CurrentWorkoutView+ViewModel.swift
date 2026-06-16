@@ -137,7 +137,7 @@ extension CurrentWorkoutView {
                     }
                     // 2. Save movement logs for entries that have at least one checked set
                     for entry in self.editableEntries {
-                        let validSets = entry.logSets.filter { $0.isChecked }
+                        let validSets = entry.logSets.filter { $0.isChecked && $0.reps > 0 }
                         guard !validSets.isEmpty else { continue }
                         var log = MovementLog(sets: validSets, notes: entry.logNotes)
                         log.for_current_workout = nil
