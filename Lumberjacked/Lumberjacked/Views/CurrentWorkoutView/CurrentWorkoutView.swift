@@ -21,6 +21,7 @@ struct CurrentWorkoutView: View {
     private let reorderRowHeight: CGFloat = 52
 
     @State private var replacingMovementId: UInt64? = nil
+    @State private var isKeyboardVisible = false
 
     init(viewModel: ViewModel = ViewModel()) {
         _viewModel = State(initialValue: viewModel)
@@ -196,21 +197,50 @@ struct CurrentWorkoutView: View {
                 Spacer()
             }
 
-            HStack {
-                Spacer().frame(width: 25)
+            if isKeyboardVisible {
                 VStack {
                     Spacer()
-                    addMovementButton
-                    Spacer().frame(height: 20)
+                    HStack {
+                        Spacer()
+                        Button {
+                            UIApplication.shared.sendAction(
+                                #selector(UIResponder.resignFirstResponder),
+                                to: nil, from: nil, for: nil)
+                        } label: {
+                            Image(systemName: "keyboard.chevron.compact.down")
+                                .font(.title2)
+                                .padding(12)
+                                .background(.ultraThinMaterial)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .foregroundStyle(Color.brandPrimaryText)
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 12)
+                    }
                 }
-                Spacer()
-                VStack {
+            } else {
+                HStack {
+                    Spacer().frame(width: 25)
+                    VStack {
+                        Spacer()
+                        addMovementButton
+                        Spacer().frame(height: 20)
+                    }
                     Spacer()
-                    endWorkoutButton
-                    Spacer().frame(height: 20)
+                    VStack {
+                        Spacer()
+                        endWorkoutButton
+                        Spacer().frame(height: 20)
+                    }
+                    Spacer().frame(width: 25)
                 }
-                Spacer().frame(width: 25)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            isKeyboardVisible = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            isKeyboardVisible = false
         }
     }
 

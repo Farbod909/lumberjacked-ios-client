@@ -19,30 +19,35 @@ struct TemplateWorkoutSelectorView: View {
         self.dismissAction = dismissAction
     }
 
+    private let cornerRadius: CGFloat = 12
+
     var body: some View {
-        VStack {
+        Group {
             if viewModel.isLoading(.load) {
                 ProgressView()
             } else {
-                List {
-                    ForEach(viewModel.workouts, id: \.self.id) { workout in
-                        WorkoutOverviewView(workout: workout)
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                templateWorkout = workout
-                            }
-                            .listRowInsets(EdgeInsets())
-                            .overlay {
-                                if templateWorkout == workout {
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.accentColor, lineWidth: 3)
+                ScrollView {
+                    LazyVStack(spacing: 10) {
+                        ForEach(viewModel.workouts, id: \.self.id) { workout in
+                            WorkoutOverviewView(workout: workout)
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.brandSecondary, in: RoundedRectangle(cornerRadius: cornerRadius))
+                                .overlay {
+                                    if templateWorkout == workout {
+                                        RoundedRectangle(cornerRadius: cornerRadius)
+                                            .strokeBorder(Color.accentColor, lineWidth: 3)
+                                    }
                                 }
-                            }
+                                .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
+                                .onTapGesture {
+                                    templateWorkout = workout
+                                }
+                        }
                     }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
                 }
-                .listRowSpacing(10)
             }
         }
         .task {

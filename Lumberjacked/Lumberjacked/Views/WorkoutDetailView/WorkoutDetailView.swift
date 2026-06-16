@@ -18,6 +18,7 @@ struct WorkoutDetailView: View {
     private let reorderRowHeight: CGFloat = 52
 
     @State private var replacingMovementId: UInt64? = nil
+    @State private var isKeyboardVisible = false
 
     func dismissAddMovementOverlay() {
         searchFieldFocused = false
@@ -273,12 +274,41 @@ struct WorkoutDetailView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .background(.ultraThinMaterial.opacity(viewModel.showAddMovementOverlay ? 1 : 0))
             }
+
+            if isKeyboardVisible && !viewModel.showAddMovementOverlay {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button {
+                            UIApplication.shared.sendAction(
+                                #selector(UIResponder.resignFirstResponder),
+                                to: nil, from: nil, for: nil)
+                        } label: {
+                            Image(systemName: "keyboard.chevron.compact.down")
+                                .font(.title2)
+                                .padding(12)
+                                .background(.ultraThinMaterial)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .foregroundStyle(Color.brandPrimaryText)
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 12)
+                    }
+                }
+            }
         }
         .animation(.spring(duration: 0.3, bounce: 0.05), value: viewModel.showAddMovementOverlay)
         .onChange(of: viewModel.showAddMovementOverlay) { _, isShowing in
             if isShowing {
                 searchFieldFocused = true
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            isKeyboardVisible = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            isKeyboardVisible = false
         }
         .task {
             await viewModel.attemptRefreshWorkout()

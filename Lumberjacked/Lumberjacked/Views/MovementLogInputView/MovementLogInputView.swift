@@ -9,6 +9,7 @@ struct MovementLogInputView: View {
     @State var viewModel: ViewModel
     @Environment(\.dismiss) var dismiss
     @Environment(RestTimerEnvironment.self) private var restTimer
+    @State private var isKeyboardVisible = false
 
     var body: some View {
         ZStack {
@@ -53,6 +54,35 @@ struct MovementLogInputView: View {
                     logSets: $viewModel.sets
                 )
             }
+
+            if isKeyboardVisible {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button {
+                            UIApplication.shared.sendAction(
+                                #selector(UIResponder.resignFirstResponder),
+                                to: nil, from: nil, for: nil)
+                        } label: {
+                            Image(systemName: "keyboard.chevron.compact.down")
+                                .font(.title2)
+                                .padding(12)
+                                .background(.ultraThinMaterial)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .foregroundStyle(Color.brandPrimaryText)
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 12)
+                    }
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            isKeyboardVisible = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            isKeyboardVisible = false
         }
         .toolbar {
             if viewModel.toolbarActionLoading {
