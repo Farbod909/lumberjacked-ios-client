@@ -13,6 +13,8 @@ extension WorkoutDetailView {
         var logSets: [LogSet]
         var logNotes: String
         let existingLogId: UInt64?
+        var isRemoved: Bool = false
+        var isPending: Bool = false
 
         var id: UInt64 { movement.id ?? 0 }
 
@@ -24,6 +26,7 @@ extension WorkoutDetailView {
         }
 
         var isDirty: Bool {
+            isRemoved || isPending ||
             logNotes != (movement.recorded_log?.notes ?? "") ||
             logSets  != (movement.recorded_log?.sets  ?? [])
         }
@@ -40,25 +43,32 @@ extension WorkoutDetailView {
         var deleteActionLoading = false
         var isSaving = false
 
+        var showAddMovementOverlay = false
+        var allMovements = [Movement]()
+        var searchText = ""
+
         var isDirty: Bool { editableEntries.contains { $0.isDirty } }
 
         func canSave() -> Bool {
-            editableEntries.filter { $0.isDirty }.allSatisfy { entry in
+            editableEntries.filter { $0.isDirty && !$0.isRemoved }.allSatisfy { entry in
                 entry.logSets.isEmpty || entry.logSets.allSatisfy { $0.reps > 0 }
             }
         }
 
         private let workoutAPI: WorkoutAPIProtocol
         private let movementLogAPI: MovementLogAPIProtocol
+        private let movementAPI: MovementAPIProtocol
 
         init(
             workout: Workout,
             workoutAPI: WorkoutAPIProtocol = LiveWorkoutAPI(),
-            movementLogAPI: MovementLogAPIProtocol = LiveMovementLogAPI()
+            movementLogAPI: MovementLogAPIProtocol = LiveMovementLogAPI(),
+            movementAPI: MovementAPIProtocol = LiveMovementAPI()
         ) {
             self.workout        = workout
             self.workoutAPI     = workoutAPI
             self.movementLogAPI = movementLogAPI
+            self.movementAPI    = movementAPI
             self.editableEntries = (workout.movements_details ?? []).map { EditableMovementEntry(from: $0) }
         }
 
@@ -67,7 +77,22 @@ extension WorkoutDetailView {
         func attemptSaveChanges() async {
             isSaving = true
             do {
-                for entry in editableEntries where entry.isDirty {
+                // Capture pending and dirty entries before any mutations
+                let pendingEntries = editableEntries.filter { $0.isPending }
+                let dirtyExistingEntries = editableEntries.filter { $0.isDirty && !$0.isRemoved && !$0.isPending }
+
+                // PATCH workout if movements were added or removed
+                var updatedWorkout: Workout? = nil
+                let hasStructuralChanges = editableEntries.contains { $0.isRemoved || $0.isPending }
+                if hasStructuralChanges, let workoutId = workout.id {
+                    let movementIds = editableEntries
+                        .filter { !$0.isRemoved }
+                        .compactMap { $0.movement.id }
+                    updatedWorkout = try await workoutAPI.updateWorkout(workoutId: workoutId, movements: movementIds)
+                }
+
+                // Save dirty existing entries' logs
+                for entry in dirtyExistingEntries {
                     var log = MovementLog(sets: entry.logSets, notes: entry.logNotes)
                     log.for_current_workout = nil
                     log.timestamp = nil
@@ -83,6 +108,19 @@ extension WorkoutDetailView {
                         _ = try await movementLogAPI.createLog(movementLog: log)
                     }
                 }
+
+                // Create logs for pending entries that have sets, using the new workout_movement_ids
+                let updatedMovements = updatedWorkout?.movements_details ?? []
+                for entry in pendingEntries where !entry.logSets.isEmpty {
+                    guard let updated = updatedMovements.first(where: { $0.id == entry.movement.id }),
+                          let workoutMovementId = updated.workout_movement_id else { continue }
+                    var log = MovementLog(sets: entry.logSets, notes: entry.logNotes)
+                    log.for_current_workout = nil
+                    log.timestamp = nil
+                    log.workout_movement = workoutMovementId
+                    _ = try await movementLogAPI.createLog(movementLog: log)
+                }
+
                 await attemptRefreshWorkout()
             } catch let error as RemoteNetworkingError {
                 handleNetworkError(error)
@@ -90,6 +128,28 @@ extension WorkoutDetailView {
                 alert = AppAlert(title: "Error", message: error.localizedDescription)
             }
             isSaving = false
+        }
+
+        // MARK: - Add movement
+
+        func attemptGetMovements() async {
+            do {
+                let response = try await movementAPI.getMovements()
+                allMovements = response.results
+            } catch let error as RemoteNetworkingError {
+                handleNetworkError(error)
+            } catch {
+                alert = AppAlert(title: "Error", message: error.localizedDescription)
+            }
+        }
+
+        func addPendingMovement(_ movement: Movement) {
+            let currentIds = Set(editableEntries.filter { !$0.isRemoved }.compactMap { $0.movement.id })
+            guard let movementId = movement.id, !currentIds.contains(movementId) else { return }
+            var entry = EditableMovementEntry(from: movement)
+            entry.isPending = true
+            editableEntries.append(entry)
+            searchText = ""
         }
 
         // MARK: - Delete
