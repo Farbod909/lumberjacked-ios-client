@@ -42,6 +42,12 @@ extension WorkoutDetailView {
 
         var isDirty: Bool { editableEntries.contains { $0.isDirty } }
 
+        func canSave() -> Bool {
+            editableEntries.filter { $0.isDirty }.allSatisfy { entry in
+                entry.logSets.isEmpty || entry.logSets.allSatisfy { $0.reps > 0 }
+            }
+        }
+
         private let workoutAPI: WorkoutAPIProtocol
         private let movementLogAPI: MovementLogAPIProtocol
 
@@ -66,9 +72,13 @@ extension WorkoutDetailView {
                     log.for_current_workout = nil
                     log.timestamp = nil
                     if let existingId = entry.existingLogId {
-                        _ = try await movementLogAPI.updateLog(
-                            movementLogId: existingId, movementLog: log)
-                    } else {
+                        if entry.logSets.isEmpty {
+                            try await movementLogAPI.deleteLog(movementLogId: existingId)
+                        } else {
+                            _ = try await movementLogAPI.updateLog(
+                                movementLogId: existingId, movementLog: log)
+                        }
+                    } else if !entry.logSets.isEmpty {
                         log.workout_movement = entry.movement.workout_movement_id
                         _ = try await movementLogAPI.createLog(movementLog: log)
                     }

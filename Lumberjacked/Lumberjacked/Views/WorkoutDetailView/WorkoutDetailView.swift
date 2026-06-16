@@ -75,6 +75,7 @@ struct WorkoutDetailView: View {
                     Button("Save") {
                         Task { await viewModel.attemptSaveChanges() }
                     }
+                    .disabled(!viewModel.canSave())
                 }
                 if viewModel.deleteActionLoading {
                     ProgressView()
@@ -90,6 +91,7 @@ struct WorkoutDetailView: View {
                 }
             }
         }
+        .alert(item: $viewModel.alert)
         .alert("Delete", isPresented: $viewModel.showDeleteConfirmationAlert) {
             Button("Delete", role: .destructive) {
                 Task {
