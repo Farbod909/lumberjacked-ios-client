@@ -31,6 +31,8 @@ struct CurrentWorkoutView: View {
     func dismissAddMovementOverlay() {
         addMovementTextFieldFocusState = false
         viewModel.showAddMovementOverlay = false
+        viewModel.searchText = ""
+        replacingMovementId = nil
     }
 
     // MARK: - Floating buttons
@@ -171,6 +173,7 @@ struct CurrentWorkoutView: View {
                                 },
                                 onReplaceTapped: {
                                     replacingMovementId = entry.movement.id
+                                    viewModel.showAddMovementOverlay = true
                                 },
                                 onRemoveTapped: {
                                     if let id = entry.movement.id {
@@ -271,7 +274,7 @@ struct CurrentWorkoutView: View {
             TextField(
                 "",
                 text: $viewModel.searchText,
-                prompt: Text("Enter movement name...")
+                prompt: Text(replacingMovementId != nil ? "Replace with..." : "Enter movement name...")
                     .foregroundStyle(.brandPrimaryText.opacity(0.6))
             )
             .autocorrectionDisabled()
@@ -300,14 +303,20 @@ struct CurrentWorkoutView: View {
     }
 
     var movementSearchResultsList: some View {
-        List {
+        let currentIds = Set(viewModel.editableEntries.compactMap { $0.movement.id })
+        let isReplaceable = replacingMovementId != nil
+        return List {
             Section {
                 if !viewModel.searchText.isEmpty {
                     Button {
                         Task {
                             if let newMovement = await viewModel.attemptQuickAddMovement(
                                 movementName: formattedSearchText) {
-                                if let _ = viewModel.currentWorkout {
+                                if isReplaceable {
+                                    if let oldId = replacingMovementId, let newId = newMovement.id {
+                                        await viewModel.replaceMovement(oldId: oldId, newId: newId)
+                                    }
+                                } else if let _ = viewModel.currentWorkout {
                                     await viewModel.addMovementToCurrentWorkout(
                                         movementId: newMovement.id!)
                                 } else {
@@ -336,35 +345,37 @@ struct CurrentWorkoutView: View {
             .listSectionSpacing(.compact)
             Section {
                 ForEach(Array(movementSearchResults), id: \.self) { (movement: Movement) in
+                    let alreadyAdded = currentIds.contains(movement.id ?? 0)
                     Button {
                         Task {
-                            if let movementIds = self.viewModel.currentWorkout?
-                                .movements_details?.map({ $0.id }),
-                               movementIds.contains(movement.id) {
-                                return
-                            }
-                            if let _ = viewModel.currentWorkout {
-                                await viewModel.addMovementToCurrentWorkout(
-                                    movementId: movement.id!)
+                            if alreadyAdded { return }
+                            if isReplaceable {
+                                if let oldId = replacingMovementId, let newId = movement.id {
+                                    await viewModel.replaceMovement(oldId: oldId, newId: newId)
+                                }
+                                dismissAddMovementOverlay()
                             } else {
-                                await viewModel.createWorkoutWithInitialMovement(
-                                    movementId: movement.id!)
+                                if let _ = viewModel.currentWorkout {
+                                    await viewModel.addMovementToCurrentWorkout(
+                                        movementId: movement.id!)
+                                } else {
+                                    await viewModel.createWorkoutWithInitialMovement(
+                                        movementId: movement.id!)
+                                }
+                                await viewModel.attemptGetCurrentWorkout()
+                                dismissAddMovementOverlay()
                             }
-                            await viewModel.attemptGetCurrentWorkout()
-                            dismissAddMovementOverlay()
                         }
                     } label: {
                         HStack {
                             Text(movement.name)
                             Spacer()
-                            if let movementIds = self.viewModel.currentWorkout?
-                                .movements_details?.map({ $0.id }),
-                               movementIds.contains(movement.id) {
+                            if alreadyAdded {
                                 Text("Added").font(.caption2).textCase(.uppercase)
                             }
                         }
                     }
-                    .foregroundColor(.primary)
+                    .foregroundColor(alreadyAdded ? .secondary : .primary)
                     .listRowBackground(Color.clear)
                 }
             }
@@ -453,19 +464,6 @@ struct CurrentWorkoutView: View {
                 onDismiss: { Task { await viewModel.attemptGetCurrentWorkout() } }
             ) {
                 CreateWorkoutView()
-            }
-            .sheet(
-                isPresented: Binding(
-                    get: { replacingMovementId != nil },
-                    set: { if !$0 { replacingMovementId = nil } }
-                )
-            ) {
-                MovementReplaceSheet(allMovements: viewModel.allMovements) { movement in
-                    if let oldId = replacingMovementId, let newId = movement.id {
-                        Task { await viewModel.replaceMovement(oldId: oldId, newId: newId) }
-                    }
-                    replacingMovementId = nil
-                }
             }
             .navigationDestination(for: Movement.self) { movement in
                 MovementDetailView(

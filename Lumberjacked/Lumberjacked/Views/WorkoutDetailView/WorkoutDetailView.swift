@@ -23,6 +23,7 @@ struct WorkoutDetailView: View {
         searchFieldFocused = false
         viewModel.showAddMovementOverlay = false
         viewModel.searchText = ""
+        replacingMovementId = nil
     }
 
     // MARK: - Compact reorder row
@@ -85,7 +86,7 @@ struct WorkoutDetailView: View {
             TextField(
                 "",
                 text: $viewModel.searchText,
-                prompt: Text("Search movements...")
+                prompt: Text(replacingMovementId != nil ? "Replace with..." : "Search movements...")
                     .foregroundStyle(.brandPrimaryText.opacity(0.6))
             )
             .autocorrectionDisabled()
@@ -140,11 +141,17 @@ struct WorkoutDetailView: View {
                 List {
                     ForEach(addMovementSearchResults, id: \.self) { movement in
                         let alreadyAdded = currentIds.contains(movement.id ?? 0)
+                        let isReplaceable = replacingMovementId != nil
                         Button {
-                            if !alreadyAdded {
+                            if alreadyAdded { return }
+                            if isReplaceable {
+                                if let id = replacingMovementId {
+                                    viewModel.replaceEntry(at: id, with: movement)
+                                }
+                            } else {
                                 viewModel.addPendingMovement(movement)
-                                dismissAddMovementOverlay()
                             }
+                            dismissAddMovementOverlay()
                         } label: {
                             HStack {
                                 Text(movement.name)
@@ -245,6 +252,7 @@ struct WorkoutDetailView: View {
                                         },
                                         onReplaceTapped: {
                                             replacingMovementId = entry.movement.id
+                                            viewModel.showAddMovementOverlay = true
                                         },
                                         onRemoveTapped: {
                                             entry.isRemoved = true
@@ -279,19 +287,6 @@ struct WorkoutDetailView: View {
         .onDisappear {
             if viewModel.isDirty {
                 Task { await viewModel.attemptSaveChanges() }
-            }
-        }
-        .sheet(
-            isPresented: Binding(
-                get: { replacingMovementId != nil },
-                set: { if !$0 { replacingMovementId = nil } }
-            )
-        ) {
-            MovementReplaceSheet(allMovements: viewModel.allMovements) { movement in
-                if let id = replacingMovementId {
-                    viewModel.replaceEntry(at: id, with: movement)
-                }
-                replacingMovementId = nil
             }
         }
         .toolbar {
