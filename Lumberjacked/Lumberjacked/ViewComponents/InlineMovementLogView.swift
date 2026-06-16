@@ -15,6 +15,7 @@ struct InlineMovementLogView: View {
     var readOnly: Bool = false
     var onReorderTapped: (() -> Void)? = nil
     var onEditTapped: (() -> Void)? = nil
+    var onRemoveTapped: (() -> Void)? = nil
 
     // showXField: user opened the field via menu on an otherwise-empty note
     // hideX: user collapsed the field (even if it has content)
@@ -79,6 +80,12 @@ struct InlineMovementLogView: View {
                         if let reorder = onReorderTapped {
                             Button("Reorder", systemImage: "line.3.horizontal") {
                                 reorder()
+                            }
+                        }
+
+                        if let remove = onRemoveTapped {
+                            Button("Remove", systemImage: "minus.circle", role: .destructive) {
+                                remove()
                             }
                         }
                     } label: {

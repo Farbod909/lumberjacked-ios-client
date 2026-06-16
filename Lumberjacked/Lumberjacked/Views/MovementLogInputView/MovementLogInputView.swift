@@ -38,12 +38,11 @@ struct MovementLogInputView: View {
                 TextField(
                     "",
                     text: $viewModel.movementLog.notes,
-                    prompt: Text("Notes...").foregroundStyle(.tertiary),
-                    axis: .vertical
+                    prompt: Text("Notes...").foregroundStyle(.tertiary)
                 )
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-                .lineLimit(5)
+                .lineLimit(1)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(Color(.systemGray6))
@@ -69,13 +68,15 @@ struct MovementLogInputView: View {
                 }
             }
 
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    Task {
-                        await viewModel.formSubmit(dismissAction: { dismiss() })
+            if viewModel.isDirty {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task {
+                            await viewModel.formSubmit(dismissAction: { dismiss() })
+                        }
                     }
+                    .disabled(!viewModel.canSave())
                 }
-                .disabled(!viewModel.canSave())
             }
 
             if viewModel.movementLog.id != nil {

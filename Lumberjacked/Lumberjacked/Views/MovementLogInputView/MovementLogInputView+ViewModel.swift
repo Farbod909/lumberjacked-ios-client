@@ -17,6 +17,8 @@ extension MovementLogInputView {
         var toolbarActionLoading = false
         var alert: AppAlert?
 
+        private let originalSets: [LogSet]
+        private let originalNotes: String
         private let workout: Workout?
         private let api: MovementLogAPIProtocol
 
@@ -33,11 +35,17 @@ extension MovementLogInputView {
             workout: Workout?,
             api: MovementLogAPIProtocol = LiveMovementLogAPI()
         ) {
-            self.movementLog = movementLog
-            self.movement    = movement
-            self.workout     = workout
-            self.api         = api
-            self.sets        = movementLog.sets ?? []
+            self.movementLog   = movementLog
+            self.movement      = movement
+            self.workout       = workout
+            self.api           = api
+            self.sets          = movementLog.sets ?? []
+            self.originalSets  = movementLog.sets ?? []
+            self.originalNotes = movementLog.notes
+        }
+
+        var isDirty: Bool {
+            sets != originalSets || movementLog.notes != originalNotes
         }
 
         func canSave() -> Bool {

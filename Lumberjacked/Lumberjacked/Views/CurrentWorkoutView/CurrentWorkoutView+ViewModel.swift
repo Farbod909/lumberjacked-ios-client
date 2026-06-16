@@ -177,6 +177,24 @@ extension CurrentWorkoutView {
             }
         }
 
+        // MARK: - Remove movement
+
+        func attemptRemoveMovement(movementId: UInt64) async {
+            guard let workoutId = currentWorkout?.id else { return }
+            let remaining = editableEntries
+                .map { $0.movement.id }
+                .compactMap { $0 }
+                .filter { $0 != movementId }
+            do {
+                _ = try await workoutAPI.updateWorkout(workoutId: workoutId, movements: remaining)
+                editableEntries.removeAll { $0.movement.id == movementId }
+            } catch let error as RemoteNetworkingError {
+                handleNetworkError(error)
+            } catch {
+                alert = AppAlert(title: "Error", message: error.localizedDescription)
+            }
+        }
+
         // MARK: - Movement reorder
 
         func persistMovementOrder() async {

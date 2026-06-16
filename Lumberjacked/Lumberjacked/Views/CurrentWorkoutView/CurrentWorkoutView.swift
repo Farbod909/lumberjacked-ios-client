@@ -166,6 +166,11 @@ struct CurrentWorkoutView: View {
                                     withAnimation(.easeInOut(duration: 0.2)) {
                                         isReordering = true
                                     }
+                                },
+                                onRemoveTapped: {
+                                    if let id = entry.movement.id {
+                                        Task { await viewModel.attemptRemoveMovement(movementId: id) }
+                                    }
                                 }
                             )
                         }
