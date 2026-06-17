@@ -16,18 +16,29 @@ struct MovementCatalogView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(viewModel.filteredMovements, id: \.self) { movement in
-                    Button {
-                        viewModel.movementTapped(movement)
-                    } label: {
-                        Text(movement.name)
+            Group {
+                if viewModel.isLoading(.load) {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if viewModel.movements.isEmpty {
+                    emptyState
+                } else if viewModel.filteredMovements.isEmpty {
+                    noSearchResults
+                } else {
+                    List {
+                        ForEach(viewModel.filteredMovements, id: \.self) { movement in
+                            Button {
+                                viewModel.movementTapped(movement)
+                            } label: {
+                                Text(movement.name)
+                            }
+                            .listRowBackground(Color.clear)
+                        }
                     }
-                    .listRowBackground(Color.clear)
+                    .listStyle(.inset)
+                    .scrollContentBackground(.hidden)
                 }
             }
-            .listStyle(.inset)
-            .scrollContentBackground(.hidden)
             .background(Color.brandBackground.ignoresSafeArea())
             .navigationTitle("Movement Catalog")
             .navigationBarTitleDisplayMode(.inline)
@@ -66,6 +77,52 @@ struct MovementCatalogView: View {
         .autocorrectionDisabled()
         .textInputAutocapitalization(.never)
     }
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "dumbbell")
+                .font(.system(size: 52))
+                .foregroundStyle(.secondary)
+            Text("No movements yet")
+                .font(.title2)
+                .fontWeight(.semibold)
+            Text("Add your first movement to start\ntracking your workouts.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button {
+                viewModel.showCreateMovementSheet = true
+            } label: {
+                Label("Add Movement", systemImage: "plus")
+                    .font(.headline)
+                    .padding(.horizontal, 8)
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.top, 4)
+            Spacer()
+            Spacer()
+        }
+        .padding(.horizontal, 32)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var noSearchResults: some View {
+        VStack(spacing: 12) {
+            Spacer()
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 40))
+                .foregroundStyle(.secondary)
+            Text("No results for \"\(viewModel.searchText)\"")
+                .font(.headline)
+            Button("Clear Search") {
+                viewModel.searchText = ""
+            }
+            .font(.subheadline)
+            Spacer()
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+    }
 }
 
 #if DEBUG
@@ -76,6 +133,21 @@ struct MovementCatalogView: View {
 #Preview("Filtered") {
     let vm = MovementCatalogView.ViewModel(api: MockMovementAPI())
     vm.searchText = "bar"
+    return MovementCatalogView(viewModel: vm)
+}
+
+#Preview("Empty Catalog") {
+    let vm = MovementCatalogView.ViewModel(api: MockMovementAPI())
+    vm.loadingKeys = []
+    vm.movements = []
+    return MovementCatalogView(viewModel: vm)
+}
+
+#Preview("No Search Results") {
+    let vm = MovementCatalogView.ViewModel(api: MockMovementAPI())
+    vm.loadingKeys = []
+    vm.movements = PreviewData.movements
+    vm.searchText = "zzz"
     return MovementCatalogView(viewModel: vm)
 }
 #endif
