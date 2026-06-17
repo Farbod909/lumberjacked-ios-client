@@ -7,6 +7,18 @@
 
 import SwiftUI
 
+private struct FloatingButtonStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.regular.interactive(), in: .capsule)
+        } else {
+            content
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+        }
+    }
+}
+
 struct CurrentWorkoutView: View {
     @State var viewModel: ViewModel
     @State var timeElapsed: String = "00:00"
@@ -55,9 +67,8 @@ struct CurrentWorkoutView: View {
                 .font(.headline)
         }
         .padding()
-        .background(.ultraThinMaterial)
+        .modifier(FloatingButtonStyle())
         .foregroundStyle(Color.brandPrimaryText)
-        .clipShape(RoundedRectangle(cornerRadius: 25))
     }
 
     var endWorkoutButton: some View {
@@ -76,9 +87,8 @@ struct CurrentWorkoutView: View {
                 .font(.headline)
         }
         .padding()
-        .background(.ultraThinMaterial)
+        .modifier(FloatingButtonStyle())
         .foregroundStyle(Color.accentColor)
-        .clipShape(RoundedRectangle(cornerRadius: 25))
     }
 
     // MARK: - Timer chip
