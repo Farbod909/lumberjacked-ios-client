@@ -639,8 +639,6 @@ struct CurrentWorkoutView: View {
             }
             .navigationDestination(item: $viewModel.destination) { dest in
                 switch dest {
-                case .settings:
-                    SettingsView()
                 case .editWorkout:
                     MovementSelectorView(
                         viewModel: MovementSelectorView.ViewModel(
@@ -648,11 +646,6 @@ struct CurrentWorkoutView: View {
                 }
             }
             .toolbar {
-                ToolbarItemGroup(placement: .topBarLeading) {
-                    Button { viewModel.settingsTapped() } label: {
-                        Image(systemName: "gearshape")
-                    }
-                }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     if isReordering {
                         Button("Done") {

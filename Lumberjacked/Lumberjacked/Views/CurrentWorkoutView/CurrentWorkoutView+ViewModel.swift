@@ -48,11 +48,9 @@ extension CurrentWorkoutView {
         var loadingKeys: Set<LoadingKey> = [.currentWorkout, .movements]
 
         enum Destination: Identifiable, Hashable {
-            case settings
             case editWorkout
             var id: String {
                 switch self {
-                case .settings: return "settings"
                 case .editWorkout: return "editWorkout"
                 }
             }
@@ -86,7 +84,6 @@ extension CurrentWorkoutView {
             self.movementLogAPI = movementLogAPI
         }
 
-        func settingsTapped() { destination = .settings }
         func editWorkoutTapped() { destination = .editWorkout }
 
         // MARK: - Workout loading

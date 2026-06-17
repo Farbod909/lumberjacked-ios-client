@@ -33,6 +33,10 @@ struct ContentView: View {
                 .tabItem {
                     Label("History", systemImage: "calendar")
                 }
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape")
+                }
         }
         .preferredColorScheme(preferredColorScheme)
     }
