@@ -25,6 +25,9 @@ struct TemplateWorkoutSelectorView: View {
         Group {
             if viewModel.isLoading(.load) {
                 ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.workouts.isEmpty {
+                emptyState
             } else {
                 ScrollView {
                     LazyVStack(spacing: 10) {
@@ -54,17 +57,56 @@ struct TemplateWorkoutSelectorView: View {
             await viewModel.attemptGetWorkouts()
         }
     }
+
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "calendar.badge.clock")
+                .font(.system(size: 52))
+                .foregroundStyle(.secondary)
+            Text("No past workouts")
+                .font(.title2)
+                .fontWeight(.semibold)
+            Text("Complete a workout first to\nrepeat it here.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Spacer()
+            Spacer()
+        }
+        .padding(.horizontal, 32)
+        .frame(maxWidth: .infinity)
+    }
 }
 
 #if DEBUG
-#Preview {
+#Preview("With Workouts") {
     struct Preview: View {
         @State var templateWorkout: Workout? = nil
-
         var body: some View {
             NavigationStack {
                 TemplateWorkoutSelectorView(
                     viewModel: TemplateWorkoutSelectorView.ViewModel(api: MockWorkoutAPI()),
+                    templateWorkout: $templateWorkout,
+                    dismissAction: { })
+            }
+        }
+    }
+    return Preview()
+}
+
+#Preview("Empty") {
+    struct Preview: View {
+        @State var templateWorkout: Workout? = nil
+        var body: some View {
+            NavigationStack {
+                TemplateWorkoutSelectorView(
+                    viewModel: {
+                        let vm = TemplateWorkoutSelectorView.ViewModel(api: MockWorkoutAPI())
+                        vm.loadingKeys = []
+                        vm.workouts = []
+                        return vm
+                    }(),
                     templateWorkout: $templateWorkout,
                     dismissAction: { })
             }

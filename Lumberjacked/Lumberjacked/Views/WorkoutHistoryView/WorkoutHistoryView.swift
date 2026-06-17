@@ -16,19 +16,28 @@ struct WorkoutHistoryView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(viewModel.pastWorkouts, id: \.self) { workout in
-                    Button {
-                        viewModel.workoutTapped(workout)
-                    } label: {
-                        WorkoutOverviewView(workout: workout)
+            Group {
+                if viewModel.isLoading(.load) {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if viewModel.pastWorkouts.isEmpty {
+                    emptyState
+                } else {
+                    List {
+                        ForEach(viewModel.pastWorkouts, id: \.self) { workout in
+                            Button {
+                                viewModel.workoutTapped(workout)
+                            } label: {
+                                WorkoutOverviewView(workout: workout)
+                            }
+                            .foregroundStyle(.white)
+                            .listRowBackground(Color.brandSecondary)
+                        }
                     }
-                    .foregroundStyle(.white)
-                    .listRowBackground(Color.brandSecondary)
+                    .listRowSpacing(10)
+                    .scrollContentBackground(.hidden)
                 }
             }
-            .listRowSpacing(10)
-            .scrollContentBackground(.hidden)
             .background(Color.brandBackground.ignoresSafeArea())
             .navigationTitle("Workout History")
             .navigationBarTitleDisplayMode(.inline)
@@ -43,10 +52,37 @@ struct WorkoutHistoryView: View {
             }
         }
     }
+
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "calendar.badge.clock")
+                .font(.system(size: 52))
+                .foregroundStyle(.secondary)
+            Text("No workouts yet")
+                .font(.title2)
+                .fontWeight(.semibold)
+            Text("Complete a workout to see your\nhistory here.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Spacer()
+            Spacer()
+        }
+        .padding(.horizontal, 32)
+        .frame(maxWidth: .infinity)
+    }
 }
 
 #if DEBUG
-#Preview {
+#Preview("With History") {
     WorkoutHistoryView(viewModel: WorkoutHistoryView.ViewModel(api: MockWorkoutAPI()))
+}
+
+#Preview("Empty") {
+    let vm = WorkoutHistoryView.ViewModel(api: MockWorkoutAPI())
+    vm.loadingKeys = []
+    vm.workouts = []
+    return WorkoutHistoryView(viewModel: vm)
 }
 #endif
