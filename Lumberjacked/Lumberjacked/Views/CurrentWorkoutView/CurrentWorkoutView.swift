@@ -83,59 +83,18 @@ struct CurrentWorkoutView: View {
 
     // MARK: - Timer chip
 
-    // Layout-only placeholder used inside the hidden ScrollView spacer.
-    // Must NOT carry any popover bindings to avoid competing with the real button.
-    var timerViewSpacer: some View {
-        HStack(spacing: 10) {
-            HStack(alignment: .bottom) {
-                Text(timeElapsed)
-                    .font(.largeTitle)
-                Text("elapsed")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .textCase(.uppercase)
-                    .padding(.bottom, 6)
+    var elapsedText: some View {
+        Text("\(timeElapsed) elapsed")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .onReceive(timer) { _ in
+                let interval = Date.now.timeIntervalSince(
+                    viewModel.currentWorkout?.start_timestamp ?? Date.now)
+                let totalMinutes = Int(interval / 60)
+                let hours = totalMinutes / 60
+                let minutes = totalMinutes % 60
+                timeElapsed = hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
             }
-            .padding(EdgeInsets(top: 8, leading: 18, bottom: 8, trailing: 18))
-            .background(.thinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 25))
-
-            Image(systemName: "timer")
-                .font(.title2)
-                .padding(.horizontal, 14)
-                .frame(maxHeight: .infinity)
-                .background(.thinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 25))
-        }
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    var timerView: some View {
-        HStack(spacing: 10) {
-            HStack(alignment: .bottom) {
-                Text(timeElapsed)
-                    .font(.largeTitle)
-                    .onReceive(timer) { _ in
-                        let interval = Date.now.timeIntervalSince(
-                            viewModel.currentWorkout?.start_timestamp ?? Date.now)
-                        let totalMinutes = Int(interval / 60)
-                        let hours = totalMinutes / 60
-                        let minutes = totalMinutes % 60
-                        timeElapsed = hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
-                    }
-                Text("elapsed")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .textCase(.uppercase)
-                    .padding(.bottom, 6)
-            }
-            .padding(EdgeInsets(top: 8, leading: 18, bottom: 8, trailing: 18))
-            .background(.thinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 25))
-
-            restTimerButton
-        }
-        .fixedSize(horizontal: false, vertical: true)
     }
 
     var restTimerButton: some View {
@@ -155,21 +114,17 @@ struct CurrentWorkoutView: View {
             Group {
                 if isActive {
                     Text(restTimer.formattedTimeRemaining)
-                        .font(.title3.monospacedDigit())
+                        .font(.subheadline.monospacedDigit())
                         .foregroundStyle(Color.accentColor)
                         .contentTransition(.numericText(countsDown: true))
                         .animation(.default, value: restTimer.timeRemaining)
                 } else {
                     Image(systemName: "timer")
-                        .font(.title2)
+                        .font(.body)
                         .foregroundStyle(Color.brandPrimaryText)
                 }
             }
-            .padding(.horizontal, 14)
-            .frame(maxHeight: .infinity)
         }
-        .background(.thinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 25))
         .popover(isPresented: $showRestTimerPicker) {
             restTimerPickerContent
         }
@@ -275,14 +230,6 @@ struct CurrentWorkoutView: View {
         ZStack {
             VStack {
                 ScrollView {
-                    // Hidden duplicate keeps the scroll area the right width
-                    // so the fixed timer chip doesn't shift content on appear.
-                    timerViewSpacer
-                        .padding(.top, 10)
-                        .padding(.bottom, 20)
-                        .hidden()
-                        .allowsHitTesting(false)
-
                     if isReordering {
                         // Compact name-only rows for drag-to-reorder
                         VStack(spacing: 8) {
@@ -326,13 +273,6 @@ struct CurrentWorkoutView: View {
                     Spacer().frame(height: 80)
                 }
                 .scrollIndicators(.hidden)
-            }
-
-            VStack {
-                timerView
-                    .padding(.top, 10)
-                    .padding(.bottom, 20)
-                Spacer()
             }
 
             if isKeyboardVisible {
@@ -617,6 +557,7 @@ struct CurrentWorkoutView: View {
                                 viewModel.showAddMovementOverlay ? 1 : 0))
                 }
             }
+            .navigationBarTitleDisplayMode(.inline)
             .animation(.default, value: viewModel.currentWorkout)
             .animation(
                 .spring(duration: 0.3, bounce: 0.05),
@@ -646,6 +587,16 @@ struct CurrentWorkoutView: View {
                 }
             }
             .toolbar {
+                ToolbarItemGroup(placement: .topBarLeading) {
+                    if viewModel.currentWorkout != nil {
+                        restTimerButton
+                    }
+                }
+                ToolbarItem(placement: .principal) {
+                    if viewModel.currentWorkout != nil {
+                        elapsedText
+                    }
+                }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     if isReordering {
                         Button("Done") {
