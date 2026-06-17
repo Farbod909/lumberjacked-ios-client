@@ -9,7 +9,16 @@ import SwiftUI
 
 struct ContentView: View {
     @State var viewModel = ViewModel()
-    
+    @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "dark"
+
+    var preferredColorScheme: ColorScheme? {
+        switch colorSchemePreference {
+        case "light":  return .light
+        case "dark":   return .dark
+        default:       return nil
+        }
+    }
+
     var body: some View {
         TabView {
             CurrentWorkoutView()
@@ -25,7 +34,7 @@ struct ContentView: View {
                     Label("History", systemImage: "calendar")
                 }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(preferredColorScheme)
     }
 }
 

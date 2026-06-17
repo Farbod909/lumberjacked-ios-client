@@ -8,7 +8,6 @@ import SwiftUI
 struct MovementLogInputView: View {
     @State var viewModel: ViewModel
     @Environment(\.dismiss) var dismiss
-    @Environment(RestTimerEnvironment.self) private var restTimer
     @State private var isKeyboardVisible = false
 
     var body: some View {
@@ -91,13 +90,6 @@ struct MovementLogInputView: View {
                 }
             }
 
-            // Rest timer in nav bar (shown while timer is active)
-            ToolbarItem(placement: .principal) {
-                if restTimer.isRunning {
-                    RestTimerNavBarView()
-                }
-            }
-
             if viewModel.isDirty {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -119,20 +111,6 @@ struct MovementLogInputView: View {
                 }
             }
         }
-    }
-}
-
-// MARK: - Nav bar rest timer
-
-struct RestTimerNavBarView: View {
-    @Environment(RestTimerEnvironment.self) private var restTimer
-
-    var body: some View {
-        Text(restTimer.formattedTimeRemaining)
-            .font(.headline.monospacedDigit())
-            .foregroundStyle(Color.accentColor)
-            .contentTransition(.numericText(countsDown: true))
-            .animation(.default, value: restTimer.timeRemaining)
     }
 }
 

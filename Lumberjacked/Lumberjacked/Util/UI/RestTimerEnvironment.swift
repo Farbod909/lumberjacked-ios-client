@@ -12,6 +12,7 @@ class RestTimerEnvironment {
     var timeRemaining: Int = 0
     var totalTime: Int = 0
     var isRunning: Bool = false
+    var showingZero: Bool = false
     var showTimerAlert: Bool = false
 
     private var timerCancellable: AnyCancellable?
@@ -22,6 +23,7 @@ class RestTimerEnvironment {
         totalTime = seconds
         timeRemaining = seconds
         isRunning = true
+        showingZero = false
         showTimerAlert = false
 
         timerCancellable = Timer.publish(every: 1, on: .main, in: .common)
@@ -35,6 +37,10 @@ class RestTimerEnvironment {
                     self.activeSetId = nil
                     self.timerCancellable?.cancel()
                     self.showTimerAlert = true
+                    self.showingZero = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+                        self?.showingZero = false
+                    }
                 }
             }
     }
@@ -42,6 +48,7 @@ class RestTimerEnvironment {
     func cancel() {
         timerCancellable?.cancel()
         isRunning = false
+        showingZero = false
         activeSetId = nil
         timeRemaining = 0
         totalTime = 0

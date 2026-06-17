@@ -22,6 +22,10 @@ struct CurrentWorkoutView: View {
 
     @State private var replacingMovementId: UInt64? = nil
     @State private var isKeyboardVisible = false
+    @State private var showRestTimerPicker = false
+    @State private var showRestTimerOptions = false
+    @State private var pickerMinutes: Int = 2
+    @State private var pickerSeconds: Int = 0
 
     init(viewModel: ViewModel = ViewModel()) {
         _viewModel = State(initialValue: viewModel)
@@ -79,27 +83,160 @@ struct CurrentWorkoutView: View {
 
     // MARK: - Timer chip
 
-    var timerView: some View {
-        HStack(alignment: .bottom) {
-            Text(timeElapsed)
-                .font(.largeTitle)
-                .onReceive(timer) { _ in
-                    let interval = Date.now.timeIntervalSince(
-                        viewModel.currentWorkout?.start_timestamp ?? Date.now)
-                    let totalMinutes = Int(interval / 60)
-                    let hours = totalMinutes / 60
-                    let minutes = totalMinutes % 60
-                    timeElapsed = hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
-                }
-            Text("elapsed")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .textCase(.uppercase)
-                .padding(.bottom, 6)
+    // Layout-only placeholder used inside the hidden ScrollView spacer.
+    // Must NOT carry any popover bindings to avoid competing with the real button.
+    var timerViewSpacer: some View {
+        HStack(spacing: 10) {
+            HStack(alignment: .bottom) {
+                Text(timeElapsed)
+                    .font(.largeTitle)
+                Text("elapsed")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .textCase(.uppercase)
+                    .padding(.bottom, 6)
+            }
+            .padding(EdgeInsets(top: 8, leading: 18, bottom: 8, trailing: 18))
+            .background(.thinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 25))
+
+            Image(systemName: "timer")
+                .font(.title2)
+                .padding(.horizontal, 14)
+                .frame(maxHeight: .infinity)
+                .background(.thinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 25))
         }
-        .padding(EdgeInsets(top: 8, leading: 18, bottom: 8, trailing: 18))
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    var timerView: some View {
+        HStack(spacing: 10) {
+            HStack(alignment: .bottom) {
+                Text(timeElapsed)
+                    .font(.largeTitle)
+                    .onReceive(timer) { _ in
+                        let interval = Date.now.timeIntervalSince(
+                            viewModel.currentWorkout?.start_timestamp ?? Date.now)
+                        let totalMinutes = Int(interval / 60)
+                        let hours = totalMinutes / 60
+                        let minutes = totalMinutes % 60
+                        timeElapsed = hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+                    }
+                Text("elapsed")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .textCase(.uppercase)
+                    .padding(.bottom, 6)
+            }
+            .padding(EdgeInsets(top: 8, leading: 18, bottom: 8, trailing: 18))
+            .background(.thinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 25))
+
+            restTimerButton
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    var restTimerButton: some View {
+        let isActive = restTimer.isRunning || restTimer.showingZero
+        return Button {
+            guard !restTimer.showingZero else { return }
+            if restTimer.isRunning {
+                showRestTimerOptions = true
+            } else {
+                if restTimer.totalTime > 0 {
+                    pickerMinutes = restTimer.totalTime / 60
+                    pickerSeconds = (restTimer.totalTime % 60 / 10) * 10
+                }
+                showRestTimerPicker = true
+            }
+        } label: {
+            Group {
+                if isActive {
+                    Text(restTimer.formattedTimeRemaining)
+                        .font(.title3.monospacedDigit())
+                        .foregroundStyle(Color.accentColor)
+                        .contentTransition(.numericText(countsDown: true))
+                        .animation(.default, value: restTimer.timeRemaining)
+                } else {
+                    Image(systemName: "timer")
+                        .font(.title2)
+                        .foregroundStyle(Color.brandPrimaryText)
+                }
+            }
+            .padding(.horizontal, 14)
+            .frame(maxHeight: .infinity)
+        }
         .background(.thinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 25))
+        .popover(isPresented: $showRestTimerPicker) {
+            restTimerPickerContent
+        }
+        .popover(isPresented: $showRestTimerOptions) {
+            restTimerOptionsContent
+        }
+    }
+
+    var restTimerPickerContent: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 0) {
+                Picker("Minutes", selection: $pickerMinutes) {
+                    ForEach(0...10, id: \.self) { Text("\($0)m") }
+                }
+                .pickerStyle(.wheel)
+                .frame(width: 100)
+                .clipped()
+
+                Picker("Seconds", selection: $pickerSeconds) {
+                    ForEach([0, 10, 20, 30, 40, 50], id: \.self) { Text("\($0)s") }
+                }
+                .pickerStyle(.wheel)
+                .frame(width: 100)
+                .clipped()
+            }
+
+            Button("Start") {
+                let total = pickerMinutes * 60 + pickerSeconds
+                if total > 0 {
+                    restTimer.start(seconds: total, setId: UUID())
+                }
+                showRestTimerPicker = false
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(pickerMinutes == 0 && pickerSeconds == 0)
+            .padding(.bottom, 8)
+        }
+        .padding(.top, 8)
+        .presentationCompactAdaptation(.popover)
+    }
+
+    var restTimerOptionsContent: some View {
+        VStack(spacing: 0) {
+            Button {
+                restTimer.cancel()
+                showRestTimerOptions = false
+            } label: {
+                Label("Stop", systemImage: "stop.fill")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+            }
+            .foregroundStyle(.red)
+
+            Divider()
+
+            Button {
+                restTimer.start(seconds: restTimer.totalTime, setId: UUID())
+                showRestTimerOptions = false
+            } label: {
+                Label("Reset", systemImage: "arrow.counterclockwise")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+            }
+            .foregroundStyle(.primary)
+        }
+        .frame(minWidth: 180)
+        .presentationCompactAdaptation(.popover)
     }
 
     // MARK: - New workout options
@@ -140,10 +277,11 @@ struct CurrentWorkoutView: View {
                 ScrollView {
                     // Hidden duplicate keeps the scroll area the right width
                     // so the fixed timer chip doesn't shift content on appear.
-                    timerView
+                    timerViewSpacer
                         .padding(.top, 10)
                         .padding(.bottom, 20)
                         .hidden()
+                        .allowsHitTesting(false)
 
                     if isReordering {
                         // Compact name-only rows for drag-to-reorder
@@ -513,11 +651,6 @@ struct CurrentWorkoutView: View {
                 ToolbarItemGroup(placement: .topBarLeading) {
                     Button { viewModel.settingsTapped() } label: {
                         Image(systemName: "gearshape")
-                    }
-                }
-                ToolbarItem(placement: .principal) {
-                    if restTimer.isRunning {
-                        RestTimerNavBarView()
                     }
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {

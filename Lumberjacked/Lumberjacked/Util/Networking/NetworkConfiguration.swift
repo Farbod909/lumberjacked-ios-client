@@ -5,14 +5,16 @@
 import Foundation
 
 enum NetworkConfiguration {
-    static let baseURL: String = {
+    static let localURL  = "http://192.168.86.30:8000"
+    static let remoteURL = "https://lumberjacked-dev-2-1029906100530.us-west2.run.app"
+
+    static var baseURL: String {
         if let envURL = ProcessInfo.processInfo.environment["API_BASE_URL"] {
             return envURL
         }
-        #if DEBUG
-        return "http://192.168.86.30:8000"
-        #else
-        return "https://lumberjacked-dev-2-1029906100530.us-west2.run.app"
-        #endif
-    }()
+        if UserDefaults.standard.bool(forKey: "useLocalBackend") {
+            return localURL
+        }
+        return remoteURL
+    }
 }
