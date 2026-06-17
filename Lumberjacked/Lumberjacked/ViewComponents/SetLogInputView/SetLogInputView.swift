@@ -137,9 +137,25 @@ struct SetLogInputView: View {
 
     // MARK: - Rows content (shared between standalone and embedded modes)
 
+    private var emptyStateRow: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "tray")
+                .foregroundStyle(.tertiary)
+            Text("No sets logged")
+                .foregroundStyle(.secondary)
+        }
+        .font(.subheadline)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .background(Color(.systemGray6))
+    }
+
     @ViewBuilder
     private var rowsContent: some View {
         VStack(spacing: 0) {
+            if editableSets.isEmpty {
+                emptyStateRow
+            }
             ForEach(Array(editableSets.enumerated()), id: \.element.id) { index, _ in
                 if index > 0 && !readOnly {
                     // Rest time pill between row (index-1) and row (index).
@@ -159,7 +175,7 @@ struct SetLogInputView: View {
             if !readOnly {
                 // "+" button with the same overlap treatment as the pill.
                 addSetButton
-                    .padding(.top, editableSets.isEmpty ? 0 : -pillHalfHeight)
+                    .padding(.top, -pillHalfHeight)
                     .zIndex(10)
             }
         }
