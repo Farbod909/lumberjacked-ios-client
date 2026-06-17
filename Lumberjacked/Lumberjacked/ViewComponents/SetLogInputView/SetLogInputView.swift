@@ -190,11 +190,12 @@ struct SetLogInputView: View {
         HStack(spacing: 0) {
             Text("Set")
                 .frame(width: Col.set, alignment: .leading)
+                .padding(.leading, 4)
 
             if mode.showsPrevious {
                 Text("Previous")
                     .frame(width: Col.previous, alignment: .leading)
-                    .padding(.leading, 4)
+                    .padding(.leading, 12)
             }
 
             Spacer()
@@ -238,8 +239,7 @@ struct SetLogInputView: View {
             Text(s.displayLabel(workingSetIndex: workingIdx))
                 .font(.headline)
                 .foregroundStyle(.primary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
+                .frame(width: 28, height: 28)
                 .background(
                     RoundedRectangle(cornerRadius: 6)
                         .stroke(Color.secondary.opacity(0.35), lineWidth: 1)
@@ -310,8 +310,7 @@ struct SetLogInputView: View {
                     Text(s.displayLabel(workingSetIndex: workingIdx))
                         .font(.headline)
                         .foregroundStyle(.primary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
+                        .frame(width: 28, height: 28)
                         .background(
                             RoundedRectangle(cornerRadius: 6)
                                 .stroke(Color.secondary.opacity(0.35), lineWidth: 1)
@@ -324,7 +323,7 @@ struct SetLogInputView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .frame(width: Col.previous, alignment: .leading)
-                        .padding(.leading, 4)
+                        .padding(.leading, 12)
                         .lineLimit(1)
                 }
 
