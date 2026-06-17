@@ -15,48 +15,45 @@ struct MovementDetailView: View {
         ZStack {
             Color.brandBackground.ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 12) {
-                Text(viewModel.movement.name)
-                    .font(.title)
-                    .fontWeight(.semibold)
-                    .padding(EdgeInsets(top: 0, leading: 6, bottom: 0, trailing: 6))
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(viewModel.movement.name)
+                        .font(.title)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 6)
 
-                if !viewModel.movement.hasNotes {
-                    HStack {
-                        Text("\(Image(systemName: "info.circle")) Edit this movement to add notes to help you during your workouts.")
-                        Spacer()
-                    }
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
-                }
-
-                if viewModel.movement.hasNotes {
-                    NotesView(notes: viewModel.movement.notes, maxHeight: 100)
-                }
-
-                if !viewModel.movementLogs.isEmpty {
-                    LogListView(movementLogs: viewModel.movementLogs, onLogTap: viewModel.logTapped)
-                } else {
-                    if viewModel.isLoading(.logs) {
+                    if !viewModel.movement.hasNotes {
                         HStack {
-                            Spacer()
-                            VStack {
-                                Spacer()
-                                ProgressView()
-                                Spacer()
-                            }
-                            Spacer()
-                        }
-                    } else {
-                        HStack {
-                            Text("\(Image(systemName: "info.circle")) Add this movement to a new workout to keep track of log history.")
+                            Text("\(Image(systemName: "info.circle")) Edit this movement to add notes to help you during your workouts.")
                             Spacer()
                         }
                         .padding()
                         .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
                     }
+
+                    if viewModel.movement.hasNotes {
+                        NotesView(notes: viewModel.movement.notes)
+                    }
+
+                    if !viewModel.movementLogs.isEmpty {
+                        LogListView(movementLogs: viewModel.movementLogs, onLogTap: viewModel.logTapped)
+                    } else {
+                        if viewModel.isLoading(.logs) {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 40)
+                        } else {
+                            HStack {
+                                Text("\(Image(systemName: "info.circle")) Add this movement to a new workout to keep track of log history.")
+                                Spacer()
+                            }
+                            .padding()
+                            .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
+                        }
+                    }
                 }
-                Spacer()
+                .padding(.horizontal, 10)
+                .padding(.bottom, 20)
             }
             .task {
                 await viewModel.attemptGetMovementLogs()
@@ -131,66 +128,25 @@ struct MovementDetailView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             }
-            .padding(.horizontal, 10)
         }
     }
 }
 
 struct NotesView: View {
     let notes: String
-    let maxHeight: CGFloat
-    @State private var textHeight: CGFloat = .zero
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text("Notes")
-                    .textCase(.uppercase)
-                    .font(.headline)
-
-                Group {
-                    if textHeight > maxHeight {
-                        ScrollView {
-                            Text(notes)
-                                .foregroundColor(.primary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(
-                                    GeometryReader { proxy in
-                                        Color.clear
-                                            .preference(key: HeightKey.self, value: proxy.size.height)
-                                    }
-                                )
-                        }
-                        .scrollIndicators(.hidden)
-                        .frame(height: maxHeight)
-                    } else {
-                        Text(notes)
-                            .foregroundColor(.primary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                GeometryReader { proxy in
-                                    Color.clear
-                                        .preference(key: HeightKey.self, value: proxy.size.height)
-                                }
-                            )
-                    }
-                }
-            }
-            Spacer()
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Notes")
+                .textCase(.uppercase)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(notes)
+                .foregroundColor(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .onPreferenceChange(HeightKey.self) { textHeight = $0 }
         .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 25)
-                .fill(Color.brandSecondary)
-        )
-    }
-}
-
-private struct HeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = .zero
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
+        .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
     }
 }
 
@@ -198,28 +154,29 @@ struct LogListView: View {
     var movementLogs: [MovementLog]
     var onLogTap: (MovementLog) -> Void
 
+    var sortedLogs: [MovementLog] {
+        movementLogs.sorted { $0.timestamp! > $1.timestamp! }
+    }
+
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 0) {
             Text("Log History")
                 .textCase(.uppercase)
-                .font(.headline)
-            List {
-                ForEach(
-                    movementLogs.sorted(
-                        by: { $0.timestamp! > $1.timestamp! }
-                    ),
-                    id: \.self
-                ) { log in
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 8)
+                .padding(.horizontal, 6)
+
+            VStack(spacing: 0) {
+                ForEach(Array(sortedLogs.enumerated()), id: \.element) { index, log in
                     LogItem(movementLog: log, onTap: onLogTap)
-                    .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
-                    .listRowBackground(Color.clear)
+                    if index < sortedLogs.count - 1 {
+                        Divider().padding(.leading, 16)
+                    }
                 }
             }
-            .listStyle(.plain)
-            .scrollIndicators(.hidden)
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color.brandSecondary))
         }
-        .padding()
-        .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
     }
 }
 
@@ -231,21 +188,98 @@ struct LogItem: View {
         Button {
             onTap(movementLog)
         } label: {
-            HStack(alignment: .top) {
-                if let timestamp = movementLog.timestamp {
-                    Text(timestamp.formatted(date: .abbreviated, time: .omitted))
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    if let timestamp = movementLog.timestamp {
+                        Text(timestamp.formatted(date: .abbreviated, time: .omitted))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
                         .fontWeight(.semibold)
+                        .foregroundStyle(.tertiary)
                 }
-                Spacer()
-                VStack(alignment: .trailing) {
-                    ForEach(movementLog.summary, id:\.self) { item in
-                        Text(item)
+
+                let displaySets = (movementLog.sets ?? []).filter { $0.type != "warmup" }
+                if !displaySets.isEmpty {
+                    FlowLayout(spacing: 6) {
+                        ForEach(displaySets.indices, id: \.self) { i in
+                            Text(chipLabel(displaySets[i]))
+                                .font(.subheadline)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 4)
+                                .background(Color(.systemGray4))
+                                .clipShape(Capsule())
+                        }
                     }
                 }
-                .textCase(.uppercase)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
         }
         .foregroundStyle(.primary)
+    }
+
+    private func chipLabel(_ set: LogSet) -> String {
+        if let load = set.load {
+            let rounded = (load * 10).rounded() / 10
+            let loadStr = rounded.truncatingRemainder(dividingBy: 1) == 0
+                ? String(Int(rounded))
+                : String(format: "%.1f", rounded)
+            return "\(set.reps) × \(loadStr)"
+        }
+        return "\(set.reps)"
+    }
+}
+
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
+        let rows = computeRows(maxWidth: proposal.width ?? .infinity, subviews: subviews)
+        let height = rows.reduce(0) { $0 + $1.height } + spacing * CGFloat(max(0, rows.count - 1))
+        return CGSize(width: proposal.width ?? 0, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
+        let rows = computeRows(maxWidth: bounds.width, subviews: subviews)
+        var y = bounds.minY
+        for row in rows {
+            var x = bounds.minX
+            for item in row.items {
+                item.subview.place(at: CGPoint(x: x, y: y), proposal: .unspecified)
+                x += item.width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+
+    private struct Row {
+        var items: [(subview: LayoutSubview, width: CGFloat)]
+        var height: CGFloat
+    }
+
+    private func computeRows(maxWidth: CGFloat, subviews: Subviews) -> [Row] {
+        var rows: [Row] = []
+        var current = Row(items: [], height: 0)
+        var currentX: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if currentX + size.width > maxWidth && !current.items.isEmpty {
+                rows.append(current)
+                current = Row(items: [], height: 0)
+                currentX = 0
+            }
+            current.items.append((subview: subview, width: size.width))
+            current.height = max(current.height, size.height)
+            currentX += size.width + spacing
+        }
+
+        if !current.items.isEmpty { rows.append(current) }
+        return rows
     }
 }
 
