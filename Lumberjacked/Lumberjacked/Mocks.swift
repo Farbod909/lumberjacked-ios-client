@@ -129,6 +129,36 @@ final class MockMovementLogAPI: MovementLogAPIProtocol {
     }
 }
 
+// MARK: - MockWorkoutTemplateAPI
+
+final class MockWorkoutTemplateAPI: WorkoutTemplateAPIProtocol {
+    var errorToThrow: Error?
+
+    func getWorkoutTemplates() async throws -> APIResponseList<WorkoutTemplate> {
+        if let error = errorToThrow { throw error }
+        return APIResponseList(count: PreviewData.workoutTemplates.count, results: PreviewData.workoutTemplates)
+    }
+
+    func getWorkoutTemplate(id: UInt64) async throws -> WorkoutTemplate {
+        if let error = errorToThrow { throw error }
+        return PreviewData.workoutTemplates.first { $0.id == id } ?? PreviewData.workoutTemplate_pushDay
+    }
+
+    func createWorkoutTemplate(request: CreateWorkoutTemplateRequest) async throws -> WorkoutTemplate {
+        if let error = errorToThrow { throw error }
+        return WorkoutTemplate(id: 99, author: 1, name: request.name)
+    }
+
+    func updateWorkoutTemplate(id: UInt64, request: CreateWorkoutTemplateRequest) async throws -> WorkoutTemplate {
+        if let error = errorToThrow { throw error }
+        return WorkoutTemplate(id: id, author: 1, name: request.name)
+    }
+
+    func deleteWorkoutTemplate(id: UInt64) async throws {
+        if let error = errorToThrow { throw error }
+    }
+}
+
 // MARK: - MockAuthAPI
 
 final class MockAuthAPI: AuthAPIProtocol {

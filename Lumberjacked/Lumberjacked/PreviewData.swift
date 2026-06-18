@@ -300,5 +300,44 @@ enum PreviewData {
     ]
 
     static let benchPressLogs: [MovementLog] = [log_benchPress_1, log_benchPress_2, log_benchPress_3]
+
+    // MARK: - Workout Templates
+
+    static let workoutTemplate_pushDay = WorkoutTemplate(
+        id: 1,
+        author: 1,
+        name: "Push Day",
+        movements_details: [
+            WorkoutTemplateMovement(id: 1, movement: 1, movement_detail: benchPress, order: 0),
+            WorkoutTemplateMovement(id: 2, movement: 4, movement_detail: ohp, order: 1),
+            WorkoutTemplateMovement(id: 3, movement: 6, movement_detail: inclineDumbbell, order: 2),
+        ]
+    )
+
+    static let workoutTemplate_legDay = WorkoutTemplate(
+        id: 2,
+        author: 1,
+        name: "Leg Day",
+        movements_details: [
+            WorkoutTemplateMovement(id: 4, movement: 2, movement_detail: squat, order: 0),
+            WorkoutTemplateMovement(id: 5, movement: 3, movement_detail: deadlift, order: 1),
+            WorkoutTemplateMovement(id: 6, movement: 7, movement_detail: romanianDeadlift, order: 2),
+        ]
+    )
+
+    static let workoutTemplate_pullDay = WorkoutTemplate(
+        id: 3,
+        author: 1,
+        name: "Pull Day",
+        movements_details: [
+            WorkoutTemplateMovement(id: 7, movement: 5, movement_detail: bentOverRow, order: 0),
+            WorkoutTemplateMovement(id: 8, movement: 9, movement_detail: latPulldown, order: 1),
+            WorkoutTemplateMovement(id: 9, movement: 8, movement_detail: cableRow, order: 2),
+        ]
+    )
+
+    static let workoutTemplates: [WorkoutTemplate] = [
+        workoutTemplate_pushDay, workoutTemplate_legDay, workoutTemplate_pullDay
+    ]
 }
 #endif

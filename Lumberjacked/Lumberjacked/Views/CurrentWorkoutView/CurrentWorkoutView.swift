@@ -32,6 +32,7 @@ struct CurrentWorkoutView: View {
     @State private var reorderDragStartIndex: Int = 0
     private let reorderRowHeight: CGFloat = 52
 
+    @State private var templatesViewModel = WorkoutTemplatesView.ViewModel()
     @State private var replacingMovementId: UInt64? = nil
     @State private var isKeyboardVisible = false
     @State private var showRestTimerPicker = false
@@ -207,31 +208,41 @@ struct CurrentWorkoutView: View {
     // MARK: - New workout options
 
     var newWorkoutOptionsView: some View {
-        VStack {
-            Button {
-                Task {
-                    viewModel.searchText = ""
-                    viewModel.showAddMovementOverlay = true
-                    addMovementTextFieldFocusState = true
-                    await viewModel.attemptGetMovements()
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .center, spacing: 0) {
+                Button {
+                    Task {
+                        viewModel.searchText = ""
+                        viewModel.showAddMovementOverlay = true
+                        addMovementTextFieldFocusState = true
+                        await viewModel.attemptGetMovements()
+                    }
+                } label: {
+                    Label("New workout", systemImage: "plus")
                 }
-            } label: {
-                Label("New workout", systemImage: "plus")
-            }
-            .font(.headline.weight(.semibold))
-            .foregroundStyle(Color.brandPrimaryText)
-            .padding()
-            .background(Color.brandSecondary)
-            .clipShape(RoundedRectangle(cornerRadius: 25))
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(Color.brandPrimaryText)
+                .padding()
+                .background(Color.brandSecondary)
+                .clipShape(RoundedRectangle(cornerRadius: 25))
 
-            Button {
-                viewModel.showCreateWorkoutSheet = true
-            } label: {
-                Label("Repeat a past workout", systemImage: "repeat")
+                Button {
+                    viewModel.showCreateWorkoutSheet = true
+                } label: {
+                    Label("Repeat a past workout", systemImage: "repeat")
+                }
+                .foregroundStyle(Color.accent)
+                .padding(.top, 14)
             }
-            .foregroundStyle(Color.accent)
-            .padding(.top, 14)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 20)
+
+            Divider()
+
+            WorkoutTemplatesView(viewModel: templatesViewModel)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     // MARK: - Active workout view
@@ -575,6 +586,9 @@ struct CurrentWorkoutView: View {
             )
             .task(id: appEnvironment.isNotAuthenticated) {
                 guard !appEnvironment.isNotAuthenticated else { return }
+                templatesViewModel.onWorkoutStarted = { _ in
+                    Task { await viewModel.attemptGetCurrentWorkout() }
+                }
                 await viewModel.attemptGetCurrentWorkout()
                 await viewModel.attemptGetMovements()
             }
