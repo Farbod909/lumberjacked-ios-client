@@ -7,6 +7,7 @@ import SwiftUI
 
 struct TemplateReorderView: View {
     @State private var templates: [WorkoutTemplate]
+    @State private var editMode = EditMode.active
     let onSave: ([UInt64]) -> Void
     @Environment(\.dismiss) var dismiss
 
@@ -18,15 +19,12 @@ struct TemplateReorderView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach($templates, id: \.self, editActions: .move) { $template in
-                    HStack {
-                        Text(template.name)
-                        Spacer()
-                        Image(systemName: "line.3.horizontal")
-                            .foregroundStyle(.tertiary)
-                    }
+                ForEach(templates, id: \.self) { template in
+                    Text(template.name)
                 }
+                .onMove { templates.move(fromOffsets: $0, toOffset: $1) }
             }
+            .environment(\.editMode, $editMode)
             .navigationTitle("Reorder Templates")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

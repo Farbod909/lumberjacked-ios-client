@@ -7,6 +7,7 @@ import SwiftUI
 
 struct WorkoutTemplateEditorView: View {
     @State var viewModel: ViewModel
+    @State private var editMode = EditMode.active
     let onSave: (WorkoutTemplate) -> Void
     @Environment(\.dismiss) var dismiss
 
@@ -20,22 +21,13 @@ struct WorkoutTemplateEditorView: View {
 
                 if !viewModel.selectedMovements.isEmpty {
                     Section("Movements") {
-                        ForEach($viewModel.selectedMovements, id: \.self, editActions: .move) { $movement in
-                            HStack {
-                                Text(movement.name)
-                                Spacer()
-                                Image(systemName: "line.3.horizontal")
-                                    .foregroundStyle(.tertiary)
-                            }
-                            .swipeActions(edge: .trailing) {
-                                    Button(role: .destructive) {
-                                        viewModel.selectedMovements.removeAll { $0.id == movement.id }
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                }
+                        ForEach(viewModel.selectedMovements, id: \.self) { movement in
+                            Text(movement.name)
                         }
+                        .onMove { viewModel.selectedMovements.move(fromOffsets: $0, toOffset: $1) }
+                        .onDelete { viewModel.selectedMovements.remove(atOffsets: $0) }
                     }
+                    .id(viewModel.selectedMovements.count)
                 }
 
                 Section {
@@ -73,6 +65,7 @@ struct WorkoutTemplateEditorView: View {
                     }
                 }
             }
+            .environment(\.editMode, $editMode)
             .navigationTitle(viewModel.isEditMode ? "Edit Template" : "New Template")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
