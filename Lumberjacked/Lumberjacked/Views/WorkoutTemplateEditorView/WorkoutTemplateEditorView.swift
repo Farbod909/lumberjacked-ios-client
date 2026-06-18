@@ -20,19 +20,20 @@ struct WorkoutTemplateEditorView: View {
 
                 if !viewModel.selectedMovements.isEmpty {
                     Section("Movements") {
-                        ForEach($viewModel.selectedMovements, id: \.self) { $movement in
+                        ForEach($viewModel.selectedMovements, id: \.self, editActions: .move) { $movement in
                             HStack {
                                 Text(movement.name)
                                 Spacer()
                                 Image(systemName: "line.3.horizontal")
                                     .foregroundStyle(.tertiary)
                             }
-                        }
-                        .onMove { from, to in
-                            viewModel.selectedMovements.move(fromOffsets: from, toOffset: to)
-                        }
-                        .onDelete { offsets in
-                            viewModel.selectedMovements.remove(atOffsets: offsets)
+                            .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) {
+                                        viewModel.selectedMovements.removeAll { $0.id == movement.id }
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
                         }
                     }
                 }
@@ -72,7 +73,6 @@ struct WorkoutTemplateEditorView: View {
                     }
                 }
             }
-            .environment(\.editMode, .constant(.active))
             .navigationTitle(viewModel.isEditMode ? "Edit Template" : "New Template")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

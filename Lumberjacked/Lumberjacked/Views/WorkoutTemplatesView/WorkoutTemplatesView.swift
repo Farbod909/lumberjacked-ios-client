@@ -9,7 +9,6 @@ struct WorkoutTemplatesView: View {
     @State var viewModel: ViewModel
 
     @State private var selectedTemplate: WorkoutTemplate? = nil
-    @State private var showActionMenu = false
     @State private var editingTemplate: WorkoutTemplate? = nil
     @State private var showCreateSheet = false
     @State private var showReorderSheet = false
@@ -25,39 +24,43 @@ struct WorkoutTemplatesView: View {
                     .padding(.top, 40)
             } else {
                 LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(viewModel.orderedTemplates, id: \.id) { template in
-                        WorkoutTemplateCard(template: template) {
-                            selectedTemplate = template
-                            showActionMenu = true
+                    ForEach(viewModel.orderedTemplates, id: \.self) { template in
+                        Menu {
+                            Button {
+                                Task { await viewModel.startWorkout(from: template) }
+                            } label: {
+                                Label("Start Workout", systemImage: "play.fill")
+                            }
+                            Button {
+                                editingTemplate = template
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            Button {
+                                showReorderSheet = true
+                            } label: {
+                                Label("Reorder Templates", systemImage: "arrow.up.arrow.down")
+                            }
+                            Divider()
+                            Button(role: .destructive) {
+                                selectedTemplate = template
+                                showDeleteAlert = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        } label: {
+                            WorkoutTemplateCard(template: template)
                         }
+                        .buttonStyle(.plain)
                     }
-                    WorkoutTemplateCard(template: WorkoutTemplate(name: ""), isAddCard: true) {
-                        showCreateSheet = true
+
+                    Button { showCreateSheet = true } label: {
+                        WorkoutTemplateCard(isAddCard: true)
                     }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-            }
-        }
-        .confirmationDialog(
-            selectedTemplate?.name ?? "",
-            isPresented: $showActionMenu,
-            titleVisibility: .visible
-        ) {
-            if let template = selectedTemplate {
-                Button("Start Workout") {
-                    Task { await viewModel.startWorkout(from: template) }
-                }
-                Button("Edit") {
-                    editingTemplate = template
-                }
-                Button("Reorder Templates") {
-                    showReorderSheet = true
-                }
-                Button("Delete", role: .destructive) {
-                    showDeleteAlert = true
-                }
-                Button("Cancel", role: .cancel) { }
             }
         }
         .alert(
@@ -99,9 +102,6 @@ struct WorkoutTemplatesView: View {
             )
         }
         .alert(item: $viewModel.alert)
-        .task {
-            await viewModel.attemptGetTemplates()
-        }
     }
 }
 

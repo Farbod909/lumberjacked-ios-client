@@ -18,7 +18,7 @@ struct TemplateReorderView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(templates, id: \.id) { template in
+                ForEach($templates, id: \.self, editActions: .move) { $template in
                     HStack {
                         Text(template.name)
                         Spacer()
@@ -26,11 +26,7 @@ struct TemplateReorderView: View {
                             .foregroundStyle(.tertiary)
                     }
                 }
-                .onMove { from, to in
-                    templates.move(fromOffsets: from, toOffset: to)
-                }
             }
-            .environment(\.editMode, .constant(.active))
             .navigationTitle("Reorder Templates")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

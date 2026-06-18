@@ -591,6 +591,7 @@ struct CurrentWorkoutView: View {
                 }
                 await viewModel.attemptGetCurrentWorkout()
                 await viewModel.attemptGetMovements()
+                await templatesViewModel.attemptGetTemplates()
             }
             .sheet(
                 isPresented: $viewModel.showCreateWorkoutSheet,

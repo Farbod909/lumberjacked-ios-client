@@ -14,6 +14,15 @@ extension WorkoutTemplatesView {
         var templates: [WorkoutTemplate] = []
         var alert: AppAlert?
 
+        // Stored so @Observable tracks it and re-renders orderedTemplates immediately.
+        var localOrder: [UInt64] {
+            didSet {
+                if let data = try? JSONEncoder().encode(localOrder) {
+                    UserDefaults.standard.set(data, forKey: Self.orderKey)
+                }
+            }
+        }
+
         private let templateAPI: WorkoutTemplateAPIProtocol
         private let workoutAPI: WorkoutAPIProtocol
         var onWorkoutStarted: ((Workout) -> Void)?
@@ -28,28 +37,20 @@ extension WorkoutTemplatesView {
             self.templateAPI = templateAPI
             self.workoutAPI = workoutAPI
             self.onWorkoutStarted = onWorkoutStarted
+            if let data = UserDefaults.standard.data(forKey: Self.orderKey),
+               let decoded = try? JSONDecoder().decode([UInt64].self, from: data) {
+                self.localOrder = decoded
+            } else {
+                self.localOrder = []
+            }
         }
 
         // MARK: - Ordering
 
-        var localOrder: [UInt64] {
-            get {
-                guard let data = UserDefaults.standard.data(forKey: Self.orderKey),
-                      let decoded = try? JSONDecoder().decode([UInt64].self, from: data)
-                else { return [] }
-                return decoded
-            }
-            set {
-                let data = try? JSONEncoder().encode(newValue)
-                UserDefaults.standard.set(data, forKey: Self.orderKey)
-            }
-        }
-
         var orderedTemplates: [WorkoutTemplate] {
-            let order = localOrder
-            if order.isEmpty { return templates }
-            let ordered = order.compactMap { id in templates.first(where: { $0.id == id }) }
-            let unordered = templates.filter { t in !order.contains(t.id ?? 0) }
+            if localOrder.isEmpty { return templates }
+            let ordered = localOrder.compactMap { id in templates.first(where: { $0.id == id }) }
+            let unordered = templates.filter { t in !localOrder.contains(t.id ?? 0) }
             return ordered + unordered
         }
 
@@ -94,9 +95,7 @@ extension WorkoutTemplatesView {
                 do {
                     try await self.templateAPI.deleteWorkoutTemplate(id: id)
                     self.templates.removeAll { $0.id == id }
-                    var order = self.localOrder
-                    order.removeAll { $0 == id }
-                    self.localOrder = order
+                    localOrder.removeAll { $0 == id }
                 } catch {
                     self.alert = AppAlert(title: "Error", message: error.localizedDescription)
                 }

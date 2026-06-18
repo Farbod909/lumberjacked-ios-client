@@ -6,19 +6,15 @@
 import SwiftUI
 
 struct WorkoutTemplateCard: View {
-    let template: WorkoutTemplate
+    var template: WorkoutTemplate = WorkoutTemplate(name: "")
     var isAddCard: Bool = false
-    let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            if isAddCard {
-                addCardContent
-            } else {
-                templateCardContent
-            }
+        if isAddCard {
+            addCardContent
+        } else {
+            templateCardContent
         }
-        .buttonStyle(.plain)
     }
 
     private var templateCardContent: some View {
@@ -74,9 +70,9 @@ struct WorkoutTemplateCard: View {
 #if DEBUG
 #Preview {
     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-        WorkoutTemplateCard(template: PreviewData.workoutTemplate_pushDay) { }
-        WorkoutTemplateCard(template: PreviewData.workoutTemplate_legDay) { }
-        WorkoutTemplateCard(template: WorkoutTemplate(name: ""), isAddCard: true) { }
+        WorkoutTemplateCard(template: PreviewData.workoutTemplate_pushDay)
+        WorkoutTemplateCard(template: PreviewData.workoutTemplate_legDay)
+        WorkoutTemplateCard(isAddCard: true)
     }
     .padding()
 }
