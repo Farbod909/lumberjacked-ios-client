@@ -12,7 +12,7 @@ struct FieldErrorModifier: ViewModifier {
         VStack(alignment: .leading, spacing: 4) {
             content
                 .overlay(
-                    RoundedRectangle(cornerRadius: 6)
+                    RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
                         .stroke(message != nil ? Color.red : Color.clear, lineWidth: 1)
                 )
             if let message {

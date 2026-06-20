@@ -1,6 +1,5 @@
 //
 //  WorkoutTemplateEditorView.swift
-//  Lumberjacked
 //
 
 import SwiftUI

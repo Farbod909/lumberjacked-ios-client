@@ -144,10 +144,10 @@ struct SetLogInputView: View {
             Text("No sets logged")
                 .foregroundStyle(.secondary)
         }
-        .font(.subheadline)
+        .font(DesignSystem.Font.body)
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
-        .background(Color(.systemGray6))
+        .background(Color.brandSecondary)
     }
 
     @ViewBuilder
@@ -214,9 +214,7 @@ struct SetLogInputView: View {
                     .padding(.leading, 8)   // matches checkboxButton's padding(.leading, 8) in the row
             }
         }
-        .font(.caption)
-        .textCase(.uppercase)
-        .foregroundStyle(.secondary)
+        .sectionLabel()
         .padding(.horizontal, 16)
         .padding(.bottom, 4)
     }
@@ -241,7 +239,7 @@ struct SetLogInputView: View {
                 .foregroundStyle(.primary)
                 .frame(width: 28, height: 28)
                 .background(
-                    RoundedRectangle(cornerRadius: 6)
+                    RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
                         .stroke(Color.secondary.opacity(0.35), lineWidth: 1)
                 )
                 .frame(width: Col.set, alignment: .leading)
@@ -258,7 +256,7 @@ struct SetLogInputView: View {
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 16)
-        .background(Color(.systemGray6))
+        .background(Color.brandSecondary)
     }
 
     private func formatLoad(_ load: Double?) -> String {
@@ -277,7 +275,7 @@ struct SetLogInputView: View {
         ZStack(alignment: .trailing) {
             // Opaque base — prevents the red delete button from flashing through
             // during row insertion animations before the content HStack renders.
-            Color(.systemGray6)
+            Color.brandSecondary
 
             // Red delete button, revealed when the content slides left.
             Button(role: .destructive) {
@@ -312,7 +310,7 @@ struct SetLogInputView: View {
                         .foregroundStyle(.primary)
                         .frame(width: 28, height: 28)
                         .background(
-                            RoundedRectangle(cornerRadius: 6)
+                            RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
                                 .stroke(Color.secondary.opacity(0.35), lineWidth: 1)
                         )
                 }
@@ -347,11 +345,11 @@ struct SetLogInputView: View {
             .padding(.horizontal, 16)
             // Two-layer background: opaque base prevents the red delete button
             // from showing through the semi-transparent green checked overlay.
-            // Color(.systemGray6) is opaque; Color(.systemFill) must NOT be used
+            // Color.brandSecondary is opaque; Color(.systemFill) must NOT be used
             // here because it is semi-transparent (~20% alpha).
             .background {
                 ZStack {
-                    Color(.systemGray6)
+                    Color.brandSecondary
                     if s.isChecked { Color.green.opacity(0.25) }
                 }
             }
@@ -391,8 +389,8 @@ struct SetLogInputView: View {
             .multilineTextAlignment(.center)
             .padding(.horizontal, 4)
             .padding(.vertical, 6)
-            .background(Color(.systemFill))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .background(Color.brandSecondaryLight)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
             .focused($focusedField, equals: .reps(set.wrappedValue.id))
             .selectAllTextOnFocus()
             .onChange(of: set.wrappedValue.reps) { _, _ in syncToBinding() }
@@ -406,8 +404,8 @@ struct SetLogInputView: View {
             .multilineTextAlignment(.center)
             .padding(.horizontal, 4)
             .padding(.vertical, 6)
-            .background(Color(.systemFill))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .background(Color.brandSecondaryLight)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
             .focused($focusedField, equals: .load(set.wrappedValue.id))
             .selectAllTextOnFocus()
             .onChange(of: set.wrappedValue.load) { _, _ in syncToBinding() }

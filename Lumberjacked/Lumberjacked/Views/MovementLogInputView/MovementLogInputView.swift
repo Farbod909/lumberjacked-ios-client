@@ -38,14 +38,14 @@ struct MovementLogInputView: View {
                 TextField(
                     "",
                     text: $viewModel.movementLog.notes,
-                    prompt: Text("Notes...").foregroundStyle(.tertiary)
+                    prompt: Text("Notes...").foregroundStyle(.secondary)
                 )
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(Color(.systemGray6))
+                .background(Color.brandSecondary)
                 .padding(.bottom, 4)
 
                 SetLogInputView(
@@ -68,7 +68,7 @@ struct MovementLogInputView: View {
                                 .font(.title2)
                                 .padding(12)
                                 .background(.ultraThinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium))
                         }
                         .foregroundStyle(Color.brandPrimaryText)
                         .padding(.trailing, 20)

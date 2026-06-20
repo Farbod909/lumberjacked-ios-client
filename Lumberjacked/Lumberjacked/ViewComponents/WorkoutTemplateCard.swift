@@ -44,8 +44,7 @@ struct WorkoutTemplateCard: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, minHeight: 100, alignment: .topLeading)
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .brandCard()
     }
 
     private var addCardContent: some View {
@@ -58,10 +57,9 @@ struct WorkoutTemplateCard: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, minHeight: 100)
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .brandCard()
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium)
                 .strokeBorder(Color.secondary.opacity(0.3), style: StrokeStyle(lineWidth: 1.5, dash: [6]))
         )
     }

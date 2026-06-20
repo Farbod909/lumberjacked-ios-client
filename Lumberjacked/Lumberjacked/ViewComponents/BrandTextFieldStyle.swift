@@ -10,7 +10,7 @@ import SwiftUI
 struct BrandTextFieldStyle: TextFieldStyle {
     public static var defaultHorizontalPadding: CGFloat = 18
     public static var defaultVerticalPadding: CGFloat = 12
-    public static var defaultCornerRadius: CGFloat = 12
+    public static var defaultCornerRadius: CGFloat = DesignSystem.CornerRadius.small
 
     var horizontalPadding = defaultHorizontalPadding
     var verticalPadding = defaultVerticalPadding

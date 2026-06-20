@@ -42,8 +42,7 @@ struct WorkoutDetailView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .brandCard()
         .shadow(
             color: .black.opacity(reorderDraggingIndex == index ? 0.18 : 0),
             radius: 6, y: 3
@@ -107,9 +106,8 @@ struct WorkoutDetailView: View {
             }
             .opacity(viewModel.searchText.isEmpty ? 0 : 1)
         }
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.brandSecondary))
+        .brandCard(cornerRadius: DesignSystem.CornerRadius.small)
         .padding(.horizontal, 16)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     var addMovementSearchResults: [Movement] {
@@ -289,7 +287,7 @@ struct WorkoutDetailView: View {
                                 .font(.title2)
                                 .padding(12)
                                 .background(.ultraThinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium))
                         }
                         .foregroundStyle(Color.brandPrimaryText)
                         .padding(.trailing, 20)

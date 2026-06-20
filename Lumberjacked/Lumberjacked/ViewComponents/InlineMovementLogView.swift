@@ -39,7 +39,7 @@ struct InlineMovementLogView: View {
             // Movement name + menu
             HStack(alignment: .center) {
                 Text(movement.name)
-                    .font(.title2.bold())
+                    .font(DesignSystem.Font.cardTitle)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 if let edit = onEditTapped {
@@ -142,14 +142,14 @@ struct InlineMovementLogView: View {
                 TextField(
                     "",
                     text: $logNotes,
-                    prompt: Text("Log notes...").foregroundStyle(.tertiary)
+                    prompt: Text("Log notes...").foregroundStyle(.secondary)
                 )
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(Color(.systemGray6))
+                .background(Color.brandSecondary)
                 .padding(.bottom, 4)
             }
 

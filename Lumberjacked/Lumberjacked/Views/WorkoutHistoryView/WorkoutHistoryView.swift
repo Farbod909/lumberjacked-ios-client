@@ -23,19 +23,23 @@ struct WorkoutHistoryView: View {
                 } else if viewModel.pastWorkouts.isEmpty {
                     emptyState
                 } else {
-                    List {
-                        ForEach(viewModel.pastWorkouts, id: \.self) { workout in
-                            Button {
-                                viewModel.workoutTapped(workout)
-                            } label: {
-                                WorkoutOverviewView(workout: workout)
+                    ScrollView {
+                        LazyVStack(spacing: 10) {
+                            ForEach(viewModel.pastWorkouts, id: \.self) { workout in
+                                Button {
+                                    viewModel.workoutTapped(workout)
+                                } label: {
+                                    WorkoutOverviewView(workout: workout)
+                                        .padding()
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .foregroundStyle(.primary)
+                                .brandCard()
                             }
-                            .foregroundStyle(.white)
-                            .listRowBackground(Color.brandSecondary)
                         }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
                     }
-                    .listRowSpacing(10)
-                    .scrollContentBackground(.hidden)
                 }
             }
             .background(Color.brandBackground.ignoresSafeArea())

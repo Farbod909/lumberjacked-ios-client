@@ -224,7 +224,7 @@ struct CurrentWorkoutView: View {
                 .foregroundStyle(Color.brandPrimaryText)
                 .padding()
                 .background(Color.brandSecondary)
-                .clipShape(RoundedRectangle(cornerRadius: 25))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large))
 
                 Button {
                     viewModel.showCreateWorkoutSheet = true
@@ -310,7 +310,7 @@ struct CurrentWorkoutView: View {
                                 .font(.title2)
                                 .padding(12)
                                 .background(.ultraThinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium))
                         }
                         .foregroundStyle(Color.brandPrimaryText)
                         .padding(.trailing, 20)
@@ -358,8 +358,7 @@ struct CurrentWorkoutView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .brandCard()
         .shadow(
             color: .black.opacity(reorderDraggingIndex == index ? 0.18 : 0),
             radius: 6, y: 3
@@ -426,9 +425,8 @@ struct CurrentWorkoutView: View {
             }
             .opacity(viewModel.searchText.isEmpty ? 0 : 1)
         }
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.brandSecondary))
+        .brandCard(cornerRadius: DesignSystem.CornerRadius.small)
         .padding(.horizontal, 16)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     var movementSearchResultsList: some View {

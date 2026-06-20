@@ -18,8 +18,7 @@ struct MovementDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Text(viewModel.movement.name)
-                        .font(.title)
-                        .fontWeight(.semibold)
+                        .font(DesignSystem.Font.screenTitle)
                         .padding(.horizontal, 6)
 
                     if !viewModel.movement.hasNotes {
@@ -28,7 +27,7 @@ struct MovementDetailView: View {
                             Spacer()
                         }
                         .padding()
-                        .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
+                        .brandCard()
                     }
 
                     if viewModel.movement.hasNotes {
@@ -48,7 +47,7 @@ struct MovementDetailView: View {
                                 Spacer()
                             }
                             .padding()
-                            .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
+                            .brandCard()
                         }
                     }
                 }
@@ -138,15 +137,13 @@ struct NotesView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Notes")
-                .textCase(.uppercase)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .sectionLabel()
             Text(notes)
                 .foregroundColor(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding()
-        .background(RoundedRectangle(cornerRadius: 25).fill(Color.brandSecondary))
+        .brandCard()
     }
 }
 
@@ -161,9 +158,7 @@ struct LogListView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Log History")
-                .textCase(.uppercase)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .sectionLabel()
                 .padding(.bottom, 8)
                 .padding(.horizontal, 6)
 
@@ -175,7 +170,7 @@ struct LogListView: View {
                     }
                 }
             }
-            .background(RoundedRectangle(cornerRadius: 16).fill(Color.brandSecondary))
+            .brandCard()
         }
     }
 }
@@ -192,7 +187,7 @@ struct LogItem: View {
                 HStack {
                     if let timestamp = movementLog.timestamp {
                         Text(timestamp.formatted(date: .abbreviated, time: .omitted))
-                            .font(.subheadline)
+                            .font(DesignSystem.Font.body)
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
@@ -207,10 +202,10 @@ struct LogItem: View {
                     FlowLayout(spacing: 6) {
                         ForEach(displaySets.indices, id: \.self) { i in
                             Text(chipLabel(displaySets[i]))
-                                .font(.subheadline)
+                                .font(DesignSystem.Font.body)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 4)
-                                .background(Color(.systemGray4))
+                                .background(Color.brandSecondaryLight)
                                 .clipShape(Capsule())
                         }
                     }
