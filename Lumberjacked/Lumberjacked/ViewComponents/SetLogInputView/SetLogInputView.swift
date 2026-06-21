@@ -409,8 +409,8 @@ struct SetLogInputView: View {
         let placeholder: String = {
             guard case .activeWorkout = mode,
                   idx < templateSets.count,
-                  !templateSets[idx].reps.isEmpty else { return "–" }
-            return templateSets[idx].reps
+                  let reps = templateSets[idx].reps, !reps.isEmpty else { return "–" }
+            return reps
         }()
         return TextField(placeholder, text: set.reps)
             .keyboardType(mode.showsLoad ? .numberPad : .default)

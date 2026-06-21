@@ -13,6 +13,21 @@ struct RemoteNetworkingError: Error {
     var messages: [String: Any]?
 }
 
+extension RemoteNetworkingError: LocalizedError {
+    var errorDescription: String? {
+        guard let messages else { return "An unknown error occurred." }
+        let parts = messages.values.compactMap { value -> String? in
+            if let arr = value as? NSArray {
+                let joined = arr.compactMap { $0 as? String }.joined(separator: "\n")
+                return joined.isEmpty ? nil : joined
+            }
+            if let str = value as? String { return str }
+            return nil
+        }
+        return parts.isEmpty ? "An unknown error occurred." : parts.joined(separator: "\n")
+    }
+}
+
 extension Notification.Name {
     static let appUnauthorized = Notification.Name("appUnauthorized")
 }

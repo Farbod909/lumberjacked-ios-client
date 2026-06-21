@@ -23,7 +23,7 @@ extension WorkoutTemplateEditorView {
             let logSets = entry.logSets
             if !logSets.isEmpty {
                 self.templateSets = logSets.map {
-                    TemplateSet(reps: $0.reps > 0 ? String($0.reps) : "", type: $0.type, rest_time: $0.rest_time)
+                    TemplateSet(reps: $0.reps > 0 ? String($0.reps) : nil, type: $0.type, rest_time: $0.rest_time)
                 }
             } else if let sets = entry.movement.template?.sets, !sets.isEmpty {
                 self.templateSets = sets
@@ -37,7 +37,7 @@ extension WorkoutTemplateEditorView {
             let logSets = entry.logSets
             if !logSets.isEmpty {
                 self.templateSets = logSets.map {
-                    TemplateSet(reps: $0.reps > 0 ? String($0.reps) : "", type: $0.type, rest_time: $0.rest_time)
+                    TemplateSet(reps: $0.reps > 0 ? String($0.reps) : nil, type: $0.type, rest_time: $0.rest_time)
                 }
             } else if let sets = entry.movement.template?.sets, !sets.isEmpty {
                 self.templateSets = sets
@@ -111,9 +111,6 @@ extension WorkoutTemplateEditorView {
             !name.trimmingCharacters(in: .whitespaces).isEmpty
                 && !entries.isEmpty
                 && isDirty
-                && entries.allSatisfy { entry in
-                    entry.templateSets.allSatisfy { !$0.reps.trimmingCharacters(in: .whitespaces).isEmpty }
-                }
         }
 
         var searchResults: [Movement] {
@@ -155,10 +152,9 @@ extension WorkoutTemplateEditorView {
                     let request = CreateWorkoutTemplateRequest(
                         name: self.name.trimmingCharacters(in: .whitespaces),
                         movements: self.entries.map { entry in
-                            let sets = entry.templateSets.filter { !$0.reps.trimmingCharacters(in: .whitespaces).isEmpty }
-                            return CreateWorkoutTemplateMovementItem(
+                            CreateWorkoutTemplateMovementItem(
                                 movement: entry.movement.id!,
-                                sets: sets.isEmpty ? nil : sets
+                                sets: entry.templateSets.isEmpty ? nil : entry.templateSets
                             )
                         }
                     )

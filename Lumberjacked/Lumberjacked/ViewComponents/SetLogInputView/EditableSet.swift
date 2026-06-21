@@ -75,13 +75,13 @@ extension EditableSet {
 
 extension EditableSet {
     init(from templateSet: TemplateSet) {
-        type     = templateSet.type
-        reps     = templateSet.reps
+        type      = templateSet.type
+        reps      = templateSet.reps ?? ""
         rest_time = templateSet.rest_time
     }
 
     var asTemplateSet: TemplateSet {
-        TemplateSet(reps: reps, type: type, rest_time: rest_time)
+        TemplateSet(reps: reps.isEmpty ? nil : reps, type: type, rest_time: rest_time)
     }
 }
 

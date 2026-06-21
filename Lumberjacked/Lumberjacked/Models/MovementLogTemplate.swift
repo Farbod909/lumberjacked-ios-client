@@ -6,7 +6,7 @@
 import Foundation
 
 struct TemplateSet: Codable, Hashable {
-    var reps: String
+    var reps: String?
     var type: String
     var rest_time: Int?
 }
