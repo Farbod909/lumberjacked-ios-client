@@ -231,7 +231,6 @@ struct WorkoutTemplateEditorView: View {
                             ForEach($viewModel.entries) { $entry in
                                 InlineMovementTemplateView(
                                     movement: entry.movement,
-                                    movementNotes: $entry.movementNotes,
                                     templateSets: $entry.templateSets,
                                     onReorderTapped: {
                                         withAnimation(.easeInOut(duration: 0.2)) {

@@ -9,20 +9,17 @@ extension WorkoutTemplateEditorView {
 
     struct EditableTemplateMovementEntry: Identifiable {
         let movement: Movement
-        var movementNotes: String
         var templateSets: [TemplateSet]
 
         var id: UInt64 { movement.id ?? 0 }
 
         init(from movement: Movement) {
             self.movement = movement
-            self.movementNotes = movement.notes
             self.templateSets = movement.template?.sets ?? []
         }
 
         init(fromCurrentWorkout entry: CurrentWorkoutView.EditableMovementEntry) {
             self.movement = entry.movement
-            self.movementNotes = entry.movementNotes
             let logSets = entry.logSets
             if !logSets.isEmpty {
                 self.templateSets = logSets.map {
@@ -31,13 +28,12 @@ extension WorkoutTemplateEditorView {
             } else if let sets = entry.movement.template?.sets, !sets.isEmpty {
                 self.templateSets = sets
             } else {
-                self.templateSets = [TemplateSet(reps: "", type: "working", rest_time: nil)]
+                self.templateSets = []
             }
         }
 
         init(fromWorkoutDetail entry: WorkoutDetailView.EditableMovementEntry) {
             self.movement = entry.movement
-            self.movementNotes = entry.movement.notes
             let logSets = entry.logSets
             if !logSets.isEmpty {
                 self.templateSets = logSets.map {
@@ -46,7 +42,7 @@ extension WorkoutTemplateEditorView {
             } else if let sets = entry.movement.template?.sets, !sets.isEmpty {
                 self.templateSets = sets
             } else {
-                self.templateSets = [TemplateSet(reps: "", type: "working", rest_time: nil)]
+                self.templateSets = []
             }
         }
     }
@@ -105,7 +101,6 @@ extension WorkoutTemplateEditorView {
             if entries.count != originalMovements.count { return true }
             for (entry, wtm) in zip(entries, originalMovements) {
                 if entry.movement.id != wtm.movement { return true }
-                if entry.movementNotes != entry.movement.notes { return true }
                 let originalSets = wtm.movement_log_template_detail?.sets ?? []
                 if entry.templateSets != originalSets { return true }
             }
@@ -157,15 +152,6 @@ extension WorkoutTemplateEditorView {
         func save(onSuccess: @escaping (WorkoutTemplate) -> Void) async {
             try? await withLoading(.action) {
                 do {
-                    // Save any changed movement notes
-                    for entry in self.entries {
-                        guard let movementId = entry.movement.id,
-                              entry.movementNotes != entry.movement.notes else { continue }
-                        var updated = entry.movement
-                        updated.notes = entry.movementNotes
-                        _ = try await self.movementAPI.updateMovement(movementId: movementId, movement: updated)
-                    }
-
                     let request = CreateWorkoutTemplateRequest(
                         name: self.name.trimmingCharacters(in: .whitespaces),
                         movements: self.entries.map { entry in

@@ -145,7 +145,7 @@ struct SetLogInputView: View {
     @ViewBuilder
     private var emptyStateRow: some View {
         if case .editTemplate = mode {
-            Text("No template — this movement will mirror your last session")
+            Text("Tap '+' to add suggested sets and rep ranges to this movement")
                 .font(DesignSystem.Font.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
