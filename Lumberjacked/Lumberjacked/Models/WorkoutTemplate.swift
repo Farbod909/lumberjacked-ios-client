@@ -31,5 +31,5 @@ struct CreateWorkoutTemplateRequest: Codable {
 
 struct CreateWorkoutTemplateMovementItem: Codable {
     var movement: UInt64
-    var movement_log_template: UInt64?
+    var sets: [TemplateSet]?
 }

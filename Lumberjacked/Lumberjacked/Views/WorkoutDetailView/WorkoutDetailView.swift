@@ -19,6 +19,7 @@ struct WorkoutDetailView: View {
 
     @State private var replacingMovementId: UInt64? = nil
     @State private var isKeyboardVisible = false
+    @State private var showSaveAsTemplateSheet = false
 
     func dismissAddMovementOverlay() {
         searchFieldFocused = false
@@ -347,6 +348,11 @@ struct WorkoutDetailView: View {
                         } label: {
                             Label("Add movement", systemImage: "plus")
                         }
+                        Button {
+                            showSaveAsTemplateSheet = true
+                        } label: {
+                            Label("Save as Template", systemImage: "bookmark")
+                        }
                         Button(role: .destructive) {
                             viewModel.showDeleteConfirmationAlert = true
                         } label: {
@@ -367,6 +373,17 @@ struct WorkoutDetailView: View {
                 }
             }
             Button("Cancel", role: .cancel) {}
+        }
+        .sheet(isPresented: $showSaveAsTemplateSheet) {
+            WorkoutTemplateEditorView(
+                viewModel: WorkoutTemplateEditorView.ViewModel(
+                    template: nil,
+                    initialEntries: viewModel.editableEntries.map {
+                        WorkoutTemplateEditorView.EditableTemplateMovementEntry(fromWorkoutDetail: $0)
+                    }
+                ),
+                onSave: { _ in }
+            )
         }
     }
 }

@@ -34,6 +34,7 @@ struct CurrentWorkoutView: View {
 
     @State private var templatesViewModel = WorkoutTemplatesView.ViewModel()
     @State private var replacingMovementId: UInt64? = nil
+    @State private var pendingTemplateEntries: [WorkoutTemplateEditorView.EditableTemplateMovementEntry]? = nil
     @State private var isKeyboardVisible = false
     @State private var showRestTimerPicker = false
     @State private var showRestTimerOptions = false
@@ -79,6 +80,18 @@ struct CurrentWorkoutView: View {
                 message: "If you haven't recorded a log for a movement it will be marked as skipped.",
                 confirmAction: { Task { await viewModel.attemptEndCurrentWorkout() } },
                 confirmLabel: "Save Workout",
+                secondaryAction: {
+                    let entries = viewModel.editableEntries.map {
+                        WorkoutTemplateEditorView.EditableTemplateMovementEntry(fromCurrentWorkout: $0)
+                    }
+                    Task {
+                        await viewModel.attemptEndCurrentWorkout()
+                        if viewModel.currentWorkout == nil {
+                            pendingTemplateEntries = entries
+                        }
+                    }
+                },
+                secondaryLabel: "Save as Template",
                 cancelLabel: "Cancel",
                 destructiveAction: { Task { await viewModel.attemptDeleteCurrentWorkout() } },
                 destructiveLabel: "Discard Workout"
@@ -597,6 +610,22 @@ struct CurrentWorkoutView: View {
                 onDismiss: { Task { await viewModel.attemptGetCurrentWorkout() } }
             ) {
                 CreateWorkoutView()
+            }
+            .sheet(
+                isPresented: Binding(
+                    get: { pendingTemplateEntries != nil },
+                    set: { if !$0 { pendingTemplateEntries = nil } }
+                )
+            ) {
+                if let entries = pendingTemplateEntries {
+                    WorkoutTemplateEditorView(
+                        viewModel: WorkoutTemplateEditorView.ViewModel(
+                            template: nil,
+                            initialEntries: entries
+                        ),
+                        onSave: { saved in templatesViewModel.templateSaved(saved) }
+                    )
+                }
             }
             .navigationDestination(for: Movement.self) { movement in
                 MovementDetailView(

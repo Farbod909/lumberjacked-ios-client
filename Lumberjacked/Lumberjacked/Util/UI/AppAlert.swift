@@ -13,6 +13,8 @@ struct AppAlert: Identifiable {
     var message: String? = nil
     var confirmAction: (() -> Void)? = nil
     var confirmLabel: String = "Confirm"
+    var secondaryAction: (() -> Void)? = nil
+    var secondaryLabel: String = "Option"
     var cancelLabel: String = "Cancel"
     var dismissLabel: String = "OK"
     var destructiveAction: (() -> Void)? = nil
@@ -29,6 +31,9 @@ extension View {
         ) {
             if let confirm = a?.confirmAction {
                 Button(a?.confirmLabel ?? "Confirm") { confirm(); dismiss() }
+                if let secondary = a?.secondaryAction {
+                    Button(a?.secondaryLabel ?? "Option") { secondary(); dismiss() }
+                }
                 if let destructive = a?.destructiveAction {
                     Button(a?.destructiveLabel ?? "Delete", role: .destructive) { destructive(); dismiss() }
                 }
