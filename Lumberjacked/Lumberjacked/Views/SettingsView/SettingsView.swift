@@ -14,10 +14,12 @@ struct SettingsView: View {
     @AppStorage("useLocalBackend") private var useLocalBackend: Bool = false
     @AppStorage("defaultRestTime") private var defaultRestTime: Int = 120
 
-    private func formattedRestTime(_ seconds: Int) -> String {
-        let m = seconds / 60
-        let s = seconds % 60
-        return String(format: "%d:%02d", m, s)
+    @State private var showRestTimerPicker = false
+    @State private var pickerMinutes: Int = 2
+    @State private var pickerSeconds: Int = 0
+
+    private var formattedDefaultRest: String {
+        String(format: "%d:%02d", defaultRestTime / 60, defaultRestTime % 60)
     }
 
     init(viewModel: ViewModel = ViewModel()) {
@@ -27,12 +29,49 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("Workouts") {
-                Stepper(value: $defaultRestTime, in: 30...600, step: 30) {
-                    HStack {
-                        Text("Default Rest Time")
-                        Spacer()
-                        Text(formattedRestTime(defaultRestTime))
-                            .foregroundStyle(.secondary)
+                HStack {
+                    Text("Default Rest Time")
+                    Spacer()
+                    Button {
+                        pickerMinutes = defaultRestTime / 60
+                        pickerSeconds = (defaultRestTime % 60 / 10) * 10
+                        showRestTimerPicker = true
+                    } label: {
+                        Text(formattedDefaultRest)
+                            .monospacedDigit()
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(Color.brandSecondaryLight))
+                    }
+                    .buttonStyle(.borderless)
+                    .popover(isPresented: $showRestTimerPicker) {
+                        VStack(spacing: 12) {
+                            HStack(spacing: 0) {
+                                Picker("Minutes", selection: $pickerMinutes) {
+                                    ForEach(0...10, id: \.self) { Text("\($0)m") }
+                                }
+                                .pickerStyle(.wheel)
+                                .frame(width: 100)
+                                .clipped()
+
+                                Picker("Seconds", selection: $pickerSeconds) {
+                                    ForEach([0, 10, 20, 30, 40, 50], id: \.self) { Text("\($0)s") }
+                                }
+                                .pickerStyle(.wheel)
+                                .frame(width: 100)
+                                .clipped()
+                            }
+                            Button("Set") {
+                                defaultRestTime = pickerMinutes * 60 + pickerSeconds
+                                showRestTimerPicker = false
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(pickerMinutes == 0 && pickerSeconds == 0)
+                            .padding(.bottom, 8)
+                        }
+                        .padding(.top, 8)
+                        .presentationCompactAdaptation(.popover)
                     }
                 }
             }
