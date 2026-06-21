@@ -37,6 +37,11 @@ struct WorkoutTemplatesView: View {
                                 Label("Edit", systemImage: "pencil")
                             }
                             Button {
+                                Task { await viewModel.duplicateTemplate(template) }
+                            } label: {
+                                Label("Duplicate", systemImage: "plus.square.on.square")
+                            }
+                            Button {
                                 showReorderSheet = true
                             } label: {
                                 Label("Reorder Templates", systemImage: "arrow.up.arrow.down")

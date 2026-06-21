@@ -77,7 +77,7 @@ struct CurrentWorkoutView: View {
         Button {
             viewModel.alert = AppAlert(
                 title: "Finish Workout",
-                message: "If you haven't recorded a log for a movement it will be marked as skipped.",
+                message: "If you haven't recorded a log for a movement it will be marked as skipped. Unchecked sets will also not be logged.",
                 confirmAction: { Task { await viewModel.attemptEndCurrentWorkout() } },
                 confirmLabel: "Save Workout",
                 secondaryAction: {
@@ -91,7 +91,7 @@ struct CurrentWorkoutView: View {
                         }
                     }
                 },
-                secondaryLabel: "Save as Template",
+                secondaryLabel: "Save and Create Template",
                 cancelLabel: "Cancel",
                 destructiveAction: { Task { await viewModel.attemptDeleteCurrentWorkout() } },
                 destructiveLabel: "Discard Workout"

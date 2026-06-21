@@ -102,6 +102,31 @@ extension WorkoutTemplatesView {
             }
         }
 
+        // MARK: - Duplicate
+
+        @MainActor
+        func duplicateTemplate(_ template: WorkoutTemplate) async {
+            let movements: [CreateWorkoutTemplateMovementItem]? = template.movements_details?.compactMap { entry in
+                guard let movementId = entry.movement ?? entry.movement_detail?.id else { return nil }
+                return CreateWorkoutTemplateMovementItem(
+                    movement: movementId,
+                    sets: entry.movement_log_template_detail?.sets
+                )
+            }
+            let request = CreateWorkoutTemplateRequest(
+                name: "Copy of \(template.name)",
+                movements: movements
+            )
+            try? await withLoading(.action) {
+                do {
+                    let created = try await self.templateAPI.createWorkoutTemplate(request: request)
+                    self.templates.append(created)
+                } catch {
+                    self.alert = AppAlert(title: "Error", message: error.localizedDescription)
+                }
+            }
+        }
+
         // MARK: - Refresh after edit/create
 
         func templateSaved(_ template: WorkoutTemplate) {
