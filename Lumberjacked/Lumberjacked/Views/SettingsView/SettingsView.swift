@@ -12,6 +12,13 @@ struct SettingsView: View {
     @EnvironmentObject var appEnvironment: LumberjackedAppEnvironment
     @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "dark"
     @AppStorage("useLocalBackend") private var useLocalBackend: Bool = false
+    @AppStorage("defaultRestTime") private var defaultRestTime: Int = 120
+
+    private func formattedRestTime(_ seconds: Int) -> String {
+        let m = seconds / 60
+        let s = seconds % 60
+        return String(format: "%d:%02d", m, s)
+    }
 
     init(viewModel: ViewModel = ViewModel()) {
         _viewModel = State(initialValue: viewModel)
@@ -19,6 +26,18 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section("Workouts") {
+                Stepper(value: $defaultRestTime, in: 30...600, step: 30) {
+                    HStack {
+                        Text("Default Rest Time")
+                        Spacer()
+                        Text(formattedRestTime(defaultRestTime))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .listRowBackground(Color.brandSecondary)
+
             Section("Appearance") {
                 Picker("Theme", selection: $colorSchemePreference) {
                     Text("System").tag("system")

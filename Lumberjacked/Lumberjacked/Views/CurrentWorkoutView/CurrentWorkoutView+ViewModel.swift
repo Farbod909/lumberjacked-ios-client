@@ -47,6 +47,8 @@ extension CurrentWorkoutView {
                 //
                 // Template: W, 1, 2         History: W, 1, 2, 3  (template drops a working set)
                 // → W←W  1←1  2←2          (history set at pos 3 is simply unused)
+                let stored = UserDefaults.standard.integer(forKey: "defaultRestTime")
+                let defaultRest = stored > 0 ? stored : 120
                 let historicalSets = movement.latest_log?.sets ?? []
                 var claimedIndices = Set<Int>()
                 self.logSets = templateSets.map { templateSet in
@@ -54,18 +56,21 @@ extension CurrentWorkoutView {
                         !claimedIndices.contains($0) && historicalSets[$0].type == templateSet.type
                     }
                     if let idx = matchIndex { claimedIndices.insert(idx) }
-                    return LogSet(reps: 0, load: nil, type: templateSet.type, rest_time: templateSet.rest_time ?? 120)
+                    return LogSet(reps: 0, load: nil, type: templateSet.type, rest_time: templateSet.rest_time ?? defaultRest)
                 }
                 self.logNotes      = ""
                 self.existingLogId = nil
             } else if let previousSets = movement.latest_log?.sets, !previousSets.isEmpty {
+                let stored = UserDefaults.standard.integer(forKey: "defaultRestTime")
+                let defaultRest = stored > 0 ? stored : 120
                 // Mirror previous log as placeholders — seed empty rows preserving type/rest
-                self.logSets       = previousSets.map { LogSet(reps: 0, load: nil, type: $0.type, rest_time: $0.rest_time ?? 120) }
+                self.logSets       = previousSets.map { LogSet(reps: 0, load: nil, type: $0.type, rest_time: $0.rest_time ?? defaultRest) }
                 self.logNotes      = ""
                 self.existingLogId = nil
             } else {
+                let stored = UserDefaults.standard.integer(forKey: "defaultRestTime")
                 // No previous log, no template: seed one empty working set
-                self.logSets       = [LogSet(reps: 0, load: nil, type: "working", rest_time: 120)]
+                self.logSets       = [LogSet(reps: 0, load: nil, type: "working", rest_time: stored > 0 ? stored : 120)]
                 self.logNotes      = ""
                 self.existingLogId = nil
             }
