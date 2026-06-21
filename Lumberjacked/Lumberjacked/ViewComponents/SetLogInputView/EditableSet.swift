@@ -89,7 +89,7 @@ extension EditableSet {
 
 extension EditableSet {
     static func defaultWorkingSet(copyingRestFrom prior: EditableSet? = nil) -> EditableSet {
-        EditableSet(type: "working", reps: "", load: nil, rest_time: prior?.rest_time)
+        EditableSet(type: "working", reps: "", load: nil, rest_time: prior?.rest_time ?? 120)
     }
 }
 

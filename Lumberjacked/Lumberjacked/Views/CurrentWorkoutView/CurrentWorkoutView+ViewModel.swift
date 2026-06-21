@@ -54,18 +54,18 @@ extension CurrentWorkoutView {
                         !claimedIndices.contains($0) && historicalSets[$0].type == templateSet.type
                     }
                     if let idx = matchIndex { claimedIndices.insert(idx) }
-                    return LogSet(reps: 0, load: nil, type: templateSet.type, rest_time: templateSet.rest_time)
+                    return LogSet(reps: 0, load: nil, type: templateSet.type, rest_time: templateSet.rest_time ?? 120)
                 }
                 self.logNotes      = ""
                 self.existingLogId = nil
             } else if let previousSets = movement.latest_log?.sets, !previousSets.isEmpty {
                 // Mirror previous log as placeholders — seed empty rows preserving type/rest
-                self.logSets       = previousSets.map { LogSet(reps: 0, load: nil, type: $0.type, rest_time: $0.rest_time) }
+                self.logSets       = previousSets.map { LogSet(reps: 0, load: nil, type: $0.type, rest_time: $0.rest_time ?? 120) }
                 self.logNotes      = ""
                 self.existingLogId = nil
             } else {
                 // No previous log, no template: seed one empty working set
-                self.logSets       = [LogSet(reps: 0, load: nil, type: "working", rest_time: nil)]
+                self.logSets       = [LogSet(reps: 0, load: nil, type: "working", rest_time: 120)]
                 self.logNotes      = ""
                 self.existingLogId = nil
             }
