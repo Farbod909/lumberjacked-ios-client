@@ -36,7 +36,6 @@ enum SetLogInputMode {
 // MARK: - Focus identifier
 
 private enum FocusedField: Hashable {
-    case restTime(UUID)
     case reps(UUID)
     case load(UUID)
 }
@@ -64,8 +63,10 @@ struct SetLogInputView: View {
 
     @State private var editableSets: [EditableSet] = []
 
-    @State private var editingRestTimeId: UUID? = nil
-    @State private var restTimeText: String = ""
+    @State private var showRestTimePicker = false
+    @State private var pickerTargetSetId: UUID? = nil
+    @State private var pickerMinutes: Int = 2
+    @State private var pickerSeconds: Int = 0
     @FocusState private var focusedField: FocusedField?
 
     @State private var swipeOffsets: [UUID: CGFloat] = [:]
@@ -129,15 +130,6 @@ struct SetLogInputView: View {
             Button("OK") { }
         }
         .onAppear { loadFromBinding() }
-        .onChange(of: focusedField) { oldValue, newValue in
-            if case .restTime(let oldId) = oldValue {
-                commitRestTimeEdit(for: oldId)
-            }
-            if case .restTime(let newId) = newValue,
-               let set = editableSets.first(where: { $0.id == newId }) {
-                restTimeText = restTimer.formattedTime(set.rest_time ?? 0)
-            }
-        }
     }
 
     // MARK: - Rows content (shared between standalone and embedded modes)
@@ -482,36 +474,63 @@ struct SetLogInputView: View {
 
         return HStack {
             Spacer()
-            ZStack {
-                Capsule().fill(Color.brandBackground)
-
-                if editingRestTimeId == setId {
-                    TextField("m:ss", text: $restTimeText)
-                        .keyboardType(.numbersAndPunctuation)
-                        .multilineTextAlignment(.center)
-                        .focused($focusedField, equals: .restTime(setId))
-                        .onAppear { focusedField = .restTime(setId) }
-                        .onSubmit { focusedField = nil }
-                        .selectAllTextOnFocus()
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundStyle(.primary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 6)
-                } else {
-                    Button { beginRestTimeEdit(s) } label: {
-                        Text(displayText)
-                            .font(.subheadline.monospacedDigit())
-                            .fontWeight(isActive ? .bold : .regular)
-                            .foregroundStyle(isActive ? Color.red : Color.primary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 6)
-                    }
-                    .buttonStyle(.plain)
-                }
+            Button {
+                let currentSeconds = s.rest_time ?? 0
+                pickerMinutes = currentSeconds / 60
+                pickerSeconds = (currentSeconds % 60 / 10) * 10
+                pickerTargetSetId = setId
+                showRestTimePicker = true
+            } label: {
+                Text(displayText)
+                    .font(.subheadline.monospacedDigit())
+                    .fontWeight(isActive ? .bold : .regular)
+                    .foregroundStyle(isActive ? Color.red : Color.primary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
             }
-            .fixedSize()
+            .buttonStyle(.plain)
+            .background(Capsule().fill(Color.brandBackground))
+            .popover(isPresented: Binding(
+                get: { showRestTimePicker && pickerTargetSetId == setId },
+                set: { if !$0 { showRestTimePicker = false } }
+            )) {
+                restTimePickerContent(set)
+            }
             Spacer()
         }
+    }
+
+    private func restTimePickerContent(_ set: Binding<EditableSet>) -> some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 0) {
+                Picker("Minutes", selection: $pickerMinutes) {
+                    ForEach(0...10, id: \.self) { Text("\($0)m") }
+                }
+                .pickerStyle(.wheel)
+                .frame(width: 100)
+                .clipped()
+
+                Picker("Seconds", selection: $pickerSeconds) {
+                    ForEach([0, 10, 20, 30, 40, 50], id: \.self) { Text("\($0)s") }
+                }
+                .pickerStyle(.wheel)
+                .frame(width: 100)
+                .clipped()
+            }
+
+            Button("Set") {
+                let total = pickerMinutes * 60 + pickerSeconds
+                if let idx = editableSets.firstIndex(where: { $0.id == set.wrappedValue.id }) {
+                    editableSets[idx].rest_time = total > 0 ? total : nil
+                    syncToBinding()
+                }
+                showRestTimePicker = false
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.bottom, 8)
+        }
+        .padding(.top, 8)
+        .presentationCompactAdaptation(.popover)
     }
 
     // MARK: - Drag handle
@@ -575,35 +594,6 @@ struct SetLogInputView: View {
         // No top padding here — the VStack applies .padding(.top, -pillHalfHeight)
         // externally so the capsule visually overlaps the last content row above.
         .padding(.bottom, 12)
-    }
-
-    // MARK: - Rest time edit helpers
-
-    private func beginRestTimeEdit(_ set: EditableSet) {
-        editingRestTimeId = set.id
-    }
-
-    private func commitRestTimeEdit(for id: UUID) {
-        defer {
-            restTimeText = ""
-            if editingRestTimeId == id { editingRestTimeId = nil }
-        }
-        guard let parsed = parseRestTimeText(restTimeText),
-              let idx = editableSets.firstIndex(where: { $0.id == id }) else { return }
-        editableSets[idx].rest_time = parsed
-        syncToBinding()
-    }
-
-    private func parseRestTimeText(_ text: String) -> Int? {
-        let trimmed = text.trimmingCharacters(in: .whitespaces)
-        if trimmed.contains(":") {
-            let parts = trimmed.split(separator: ":")
-            guard parts.count == 2,
-                  let m = Int(parts[0]),
-                  let s = Int(parts[1]) else { return nil }
-            return m * 60 + s
-        }
-        return Int(trimmed)
     }
 
     // MARK: - Previous data
