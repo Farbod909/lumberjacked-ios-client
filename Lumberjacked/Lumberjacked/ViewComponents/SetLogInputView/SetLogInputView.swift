@@ -28,8 +28,12 @@ enum SetLogInputMode {
         return false
     }
     var repsFieldWidth: CGFloat {
-        if case .editTemplate = self { return 68 }
+        if case .editTemplate = self { return 90 }
         return 52
+    }
+    var repsColumnLabel: String {
+        if case .editTemplate = self { return "Reps / Range" }
+        return "Reps"
     }
 }
 
@@ -213,7 +217,7 @@ struct SetLogInputView: View {
 
             Spacer()
 
-            Text("Reps")
+            Text(mode.repsColumnLabel)
                 .frame(width: mode.repsFieldWidth, alignment: .center)
 
             if mode.showsLoad {
@@ -399,6 +403,7 @@ struct SetLogInputView: View {
     private func repsField(_ set: Binding<EditableSet>) -> some View {
         let idx = editableSets.firstIndex(where: { $0.id == set.wrappedValue.id }) ?? 0
         let placeholder: String = {
+            if case .editTemplate = mode { return idx == 0 ? "e.g. 8-12" : "–" }
             guard case .activeWorkout = mode else { return "–" }
             if idx < templateSets.count, let reps = templateSets[idx].reps, !reps.isEmpty {
                 return reps
@@ -406,8 +411,12 @@ struct SetLogInputView: View {
             let prev = previousSetFor(set.wrappedValue)
             return prev.map { $0.reps > 0 ? String($0.reps) : "–" } ?? "–"
         }()
+        let keyboardType: UIKeyboardType = {
+            if case .editTemplate = mode { return .numbersAndPunctuation }
+            return mode.showsLoad ? .numberPad : .default
+        }()
         return TextField(placeholder, text: set.reps)
-            .keyboardType(mode.showsLoad ? .numberPad : .default)
+            .keyboardType(keyboardType)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 4)
             .padding(.vertical, 6)
