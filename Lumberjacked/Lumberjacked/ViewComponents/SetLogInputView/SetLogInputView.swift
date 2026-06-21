@@ -27,6 +27,10 @@ enum SetLogInputMode {
         if case .activeWorkout = self { return true }
         return false
     }
+    var repsFieldWidth: CGFloat {
+        if case .editTemplate = self { return 68 }
+        return 52
+    }
 }
 
 // MARK: - Focus identifier
@@ -206,7 +210,7 @@ struct SetLogInputView: View {
             Spacer()
 
             Text("Reps")
-                .frame(width: Col.reps, alignment: .center)
+                .frame(width: mode.repsFieldWidth, alignment: .center)
 
             if mode.showsLoad {
                 Text("lbs")
@@ -251,7 +255,7 @@ struct SetLogInputView: View {
             Spacer()
             Text(s.reps.isEmpty ? "–" : s.reps)
                 .multilineTextAlignment(.center)
-                .frame(width: Col.reps)
+                .frame(width: mode.repsFieldWidth)
             if mode.showsLoad {
                 Text(formatLoad(s.load))
                     .multilineTextAlignment(.center)
@@ -332,7 +336,7 @@ struct SetLogInputView: View {
 
                 Spacer()
 
-                repsField(set).frame(width: Col.reps)
+                repsField(set).frame(width: mode.repsFieldWidth)
 
                 if mode.showsLoad {
                     loadField(set)
@@ -584,12 +588,26 @@ struct SetLogInputView: View {
 
     // MARK: - Previous data
 
-    private func previousSetFor(_ set: EditableSet) -> LogSet? {
+    // Greedy left-to-right type-match: each current set claims the first unclaimed historical
+    // set of the same type. Mirrors the load-matching logic in EditableMovementEntry.init(from:)
+    // so the Previous column is consistent with the prepopulated loads.
+    private var previousSetMap: [UUID: LogSet] {
         guard case .activeWorkout(let previousSets) = mode,
-              let previousSets else { return nil }
-        let idx = editableSets.firstIndex(where: { $0.id == set.id }) ?? 0
-        guard idx < previousSets.count else { return nil }
-        return previousSets[idx]
+              let previousSets else { return [:] }
+        var claimedIndices = Set<Int>()
+        var map: [UUID: LogSet] = [:]
+        for set in editableSets {
+            guard let idx = previousSets.indices.first(where: {
+                !claimedIndices.contains($0) && previousSets[$0].type == set.type
+            }) else { continue }
+            claimedIndices.insert(idx)
+            map[set.id] = previousSets[idx]
+        }
+        return map
+    }
+
+    private func previousSetFor(_ set: EditableSet) -> LogSet? {
+        previousSetMap[set.id]
     }
 
     private func previousText(_ logSet: LogSet?) -> String {
