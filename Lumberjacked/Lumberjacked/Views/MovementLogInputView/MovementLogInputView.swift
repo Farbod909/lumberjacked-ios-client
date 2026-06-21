@@ -38,7 +38,7 @@ struct MovementLogInputView: View {
                 TextField(
                     "",
                     text: $viewModel.movementLog.notes,
-                    prompt: Text("Notes...").foregroundStyle(.secondary)
+                    prompt: Text("Notes...").foregroundStyle(Color.brandPlaceholderText)
                 )
                 .font(.subheadline)
                 .foregroundStyle(.secondary)

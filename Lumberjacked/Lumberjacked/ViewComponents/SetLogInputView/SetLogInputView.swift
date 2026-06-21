@@ -111,6 +111,7 @@ struct SetLogInputView: View {
     var body: some View {
         VStack(spacing: 0) {
             headerRow
+                .padding(.horizontal, 10)
             if isEmbedded {
                 rowsContent
             } else {
@@ -155,6 +156,8 @@ struct SetLogInputView: View {
         VStack(spacing: 0) {
             if editableSets.isEmpty {
                 emptyStateRow
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                    .padding(.horizontal, 10)
             }
             ForEach(Array(editableSets.enumerated()), id: \.element.id) { index, _ in
                 if index > 0 && !readOnly {
@@ -167,6 +170,8 @@ struct SetLogInputView: View {
                         .zIndex(10)
                 }
                 setRow($editableSets[index], index: index)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                    .padding(.horizontal, 10)
                     .zIndex(1)
                     // Instant insertion prevents the red delete button from
                     // flashing through the content HStack during fade-in.
@@ -215,7 +220,7 @@ struct SetLogInputView: View {
             }
         }
         .sectionLabel()
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 12)
         .padding(.bottom, 4)
     }
 
@@ -255,7 +260,7 @@ struct SetLogInputView: View {
             }
         }
         .padding(.vertical, 10)
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 12)
         .background(Color.brandSecondary)
     }
 
@@ -342,7 +347,7 @@ struct SetLogInputView: View {
                 }
             }
             .padding(.vertical, 10)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 12)
             // Two-layer background: opaque base prevents the red delete button
             // from showing through the semi-transparent green checked overlay.
             // Color.brandSecondary is opaque; Color(.systemFill) must NOT be used

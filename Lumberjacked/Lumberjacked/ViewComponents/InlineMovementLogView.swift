@@ -117,9 +117,11 @@ struct InlineMovementLogView: View {
                 .foregroundStyle(.primary)
                 .tint(.accentColor)
                 .lineLimit(1)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 11)
                 .background(Color.accentColor.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                .padding(.horizontal, 10)
                 .padding(.bottom, 4)
             } else if !movementNotesEditable && !movement.notes.isEmpty {
                 Text(movement.notes)
@@ -142,14 +144,16 @@ struct InlineMovementLogView: View {
                 TextField(
                     "",
                     text: $logNotes,
-                    prompt: Text("Log notes...").foregroundStyle(.secondary)
+                    prompt: Text("Log notes...").foregroundStyle(Color.brandPlaceholderText)
                 )
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 11)
                 .background(Color.brandSecondary)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                .padding(.horizontal, 10)
                 .padding(.bottom, 4)
             }
 
