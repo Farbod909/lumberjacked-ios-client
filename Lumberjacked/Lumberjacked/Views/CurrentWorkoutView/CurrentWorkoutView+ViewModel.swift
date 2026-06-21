@@ -26,13 +26,48 @@ extension CurrentWorkoutView {
                 self.logSets       = log.sets ?? []
                 self.logNotes      = log.notes
                 self.existingLogId = log.id
+            } else if let templateSets = movement.template?.sets, !templateSets.isEmpty {
+                // Template exists: seed rows from template with reps left empty (shown as placeholder).
+                // Loads are carried from latest_log using a greedy left-to-right type-match: for each
+                // template set, claim the first unclaimed historical set of the same type and take its
+                // load. This is more robust than a purely positional match because it handles reordering
+                // and count mismatches gracefully, without inventing cross-type associations.
+                //
+                // Template: W, 1, 2, F      History: W, 1, 2, F
+                // → W←W  1←1  2←2  F←F     (all loads carried, identical shapes)
+                //
+                // Template: W, 1, M, F      History: W, 1, F, M  (order swapped)
+                // → W←W  1←1  M←M  F←F     (loads still carried despite reordering)
+                //
+                // Template: W, 1, M, F      History: W, 1, 2, F, M  (extra working set in history)
+                // → W←W  1←1  M←M  F←F     (extra history working set at pos 2 is skipped over)
+                //
+                // Template: W, 1, 2, 3      History: 1, 2, 3  (template adds a warmup)
+                // → W←nil  1←1  2←2  3←3   (no W in history → warmup gets no load)
+                //
+                // Template: W, 1, 2         History: W, 1, 2, 3  (template drops a working set)
+                // → W←W  1←1  2←2          (history set at pos 3 is simply unused)
+                let historicalSets = movement.latest_log?.sets ?? []
+                var claimedIndices = Set<Int>()
+                self.logSets = templateSets.map { templateSet in
+                    let matchIndex = historicalSets.indices.first {
+                        !claimedIndices.contains($0) && historicalSets[$0].type == templateSet.type
+                    }
+                    if let idx = matchIndex {
+                        claimedIndices.insert(idx)
+                        return LogSet(reps: 0, load: historicalSets[idx].load, type: templateSet.type, rest_time: templateSet.rest_time)
+                    }
+                    return LogSet(reps: 0, load: nil, type: templateSet.type, rest_time: templateSet.rest_time)
+                }
+                self.logNotes      = ""
+                self.existingLogId = nil
             } else if let previousSets = movement.latest_log?.sets, !previousSets.isEmpty {
                 // Pre-populate from previous log (same count, reps, and load)
                 self.logSets       = previousSets
                 self.logNotes      = ""
                 self.existingLogId = nil
             } else {
-                // No previous log: seed one empty working set
+                // No previous log, no template: seed one empty working set
                 self.logSets       = [LogSet(reps: 0, load: nil, type: "working", rest_time: nil)]
                 self.logNotes      = ""
                 self.existingLogId = nil

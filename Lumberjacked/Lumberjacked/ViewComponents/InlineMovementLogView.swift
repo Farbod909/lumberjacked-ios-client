@@ -11,6 +11,7 @@ struct InlineMovementLogView: View {
     @Binding var logNotes: String
     @Binding var logSets: [LogSet]
     let mode: SetLogInputMode
+    var templateSets: [TemplateSet] = []
     let movementNotesEditable: Bool
     var readOnly: Bool = false
     var onReorderTapped: (() -> Void)? = nil
@@ -157,7 +158,7 @@ struct InlineMovementLogView: View {
                 .padding(.bottom, 4)
             }
 
-            SetLogInputView(mode: mode, logSets: $logSets, isEmbedded: true, readOnly: readOnly)
+            SetLogInputView(mode: mode, logSets: $logSets, templateSets: .constant(templateSets), isEmbedded: true, readOnly: readOnly)
         }
     }
 }

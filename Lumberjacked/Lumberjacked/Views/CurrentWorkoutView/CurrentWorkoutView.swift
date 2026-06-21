@@ -272,6 +272,7 @@ struct CurrentWorkoutView: View {
                                 logSets: $entry.logSets,
                                 mode: .activeWorkout(
                                     previousSets: entry.movement.latest_log?.sets),
+                                templateSets: entry.movement.template?.sets ?? [],
                                 movementNotesEditable: true,
                                 onReorderTapped: {
                                     withAnimation(.easeInOut(duration: 0.2)) {

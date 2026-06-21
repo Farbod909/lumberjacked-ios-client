@@ -389,7 +389,14 @@ struct SetLogInputView: View {
     // MARK: - Reps field
 
     private func repsField(_ set: Binding<EditableSet>) -> some View {
-        TextField("–", text: set.reps)
+        let idx = editableSets.firstIndex(where: { $0.id == set.wrappedValue.id }) ?? 0
+        let placeholder: String = {
+            guard case .activeWorkout = mode,
+                  idx < templateSets.count,
+                  !templateSets[idx].reps.isEmpty else { return "–" }
+            return templateSets[idx].reps
+        }()
+        return TextField(placeholder, text: set.reps)
             .keyboardType(mode.showsLoad ? .numberPad : .default)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 4)
