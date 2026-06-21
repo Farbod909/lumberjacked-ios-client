@@ -15,9 +15,25 @@ struct InlineMovementTemplateView: View {
 
     @State private var showMovementNotesField = false
     @State private var hideMovementNotes = false
+    @State private var cachedSets: [TemplateSet] = []
 
     private var movementNotesVisible: Bool {
         (!movementNotes.isEmpty || showMovementNotesField) && !hideMovementNotes
+    }
+
+    private var usesPreset: Bool { !templateSets.isEmpty }
+
+    private func planPill(label: String, active: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(active ? .white : Color.secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(active ? Color.accentColor : Color.brandSecondary)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+        }
+        .buttonStyle(.plain)
     }
 
     var body: some View {
@@ -87,7 +103,27 @@ struct InlineMovementTemplateView: View {
                 .padding(.bottom, 4)
             }
 
-            SetLogInputView(mode: .editTemplate, templateSets: $templateSets, isEmbedded: true)
+            HStack(spacing: 8) {
+                planPill(label: "Mirror previous session", active: !usesPreset) {
+                    if usesPreset {
+                        cachedSets = templateSets
+                        templateSets = []
+                    }
+                }
+                planPill(label: "Preset", active: usesPreset) {
+                    if !usesPreset {
+                        templateSets = cachedSets.isEmpty
+                            ? [TemplateSet(reps: "", type: "working", rest_time: nil)]
+                            : cachedSets
+                    }
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.bottom, 8)
+
+            if usesPreset {
+                SetLogInputView(mode: .editTemplate, templateSets: $templateSets, isEmbedded: true)
+            }
         }
     }
 }

@@ -17,11 +17,7 @@ extension WorkoutTemplateEditorView {
         init(from movement: Movement) {
             self.movement = movement
             self.movementNotes = movement.notes
-            if let sets = movement.template?.sets, !sets.isEmpty {
-                self.templateSets = sets
-            } else {
-                self.templateSets = [TemplateSet(reps: "", type: "working", rest_time: nil)]
-            }
+            self.templateSets = movement.template?.sets ?? []
         }
 
         init(fromCurrentWorkout entry: CurrentWorkoutView.EditableMovementEntry) {
@@ -120,6 +116,9 @@ extension WorkoutTemplateEditorView {
             !name.trimmingCharacters(in: .whitespaces).isEmpty
                 && !entries.isEmpty
                 && isDirty
+                && entries.allSatisfy { entry in
+                    entry.templateSets.allSatisfy { !$0.reps.trimmingCharacters(in: .whitespaces).isEmpty }
+                }
         }
 
         var searchResults: [Movement] {
@@ -170,9 +169,10 @@ extension WorkoutTemplateEditorView {
                     let request = CreateWorkoutTemplateRequest(
                         name: self.name.trimmingCharacters(in: .whitespaces),
                         movements: self.entries.map { entry in
-                            CreateWorkoutTemplateMovementItem(
+                            let sets = entry.templateSets.filter { !$0.reps.trimmingCharacters(in: .whitespaces).isEmpty }
+                            return CreateWorkoutTemplateMovementItem(
                                 movement: entry.movement.id!,
-                                sets: entry.templateSets
+                                sets: sets.isEmpty ? nil : sets
                             )
                         }
                     )

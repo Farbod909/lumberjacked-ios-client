@@ -142,17 +142,29 @@ struct SetLogInputView: View {
 
     // MARK: - Rows content (shared between standalone and embedded modes)
 
+    @ViewBuilder
     private var emptyStateRow: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "tray")
-                .foregroundStyle(.tertiary)
-            Text("No sets logged")
+        if case .editTemplate = mode {
+            Text("No template — this movement will mirror your last session")
+                .font(DesignSystem.Font.body)
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 20)
+                .background(Color.brandSecondary)
+        } else {
+            HStack(spacing: 8) {
+                Image(systemName: "tray")
+                    .foregroundStyle(.tertiary)
+                Text("No sets logged")
+                    .foregroundStyle(.secondary)
+            }
+            .font(DesignSystem.Font.body)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
+            .background(Color.brandSecondary)
         }
-        .font(DesignSystem.Font.body)
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
-        .background(Color.brandSecondary)
     }
 
     @ViewBuilder
