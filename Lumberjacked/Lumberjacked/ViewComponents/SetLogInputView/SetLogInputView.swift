@@ -585,7 +585,11 @@ struct SetLogInputView: View {
             Spacer()
             Button {
                 withAnimation {
-                    let newSet = EditableSet.defaultWorkingSet(copyingRestFrom: editableSets.last)
+                    let newSet = EditableSet.defaultWorkingSet(copyingFrom: editableSets.last)
+                    if editableSets.count >= 2 {
+                        editableSets[editableSets.count - 1].rest_time =
+                            editableSets[editableSets.count - 2].rest_time
+                    }
                     editableSets.append(newSet)
                     syncToBinding()
                 }

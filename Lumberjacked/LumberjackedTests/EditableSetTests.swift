@@ -134,18 +134,18 @@ final class EditableSetTests: XCTestCase {
 
     // MARK: - Default working set
 
-    func testDefaultWorkingSetCopiesRestTimeFromPrior() {
+    func testDefaultWorkingSetCopiesValuesFromPrior() {
         let prior = EditableSet(type: "working", reps: "10", load: 135, rest_time: 90)
-        let newSet = EditableSet.defaultWorkingSet(copyingRestFrom: prior)
+        let newSet = EditableSet.defaultWorkingSet(copyingFrom: prior)
 
         XCTAssertEqual(newSet.type, "working")
         XCTAssertEqual(newSet.rest_time, 90)
-        XCTAssertEqual(newSet.reps, "")
-        XCTAssertNil(newSet.load)
+        XCTAssertEqual(newSet.reps, "10")
+        XCTAssertEqual(newSet.load, 135)
     }
 
     func testDefaultWorkingSetWithNoPriorHasNilRestTime() {
-        let newSet = EditableSet.defaultWorkingSet(copyingRestFrom: nil)
+        let newSet = EditableSet.defaultWorkingSet(copyingFrom: nil)
         XCTAssertNil(newSet.rest_time)
     }
 

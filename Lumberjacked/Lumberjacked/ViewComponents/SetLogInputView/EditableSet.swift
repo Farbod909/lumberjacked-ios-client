@@ -88,10 +88,15 @@ extension EditableSet {
 // MARK: - Defaults
 
 extension EditableSet {
-    static func defaultWorkingSet(copyingRestFrom prior: EditableSet? = nil) -> EditableSet {
+    static func defaultWorkingSet(copyingFrom prior: EditableSet? = nil) -> EditableSet {
         let stored = UserDefaults.standard.integer(forKey: "defaultRestTime")
         let defaultRest = stored > 0 ? stored : 120
-        return EditableSet(type: "working", reps: "", load: nil, rest_time: prior?.rest_time ?? defaultRest)
+        return EditableSet(
+            type: "working",
+            reps: prior?.reps ?? "",
+            load: prior?.load,
+            rest_time: prior?.rest_time ?? defaultRest
+        )
     }
 }
 
