@@ -351,7 +351,7 @@ struct SetLogInputView: View {
                 repsField(set).frame(width: mode.repsFieldWidth)
 
                 if mode.showsLoad {
-                    loadField(set)
+                    loadField(set, previousSet: previousSet)
                         .frame(width: Col.load)
                         .padding(.leading, 8)
                 }
@@ -407,10 +407,12 @@ struct SetLogInputView: View {
     private func repsField(_ set: Binding<EditableSet>) -> some View {
         let idx = editableSets.firstIndex(where: { $0.id == set.wrappedValue.id }) ?? 0
         let placeholder: String = {
-            guard case .activeWorkout = mode,
-                  idx < templateSets.count,
-                  let reps = templateSets[idx].reps, !reps.isEmpty else { return "–" }
-            return reps
+            guard case .activeWorkout = mode else { return "–" }
+            if idx < templateSets.count, let reps = templateSets[idx].reps, !reps.isEmpty {
+                return reps
+            }
+            let prev = previousSetFor(set.wrappedValue)
+            return prev.map { $0.reps > 0 ? String($0.reps) : "–" } ?? "–"
         }()
         return TextField(placeholder, text: set.reps)
             .keyboardType(mode.showsLoad ? .numberPad : .default)
@@ -426,8 +428,14 @@ struct SetLogInputView: View {
 
     // MARK: - Load field
 
-    private func loadField(_ set: Binding<EditableSet>) -> some View {
-        TextField("–", value: set.load, format: .number)
+    private func loadField(_ set: Binding<EditableSet>, previousSet: LogSet? = nil) -> some View {
+        let placeholder: String = {
+            guard let load = previousSet?.load else { return "–" }
+            let rounded = (load * 10).rounded() / 10
+            return rounded.truncatingRemainder(dividingBy: 1) == 0
+                ? String(Int(rounded)) : String(format: "%.1f", rounded)
+        }()
+        return TextField(placeholder, value: set.load, format: .number)
             .keyboardType(.decimalPad)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 4)
