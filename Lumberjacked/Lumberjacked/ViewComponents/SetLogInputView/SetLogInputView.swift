@@ -141,7 +141,7 @@ struct SetLogInputView: View {
     @ViewBuilder
     private var emptyStateRow: some View {
         if case .editTemplate = mode {
-            Text("Tap '+' to add suggested sets and rep ranges to this movement")
+            Text("Tap '+' to add optional suggested sets and rep ranges to this movement")
                 .font(DesignSystem.Font.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

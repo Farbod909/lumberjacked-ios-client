@@ -231,7 +231,7 @@ struct CurrentWorkoutView: View {
                         await viewModel.attemptGetMovements()
                     }
                 } label: {
-                    Label("New workout", systemImage: "plus")
+                    Label("Quick start", systemImage: "plus")
                 }
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(Color.brandPrimaryText)
