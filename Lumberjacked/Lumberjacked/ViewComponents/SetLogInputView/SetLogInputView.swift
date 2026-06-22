@@ -73,6 +73,9 @@ struct SetLogInputView: View {
     @State private var pickerSeconds: Int = 0
     @FocusState private var focusedField: FocusedField?
 
+    @State private var missingRepsSetId: UUID? = nil
+    @State private var missingRepsNeedsLoad: Bool = false
+
     @State private var swipeOffsets: [UUID: CGFloat] = [:]
     @State private var dragBases:    [UUID: CGFloat] = [:]
 
@@ -424,7 +427,21 @@ struct SetLogInputView: View {
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
             .focused($focusedField, equals: .reps(set.wrappedValue.id))
             .selectAllTextOnFocus()
-            .onChange(of: set.wrappedValue.reps) { _, _ in syncToBinding() }
+            .onChange(of: set.wrappedValue.reps) { _, new in
+                syncToBinding()
+                if !new.isEmpty, missingRepsSetId == set.wrappedValue.id { missingRepsSetId = nil }
+            }
+            .popover(isPresented: Binding(
+                get: { missingRepsSetId == set.wrappedValue.id },
+                set: { if !$0 { missingRepsSetId = nil } }
+            )) {
+                Text(missingRepsNeedsLoad
+                     ? "Don't forget to enter your reps and weight!"
+                     : "Don't forget to enter your reps!")
+                    .font(.callout)
+                    .padding()
+                    .presentationCompactAdaptation(.popover)
+            }
     }
 
     // MARK: - Load field
@@ -456,9 +473,16 @@ struct SetLogInputView: View {
             let restTime  = set.wrappedValue.rest_time
             let setId     = set.wrappedValue.id
             withAnimation { set.wrappedValue.isChecked = !wasChecked }
-            if !wasChecked { fillPlaceholders(for: set) }
+            if !wasChecked {
+                fillPlaceholders(for: set)
+                if set.wrappedValue.reps.isEmpty {
+                    missingRepsSetId = setId
+                    missingRepsNeedsLoad = set.wrappedValue.load == nil
+                }
+            }
             syncToBinding()
             if wasChecked {
+                if missingRepsSetId == setId { missingRepsSetId = nil }
                 restTimer.cancel()
             } else if let rt = restTime, rt > 0, editableSets.last?.id != setId {
                 restTimer.start(seconds: rt, setId: setId)
