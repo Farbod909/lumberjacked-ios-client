@@ -456,11 +456,15 @@ struct SetLogInputView: View {
             let restTime  = set.wrappedValue.rest_time
             let setId     = set.wrappedValue.id
             withAnimation { set.wrappedValue.isChecked = !wasChecked }
+            if !wasChecked { fillPlaceholders(for: set) }
             syncToBinding()
             if wasChecked {
                 restTimer.cancel()
             } else if let rt = restTime, rt > 0, editableSets.last?.id != setId {
                 restTimer.start(seconds: rt, setId: setId)
+            } else if editableSets.last?.id == setId {
+                // Last set: no rest needed, cancel any timer left over from previous sets
+                restTimer.cancel()
             }
         } label: {
             Image(systemName: set.wrappedValue.isChecked
@@ -631,6 +635,29 @@ struct SetLogInputView: View {
 
     private func previousSetFor(_ set: EditableSet) -> LogSet? {
         previousSetMap[set.id]
+    }
+
+    private func fillPlaceholders(for set: Binding<EditableSet>) {
+        guard case .activeWorkout = mode else { return }
+        let s = set.wrappedValue
+        let idx = editableSets.firstIndex(where: { $0.id == s.id }) ?? 0
+
+        if s.reps.isEmpty {
+            let placeholder: String = {
+                if idx < templateSets.count, let reps = templateSets[idx].reps, !reps.isEmpty {
+                    return reps
+                }
+                let prev = previousSetFor(s)
+                return prev.map { $0.reps > 0 ? String($0.reps) : "–" } ?? "–"
+            }()
+            if placeholder != "–" && !placeholder.contains("-") {
+                set.wrappedValue.reps = placeholder
+            }
+        }
+
+        if s.load == nil {
+            set.wrappedValue.load = previousSetFor(s)?.load
+        }
     }
 
     private func previousText(_ logSet: LogSet?) -> String {
