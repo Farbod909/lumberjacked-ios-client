@@ -121,7 +121,7 @@ struct InlineMovementLogView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 11)
                 .background(Color.accentColor.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large))
                 .padding(.horizontal, 10)
                 .padding(.bottom, 4)
             } else if !movementNotesEditable && !movement.notes.isEmpty {
@@ -153,7 +153,7 @@ struct InlineMovementLogView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 11)
                 .background(Color.brandSecondary)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large))
                 .padding(.horizontal, 10)
                 .padding(.bottom, 4)
             }

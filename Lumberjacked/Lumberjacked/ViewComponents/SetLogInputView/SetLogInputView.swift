@@ -171,7 +171,7 @@ struct SetLogInputView: View {
         VStack(spacing: 0) {
             if editableSets.isEmpty {
                 emptyStateRow
-                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large))
                     .padding(.horizontal, 10)
             }
             ForEach(Array(editableSets.enumerated()), id: \.element.id) { index, _ in
@@ -185,7 +185,7 @@ struct SetLogInputView: View {
                         .zIndex(10)
                 }
                 setRow($editableSets[index], index: index)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large))
                     .padding(.horizontal, 10)
                     .zIndex(1)
                     // Instant insertion prevents the red delete button from
