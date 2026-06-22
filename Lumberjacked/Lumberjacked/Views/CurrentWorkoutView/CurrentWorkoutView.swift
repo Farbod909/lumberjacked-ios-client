@@ -40,6 +40,7 @@ struct CurrentWorkoutView: View {
     @State private var showRestTimerOptions = false
     @State private var pickerMinutes: Int = 2
     @State private var pickerSeconds: Int = 0
+    @State private var showUncheckedSetsAlert = false
 
     init(viewModel: ViewModel = ViewModel()) {
         _viewModel = State(initialValue: viewModel)
@@ -75,27 +76,12 @@ struct CurrentWorkoutView: View {
 
     var endWorkoutButton: some View {
         Button {
-            viewModel.alert = AppAlert(
-                title: "Finish Workout",
-                message: "If you haven't recorded a log for a movement it will be marked as skipped. Unchecked sets will also not be logged.",
-                confirmAction: { Task { await viewModel.attemptEndCurrentWorkout() } },
-                confirmLabel: "Save Workout",
-                secondaryAction: {
-                    let entries = viewModel.editableEntries.map {
-                        WorkoutTemplateEditorView.EditableTemplateMovementEntry(fromCurrentWorkout: $0)
-                    }
-                    Task {
-                        await viewModel.attemptEndCurrentWorkout()
-                        if viewModel.currentWorkout == nil {
-                            pendingTemplateEntries = entries
-                        }
-                    }
-                },
-                secondaryLabel: "Save and Create Template",
-                cancelLabel: "Cancel",
-                destructiveAction: { Task { await viewModel.attemptDeleteCurrentWorkout() } },
-                destructiveLabel: "Discard Workout"
-            )
+            let hasUnchecked = viewModel.editableEntries.contains { $0.logSets.contains { !$0.isChecked } }
+            if hasUnchecked {
+                showUncheckedSetsAlert = true
+            } else {
+                showFinishWorkoutAlert()
+            }
         } label: {
             Label("Finish", systemImage: "flag.pattern.checkered")
                 .font(.headline)
@@ -103,6 +89,29 @@ struct CurrentWorkoutView: View {
         .padding()
         .modifier(FloatingButtonStyle())
         .foregroundStyle(Color.accentColor)
+    }
+
+    func showFinishWorkoutAlert() {
+        viewModel.alert = AppAlert(
+            title: "Finish Workout",
+            confirmAction: { Task { await viewModel.attemptEndCurrentWorkout() } },
+            confirmLabel: "Save Workout",
+            secondaryAction: {
+                let entries = viewModel.editableEntries.map {
+                    WorkoutTemplateEditorView.EditableTemplateMovementEntry(fromCurrentWorkout: $0)
+                }
+                Task {
+                    await viewModel.attemptEndCurrentWorkout()
+                    if viewModel.currentWorkout == nil {
+                        pendingTemplateEntries = entries
+                    }
+                }
+            },
+            secondaryLabel: "Save and Create Template",
+            cancelLabel: "Cancel",
+            destructiveAction: { Task { await viewModel.attemptDeleteCurrentWorkout() } },
+            destructiveLabel: "Discard Workout"
+        )
     }
 
     // MARK: - Timer chip
@@ -680,6 +689,12 @@ struct CurrentWorkoutView: View {
                 }
             }
             .alert(item: $viewModel.alert)
+            .alert("You have unchecked sets", isPresented: $showUncheckedSetsAlert) {
+                Button("Yes, proceed") { showFinishWorkoutAlert() }
+                Button("No, resume workout", role: .cancel) { }
+            } message: {
+                Text("Some sets haven't been checked off. Is that intentional?")
+            }
         }
     }
 }
