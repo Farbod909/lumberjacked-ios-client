@@ -256,19 +256,19 @@ struct SetLogInputView: View {
         return HStack(spacing: 0) {
             Text(s.displayLabel(workingSetIndex: workingIdx))
                 .font(.headline)
-                .foregroundStyle(.primary)
+                .foregroundStyle(Color.brandPrimaryText)
                 .frame(width: 28, height: 28)
-                .background(
-                    RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                        .stroke(Color.secondary.opacity(0.35), lineWidth: 1)
-                )
+                .background(Color.brandSecondaryLight)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
                 .frame(width: Col.set, alignment: .leading)
             Spacer()
             Text(s.reps.isEmpty ? "–" : s.reps)
+                .fontWeight(.medium)
                 .multilineTextAlignment(.center)
                 .frame(width: mode.repsFieldWidth)
             if mode.showsLoad {
                 Text(formatLoad(s.load))
+                    .fontWeight(.medium)
                     .multilineTextAlignment(.center)
                     .frame(width: Col.load)
                     .padding(.leading, 8)
@@ -327,18 +327,22 @@ struct SetLogInputView: View {
                 } label: {
                     Text(s.displayLabel(workingSetIndex: workingIdx))
                         .font(.headline)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(Color.brandPrimaryText)
                         .frame(width: 28, height: 28)
-                        .background(
-                            RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                .stroke(Color.secondary.opacity(0.35), lineWidth: 1)
-                        )
+                        .background {
+                            ZStack {
+                                if s.isChecked { Color.brandSecondary } else { Color.brandSecondaryLight }
+                                if s.isChecked { Color.green.opacity(0.25) }
+                            }
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
                 }
                 .frame(width: Col.set, alignment: .leading)
 
                 if mode.showsPrevious {
                     Text(previousText(previousSet))
                         .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundStyle(.secondary)
                         .frame(width: Col.previous, alignment: .leading)
                         .padding(.leading, 12)
@@ -420,10 +424,16 @@ struct SetLogInputView: View {
         }()
         return TextField(placeholder, text: set.reps)
             .keyboardType(keyboardType)
+            .fontWeight(.medium)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 4)
             .padding(.vertical, 6)
-            .background(Color.brandSecondaryLight)
+            .background {
+                ZStack {
+                    if set.wrappedValue.isChecked { Color.brandSecondary } else { Color.brandSecondaryLight }
+                    if set.wrappedValue.isChecked { Color.green.opacity(0.25) }
+                }
+            }
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
             .focused($focusedField, equals: .reps(set.wrappedValue.id))
             .selectAllTextOnFocus()
@@ -455,10 +465,16 @@ struct SetLogInputView: View {
         }()
         return TextField(placeholder, value: set.load, format: .number)
             .keyboardType(.decimalPad)
+            .fontWeight(.medium)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 4)
             .padding(.vertical, 6)
-            .background(Color.brandSecondaryLight)
+            .background {
+                ZStack {
+                    if set.wrappedValue.isChecked { Color.brandSecondary } else { Color.brandSecondaryLight }
+                    if set.wrappedValue.isChecked { Color.green.opacity(0.25) }
+                }
+            }
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
             .focused($focusedField, equals: .load(set.wrappedValue.id))
             .selectAllTextOnFocus()
@@ -520,7 +536,7 @@ struct SetLogInputView: View {
             } label: {
                 Text(displayText)
                     .font(.subheadline.monospacedDigit())
-                    .fontWeight(isActive ? .bold : .regular)
+                    .fontWeight(isActive ? .bold : .medium)
                     .foregroundStyle(isActive ? Color.red : Color.primary)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 6)

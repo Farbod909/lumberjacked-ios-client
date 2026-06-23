@@ -39,7 +39,7 @@ struct SettingsView: View {
                     } label: {
                         Text(formattedDefaultRest)
                             .monospacedDigit()
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color.brandPrimaryText)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 6)
                             .background(Capsule().fill(Color.brandSecondaryLight))
