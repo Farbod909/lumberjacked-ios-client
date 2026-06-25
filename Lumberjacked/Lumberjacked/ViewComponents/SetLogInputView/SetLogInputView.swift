@@ -317,10 +317,16 @@ struct SetLogInputView: View {
             HStack(spacing: 0) {
                 Menu {
                     ForEach(EditableSet.SetType.allCases, id: \.self) { type in
-                        Button(type.fullName) {
+                        Button {
                             if let idx = editableSets.firstIndex(where: { $0.id == s.id }) {
                                 editableSets[idx].setType = type
                                 syncToBinding()
+                            }
+                        } label: {
+                            if type == s.setType {
+                                Label(type.fullName, systemImage: "checkmark")
+                            } else {
+                                Text(type.fullName)
                             }
                         }
                     }
