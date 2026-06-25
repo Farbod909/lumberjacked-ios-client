@@ -10,6 +10,7 @@ import SwiftUI
 
 class LumberjackedAppEnvironment: ObservableObject {
     @Published var isNotAuthenticated: Bool
+    @Published var hasActiveWorkout: Bool = false
 
     @Published var showAlert = false
     @Published var alertMessage = ""

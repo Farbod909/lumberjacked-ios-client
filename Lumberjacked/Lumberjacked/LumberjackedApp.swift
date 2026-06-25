@@ -16,6 +16,7 @@ struct LumberjackedApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     private let unsavedChangesNotificationID = "unsaved-workout-changes"
+    private let unfinishedWorkoutNotificationID = "unfinished-workout"
 
     var body: some Scene {
         WindowGroup {
@@ -39,8 +40,12 @@ struct LumberjackedApp: App {
                 if unsavedChangesState.isDirty {
                     scheduleUnsavedChangesNotification()
                 }
+                if appEnvironment.hasActiveWorkout {
+                    scheduleUnfinishedWorkoutNotification()
+                }
             case .active:
                 cancelUnsavedChangesNotification()
+                cancelUnfinishedWorkoutNotification()
             default:
                 break
             }
@@ -67,6 +72,30 @@ struct LumberjackedApp: App {
     private func cancelUnsavedChangesNotification() {
         UNUserNotificationCenter.current().removePendingNotificationRequests(
             withIdentifiers: [unsavedChangesNotificationID]
+        )
+    }
+
+    private func scheduleUnfinishedWorkoutNotification() {
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+            guard granted else { return }
+            let content = UNMutableNotificationContent()
+            content.title = "Unfinished workout"
+            content.body = "Did you forget to end your workout?"
+            content.sound = .default
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 30 * 60, repeats: false)
+            let request = UNNotificationRequest(
+                identifier: unfinishedWorkoutNotificationID,
+                content: content,
+                trigger: trigger
+            )
+            center.add(request)
+        }
+    }
+
+    private func cancelUnfinishedWorkoutNotification() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: [unfinishedWorkoutNotificationID]
         )
     }
 }

@@ -614,6 +614,9 @@ struct CurrentWorkoutView: View {
                 await viewModel.attemptGetMovements()
                 await templatesViewModel.attemptGetTemplates()
             }
+            .onChange(of: viewModel.currentWorkout?.id) { _, id in
+                appEnvironment.hasActiveWorkout = id != nil
+            }
             .sheet(
                 isPresented: $viewModel.showCreateWorkoutSheet,
                 onDismiss: { Task { await viewModel.attemptGetCurrentWorkout() } }
