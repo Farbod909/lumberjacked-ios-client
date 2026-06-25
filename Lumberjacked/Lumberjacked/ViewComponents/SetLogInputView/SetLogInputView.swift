@@ -48,7 +48,7 @@ private enum FocusedField: Hashable {
 
 private enum Col {
     static let set:      CGFloat = 36
-    static let previous: CGFloat = 80
+    static let previous: CGFloat = 100
     static let reps:     CGFloat = 52
     static let load:     CGFloat = 52
     static let checkbox: CGFloat = 28
@@ -263,12 +263,12 @@ struct SetLogInputView: View {
                 .frame(width: Col.set, alignment: .leading)
             Spacer()
             Text(s.reps.isEmpty ? "–" : s.reps)
-                .fontWeight(.medium)
+                .font(.system(size: 17, weight: .semibold))
                 .multilineTextAlignment(.center)
                 .frame(width: mode.repsFieldWidth)
             if mode.showsLoad {
                 Text(formatLoad(s.load))
-                    .fontWeight(.medium)
+                    .font(.system(size: 17, weight: .semibold))
                     .multilineTextAlignment(.center)
                     .frame(width: Col.load)
                     .padding(.leading, 8)
@@ -347,8 +347,7 @@ struct SetLogInputView: View {
 
                 if mode.showsPrevious {
                     Text(previousText(previousSet))
-                        .font(.subheadline)
-                        .fontWeight(.medium)
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.secondary)
                         .frame(width: Col.previous, alignment: .leading)
                         .padding(.leading, 12)
@@ -430,7 +429,7 @@ struct SetLogInputView: View {
         }()
         return TextField(placeholder, text: set.reps)
             .keyboardType(keyboardType)
-            .fontWeight(.medium)
+            .font(.system(size: 17, weight: .semibold))
             .multilineTextAlignment(.center)
             .padding(.horizontal, 4)
             .padding(.vertical, 6)
@@ -471,7 +470,7 @@ struct SetLogInputView: View {
         }()
         return TextField(placeholder, value: set.load, format: .number)
             .keyboardType(.decimalPad)
-            .fontWeight(.medium)
+            .font(.system(size: 17, weight: .semibold))
             .multilineTextAlignment(.center)
             .padding(.horizontal, 4)
             .padding(.vertical, 6)
@@ -541,8 +540,7 @@ struct SetLogInputView: View {
                 showRestTimePicker = true
             } label: {
                 Text(displayText)
-                    .font(.subheadline.monospacedDigit())
-                    .fontWeight(isActive ? .bold : .medium)
+                    .font(.system(size: 17, weight: isActive ? .heavy : .semibold).monospacedDigit())
                     .foregroundStyle(isActive ? Color.red : Color.primary)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 6)

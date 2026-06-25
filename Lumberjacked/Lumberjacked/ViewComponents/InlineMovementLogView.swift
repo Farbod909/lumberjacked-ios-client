@@ -112,13 +112,14 @@ struct InlineMovementLogView: View {
                 TextField(
                     "",
                     text: $movementNotes,
-                    prompt: Text("Movement notes...").foregroundStyle(Color.accentColor.opacity(0.5))
+                    prompt: Text("Movement notes...").foregroundStyle(Color.accentColor.opacity(0.5)),
+                    axis: .vertical
                 )
-                .font(.subheadline)
+                .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(.primary)
                 .tint(.accentColor)
-                .lineLimit(1)
-                .padding(.horizontal, 12)
+                .lineLimit(1...5)
+                .padding(.horizontal, 16)
                 .padding(.vertical, 11)
                 .background(Color.accentColor.opacity(0.12))
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large))
@@ -126,7 +127,7 @@ struct InlineMovementLogView: View {
                 .padding(.bottom, 4)
             } else if !movementNotesEditable && !movement.notes.isEmpty {
                 Text(movement.notes)
-                    .font(.subheadline)
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 8)
@@ -136,7 +137,7 @@ struct InlineMovementLogView: View {
             if readOnly {
                 if !logNotes.isEmpty {
                     Text(logNotes)
-                        .font(.subheadline)
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 16)
                         .padding(.bottom, 8)
@@ -145,12 +146,13 @@ struct InlineMovementLogView: View {
                 TextField(
                     "",
                     text: $logNotes,
-                    prompt: Text("Log notes...").foregroundStyle(Color.brandPlaceholderText)
+                    prompt: Text("Log notes...").foregroundStyle(Color.brandPlaceholderText),
+                    axis: .vertical
                 )
-                .font(.subheadline)
+                .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .padding(.horizontal, 12)
+                .lineLimit(1...5)
+                .padding(.horizontal, 16)
                 .padding(.vertical, 11)
                 .background(Color.brandSecondary)
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large))

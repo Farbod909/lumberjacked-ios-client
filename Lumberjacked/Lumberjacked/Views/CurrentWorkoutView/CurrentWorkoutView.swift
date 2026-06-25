@@ -147,7 +147,7 @@ struct CurrentWorkoutView: View {
             Group {
                 if isActive {
                     Text(restTimer.formattedTimeRemaining)
-                        .font(.subheadline.monospacedDigit())
+                        .font(.subheadline.weight(.bold).monospacedDigit())
                         .foregroundStyle(Color.accentColor)
                         .contentTransition(.numericText(countsDown: true))
                         .animation(.default, value: restTimer.timeRemaining)
