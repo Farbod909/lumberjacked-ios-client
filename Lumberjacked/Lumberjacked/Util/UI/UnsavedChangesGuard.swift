@@ -9,7 +9,7 @@ import SwiftUI
 
 private struct UnsavedChangesGuardModifier: ViewModifier {
     let isDirty: Bool
-    let save: () async -> Void
+    let save: () async -> Bool
     let discard: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -50,7 +50,7 @@ private struct UnsavedChangesGuardModifier: ViewModifier {
             }
             .alert("Unsaved Changes", isPresented: $showAlert) {
                 Button("Save") {
-                    Task { await save(); dismiss() }
+                    Task { if await save() { dismiss() } }
                 }
                 Button("Discard", role: .destructive) {
                     discard(); dismiss()
@@ -76,7 +76,9 @@ extension View {
     /// 1. Add an `isDirty: Bool` computed property to the view's ViewModel.
     /// 2. Add a `resetChanges()` method that restores editable state from the
     ///    server-sourced model (see `WorkoutDetailView.ViewModel.resetChanges()`).
-    /// 3. Apply this modifier once on the view's body:
+    /// 3. Add `attemptSaveChanges() async -> Bool` — return `true` on success,
+    ///    `false` on validation failure or network error (show an alert internally).
+    /// 4. Apply this modifier once on the view's body:
     ///    ```swift
     ///    .unsavedChangesGuard(
     ///        isDirty: viewModel.isDirty,
@@ -88,7 +90,7 @@ extension View {
     ///    background notification are handled automatically.
     func unsavedChangesGuard(
         isDirty: Bool,
-        save: @escaping () async -> Void,
+        save: @escaping () async -> Bool,
         discard: @escaping () -> Void
     ) -> some View {
         modifier(UnsavedChangesGuardModifier(isDirty: isDirty, save: save, discard: discard))

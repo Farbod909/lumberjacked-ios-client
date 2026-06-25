@@ -16,15 +16,15 @@ struct RemoteNetworkingError: Error {
 extension RemoteNetworkingError: LocalizedError {
     var errorDescription: String? {
         guard let messages else { return "An unknown error occurred." }
-        let parts = messages.values.compactMap { value -> String? in
-            if let arr = value as? NSArray {
-                let joined = arr.compactMap { $0 as? String }.joined(separator: "\n")
-                return joined.isEmpty ? nil : joined
-            }
-            if let str = value as? String { return str }
-            return nil
-        }
+        let parts = messages.values.flatMap { Self.extractStrings(from: $0) }
         return parts.isEmpty ? "An unknown error occurred." : parts.joined(separator: "\n")
+    }
+
+    private static func extractStrings(from value: Any) -> [String] {
+        if let str = value as? String { return [str] }
+        if let arr = value as? [Any] { return arr.flatMap { extractStrings(from: $0) } }
+        if let dict = value as? [String: Any] { return dict.values.flatMap { extractStrings(from: $0) } }
+        return []
     }
 }
 

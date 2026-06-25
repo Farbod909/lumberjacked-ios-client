@@ -59,7 +59,8 @@ struct ContentView: View {
         .alert("Unsaved Changes", isPresented: $showTabSwitchAlert) {
             Button("Save") {
                 Task {
-                    await unsavedChangesState.saveAction?()
+                    let saved = await unsavedChangesState.saveAction?() ?? false
+                    guard saved else { return }
                     unsavedChangesState.isDirty = false
                     if let tab = pendingTab { selectedTab = tab }
                     pendingTab = nil

@@ -14,6 +14,6 @@ import SwiftUI
 @Observable
 class UnsavedChangesState {
     var isDirty = false
-    var saveAction: (() async -> Void)?
+    var saveAction: (() async -> Bool)?
     var discardAction: (() -> Void)?
 }

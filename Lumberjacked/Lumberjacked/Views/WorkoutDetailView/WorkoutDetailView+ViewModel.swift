@@ -93,7 +93,12 @@ extension WorkoutDetailView {
             resetToken = UUID()
         }
 
-        func attemptSaveChanges() async {
+        @discardableResult
+        func attemptSaveChanges() async -> Bool {
+            guard canSave() else {
+                alert = AppAlert(title: "Cannot Save", message: "All sets must have reps filled in.")
+                return false
+            }
             isSaving = true
             do {
                 let savedStartTimestamp = editableStartTimestamp
@@ -174,10 +179,15 @@ extension WorkoutDetailView {
                 }
             } catch let error as RemoteNetworkingError {
                 handleNetworkError(error)
+                isSaving = false
+                return false
             } catch {
                 alert = AppAlert(title: "Error", message: error.localizedDescription)
+                isSaving = false
+                return false
             }
             isSaving = false
+            return true
         }
 
         // MARK: - Reorder
@@ -257,17 +267,7 @@ extension WorkoutDetailView {
         }
 
         private func handleNetworkError(_ error: RemoteNetworkingError) {
-            guard let messages = error.messages else {
-                alert = AppAlert(title: "Error", message: "Unknown error")
-                return
-            }
-            let msg = messages.values.compactMap { value -> String? in
-                if let arr = value as? NSArray {
-                    return arr.compactMap { $0 as? String }.joined(separator: "\n")
-                }
-                return value as? String
-            }.joined(separator: "\n")
-            alert = AppAlert(title: "Error", message: msg.isEmpty ? "Unknown error" : msg)
+            alert = AppAlert(title: "Error", message: error.localizedDescription)
         }
     }
 }

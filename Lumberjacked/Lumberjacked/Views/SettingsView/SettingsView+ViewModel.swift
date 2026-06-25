@@ -30,17 +30,7 @@ extension SettingsView {
         }
 
         private func handleNetworkError(_ error: RemoteNetworkingError) {
-            guard let messages = error.messages else {
-                alert = AppAlert(title: "Error", message: "Unknown error")
-                return
-            }
-            let msg = messages.values.compactMap { value -> String? in
-                if let arr = value as? NSArray {
-                    return arr.compactMap { $0 as? String }.joined(separator: "\n")
-                }
-                return value as? String
-            }.joined(separator: "\n")
-            alert = AppAlert(title: "Error", message: msg.isEmpty ? "Unknown error" : msg)
+            alert = AppAlert(title: "Error", message: error.localizedDescription)
         }
     }
 }

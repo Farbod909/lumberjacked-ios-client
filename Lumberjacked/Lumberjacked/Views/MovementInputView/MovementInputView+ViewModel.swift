@@ -74,11 +74,16 @@ extension MovementInputView {
         }
 
         private func extractString(from value: Any) -> String {
-            if let arr = value as? NSArray {
-                return arr.compactMap { $0 as? String }.joined(separator: "\n")
-            }
             if let str = value as? String { return str }
-            return "Unknown error"
+            if let arr = value as? [Any] {
+                let parts = arr.map { extractString(from: $0) }.filter { !$0.isEmpty }
+                return parts.joined(separator: "\n")
+            }
+            if let dict = value as? [String: Any] {
+                let parts = dict.values.map { extractString(from: $0) }.filter { !$0.isEmpty }
+                return parts.joined(separator: "\n")
+            }
+            return ""
         }
     }
 }
