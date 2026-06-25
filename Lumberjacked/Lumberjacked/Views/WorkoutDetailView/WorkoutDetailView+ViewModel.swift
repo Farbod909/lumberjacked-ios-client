@@ -45,6 +45,8 @@ extension WorkoutDetailView {
         var deleteActionLoading = false
         var isSaving = false
 
+        private(set) var resetToken = UUID()
+
         var showAddMovementOverlay = false
         var allMovements = [Movement]()
         var searchText = ""
@@ -83,6 +85,13 @@ extension WorkoutDetailView {
         }
 
         // MARK: - Save
+
+        func resetChanges() {
+            editableEntries = (workout.movements_details ?? []).map { EditableMovementEntry(from: $0) }
+            editableStartTimestamp = workout.start_timestamp ?? Date()
+            editableEndTimestamp = workout.end_timestamp ?? Date()
+            resetToken = UUID()
+        }
 
         func attemptSaveChanges() async {
             isSaving = true

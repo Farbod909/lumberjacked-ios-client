@@ -9,7 +9,7 @@ import SwiftUI
 
 struct WorkoutDetailView: View {
     @State var viewModel: ViewModel
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.dismiss) private var dismiss
     @FocusState private var searchFieldFocused: Bool
 
     @State private var isReordering = false
@@ -260,6 +260,7 @@ struct WorkoutDetailView: View {
                                     )
                                 }
                             }
+                            .id(viewModel.resetToken)
                         }
                         Spacer().frame(height: 80)
                     }
@@ -299,9 +300,7 @@ struct WorkoutDetailView: View {
         }
         .animation(.spring(duration: 0.3, bounce: 0.05), value: viewModel.showAddMovementOverlay)
         .onChange(of: viewModel.showAddMovementOverlay) { _, isShowing in
-            if isShowing {
-                searchFieldFocused = true
-            }
+            if isShowing { searchFieldFocused = true }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
             isKeyboardVisible = true
@@ -313,11 +312,11 @@ struct WorkoutDetailView: View {
             await viewModel.attemptRefreshWorkout()
             await viewModel.attemptGetMovements()
         }
-        .onDisappear {
-            if viewModel.isDirty {
-                Task { await viewModel.attemptSaveChanges() }
-            }
-        }
+        .unsavedChangesGuard(
+            isDirty: viewModel.isDirty,
+            save:    { await viewModel.attemptSaveChanges() },
+            discard: { viewModel.resetChanges() }
+        )
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 if isReordering {
@@ -334,6 +333,9 @@ struct WorkoutDetailView: View {
                     if viewModel.isSaving {
                         ProgressView()
                     } else if viewModel.isDirty {
+                        Button("Discard") {
+                            viewModel.resetChanges()
+                        }
                         Button("Save") {
                             Task { await viewModel.attemptSaveChanges() }
                         }
@@ -398,6 +400,7 @@ struct WorkoutDetailView: View {
             movementAPI: MockMovementAPI()))
     }
     .environment(RestTimerEnvironment())
+    .environment(UnsavedChangesState())
 }
 
 #Preview("Older Workout") {
@@ -409,5 +412,6 @@ struct WorkoutDetailView: View {
             movementAPI: MockMovementAPI()))
     }
     .environment(RestTimerEnvironment())
+    .environment(UnsavedChangesState())
 }
 #endif

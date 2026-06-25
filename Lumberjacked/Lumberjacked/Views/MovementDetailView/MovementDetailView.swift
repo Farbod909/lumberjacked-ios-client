@@ -7,6 +7,25 @@
 
 import SwiftUI
 
+// MARK: - Adding unsaved-changes protection to this view
+//
+// When inline editing is added here, wire it up in three steps:
+//
+// 1. Add `isDirty: Bool` and `resetChanges()` to MovementDetailView.ViewModel
+//    (see WorkoutDetailView.ViewModel for the pattern).
+//
+// 2. Apply the modifier once on the body's root view:
+//       .unsavedChangesGuard(
+//           isDirty: viewModel.isDirty,
+//           save:    { await viewModel.attemptSaveChanges() },
+//           discard: { viewModel.resetChanges() }
+//       )
+//
+// 3. Add `.environment(UnsavedChangesState())` to any #Previews for this view.
+//
+// That's all — the custom back button, swipe-back interception, tab-switch alert,
+// and the "you forgot to save" background notification are all handled automatically.
+
 struct MovementDetailView: View {
     @State var viewModel: ViewModel
     @Environment(\.dismiss) var dismiss
