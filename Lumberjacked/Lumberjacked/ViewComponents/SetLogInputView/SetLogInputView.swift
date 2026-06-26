@@ -91,6 +91,11 @@ struct SetLogInputView: View {
     private let deleteRevealWidth: CGFloat = 80
 
     @Environment(RestTimerEnvironment.self) private var restTimer
+    @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lb.rawValue
+
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
+
+    @State private var loadStrings: [UUID: String] = [:]
 
     // MARK: - Initializers
 
@@ -137,6 +142,11 @@ struct SetLogInputView: View {
             Button("OK") { }
         }
         .onAppear { loadFromBinding() }
+        .onChange(of: weightUnitRaw) {
+            for set in editableSets {
+                loadStrings[set.id] = displayLoadString(set.load)
+            }
+        }
     }
 
     // MARK: - Rows content (shared between standalone and embedded modes)
@@ -224,7 +234,7 @@ struct SetLogInputView: View {
                 .frame(width: mode.repsFieldWidth, alignment: .center)
 
             if mode.showsLoad {
-                Text("lbs")
+                Text(weightUnit.columnLabel)
                     .frame(width: Col.load, alignment: .center)
                     .padding(.leading, 8)   // matches loadField's padding(.leading, 8) in the row
             }
@@ -281,9 +291,20 @@ struct SetLogInputView: View {
 
     private func formatLoad(_ load: Double?) -> String {
         guard let load else { return "–" }
-        let rounded = (load * 10).rounded() / 10
+        return displayLoadString(load)
+    }
+
+    private func displayLoadString(_ lbValue: Double?) -> String {
+        guard let lbValue else { return "" }
+        let displayValue = weightUnit.fromLb(lbValue)
+        let rounded = (displayValue * 10).rounded() / 10
         return rounded.truncatingRemainder(dividingBy: 1) == 0
             ? String(Int(rounded)) : String(format: "%.1f", rounded)
+    }
+
+    private func updateLoadString(for id: UUID) {
+        guard let idx = editableSets.firstIndex(where: { $0.id == id }) else { return }
+        loadStrings[id] = displayLoadString(editableSets[idx].load)
     }
 
     @ViewBuilder
@@ -471,19 +492,39 @@ struct SetLogInputView: View {
 
     // MARK: - Load field
 
+    private func loadStringBinding(for setId: UUID) -> Binding<String> {
+        Binding(
+            get: { loadStrings[setId] ?? "" },
+            set: { newText in
+                if let dotIdx = newText.firstIndex(of: ".") {
+                    let afterDot = newText[newText.index(after: dotIdx)...]
+                    if afterDot.count > 1 { return }
+                }
+                loadStrings[setId] = newText
+                let lbValue: Double?
+                if newText.isEmpty || newText == "." {
+                    lbValue = nil
+                } else {
+                    lbValue = Double(newText).map { weightUnit.toLb($0) }
+                }
+                if let idx = editableSets.firstIndex(where: { $0.id == setId }) {
+                    editableSets[idx].load = lbValue
+                    syncToBinding()
+                }
+            }
+        )
+    }
+
     private func loadField(_ set: Binding<EditableSet>, previousSet: LogSet? = nil, aboveSet: EditableSet? = nil) -> some View {
+        let setId = set.wrappedValue.id
         let placeholder: String = {
             if let above = aboveSet, above.type == set.wrappedValue.type, let load = above.load {
-                let rounded = (load * 10).rounded() / 10
-                return rounded.truncatingRemainder(dividingBy: 1) == 0
-                    ? String(Int(rounded)) : String(format: "%.1f", rounded)
+                return displayLoadString(load)
             }
             guard let load = previousSet?.load else { return "–" }
-            let rounded = (load * 10).rounded() / 10
-            return rounded.truncatingRemainder(dividingBy: 1) == 0
-                ? String(Int(rounded)) : String(format: "%.1f", rounded)
+            return displayLoadString(load)
         }()
-        return TextField(placeholder, value: set.load, format: .number)
+        return TextField(placeholder, text: loadStringBinding(for: setId))
             .keyboardType(.decimalPad)
             .font(.system(size: 17, weight: .semibold))
             .multilineTextAlignment(.center)
@@ -496,9 +537,8 @@ struct SetLogInputView: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-            .focused($focusedField, equals: .load(set.wrappedValue.id))
+            .focused($focusedField, equals: .load(setId))
             .selectAllTextOnFocus()
-            .onChange(of: set.wrappedValue.load) { _, _ in syncToBinding() }
     }
 
     // MARK: - Checkbox
@@ -511,6 +551,7 @@ struct SetLogInputView: View {
             withAnimation { set.wrappedValue.isChecked = !wasChecked }
             if !wasChecked {
                 fillPlaceholders(for: set)
+                updateLoadString(for: set.wrappedValue.id)
                 if set.wrappedValue.reps.isEmpty {
                     missingRepsSetId = setId
                     missingRepsNeedsLoad = set.wrappedValue.load == nil
@@ -654,6 +695,7 @@ struct SetLogInputView: View {
                             editableSets[editableSets.count - 2].rest_time
                     }
                     editableSets.append(newSet)
+                    loadStrings[newSet.id] = displayLoadString(newSet.load)
                     syncToBinding()
                 }
             } label: {
@@ -731,11 +773,7 @@ struct SetLogInputView: View {
     private func previousText(_ logSet: LogSet?) -> String {
         guard let s = logSet else { return "–" }
         if let load = s.load {
-            let rounded = (load * 10).rounded() / 10
-            let loadStr = rounded.truncatingRemainder(dividingBy: 1) == 0
-                ? String(Int(rounded))
-                : String(format: "%.1f", rounded)
-            return "\(s.reps) × \(loadStr) lb"
+            return "\(s.reps) × \(displayLoadString(load)) \(weightUnit.unitLabel)"
         }
         return "\(s.reps)"
     }
@@ -751,6 +789,10 @@ struct SetLogInputView: View {
         }
         if !sameShape(incoming, editableSets) {
             editableSets = incoming
+            loadStrings = [:]
+        }
+        for set in editableSets where loadStrings[set.id] == nil {
+            loadStrings[set.id] = displayLoadString(set.load)
         }
     }
 

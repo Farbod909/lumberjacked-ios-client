@@ -30,12 +30,13 @@ struct MovementLog: Codable, Hashable {
 }
 
 extension MovementLog {
-    func roundDouble(_ double: Double) -> String {
-        let roundedValue = (double * 10).rounded() / 10
-        if roundedValue.truncatingRemainder(dividingBy: 1) == 0 {
-            return String(Int(roundedValue))
+    private func formatLoad(_ lbValue: Double, unit: WeightUnit) -> String {
+        let displayValue = unit.fromLb(lbValue)
+        let rounded = (displayValue * 10).rounded() / 10
+        if rounded.truncatingRemainder(dividingBy: 1) == 0 {
+            return String(Int(rounded))
         } else {
-            return String(format: "%.1f", roundedValue)
+            return String(format: "%.1f", rounded)
         }
     }
 
@@ -49,34 +50,34 @@ extension MovementLog {
         return sets.allSatisfy { $0.load == sets[0].load }
     }
 
-    var summary: [String] {
+    func summary(unit: WeightUnit) -> [String] {
         guard let sets = sets, !sets.isEmpty else { return [] }
 
         if allSameReps && allSameLoad {
             var result = ["\(sets.count)\u{FEFF} \u{FEFF}sets"]
             result.append("\(sets[0].reps)\u{FEFF} \u{FEFF}reps")
             if let load = sets[0].load {
-                result.append("\(roundDouble(load))\u{FEFF} \u{FEFF}lb")
+                result.append("\(formatLoad(load, unit: unit))\u{FEFF} \u{FEFF}\(unit.unitLabel)")
             }
             return result
         }
 
         return sets.map { set in
             if let load = set.load {
-                return "\(set.reps)\u{FEFF} \u{FEFF}reps × \(roundDouble(load))\u{FEFF} \u{FEFF}lb"
+                return "\(set.reps)\u{FEFF} \u{FEFF}reps × \(formatLoad(load, unit: unit))\u{FEFF} \u{FEFF}\(unit.unitLabel)"
             } else {
                 return "\(set.reps)\u{FEFF} \u{FEFF}reps"
             }
         }
     }
 
-    var shorterSummary: [String] {
+    func shorterSummary(unit: WeightUnit) -> [String] {
         guard let sets = sets, !sets.isEmpty else { return [] }
 
         if allSameReps && allSameLoad {
             var result = ["\(sets.count)×"]
             if let load = sets[0].load {
-                result.append("\(sets[0].reps)\u{FEFF} \u{FEFF}reps × \(roundDouble(load))\u{FEFF} \u{FEFF}lb")
+                result.append("\(sets[0].reps)\u{FEFF} \u{FEFF}reps × \(formatLoad(load, unit: unit))\u{FEFF} \u{FEFF}\(unit.unitLabel)")
             } else {
                 result.append("\(sets[0].reps)\u{FEFF} \u{FEFF}reps")
             }
@@ -85,19 +86,19 @@ extension MovementLog {
 
         return sets.map { set in
             if let load = set.load {
-                return "\(set.reps)\u{FEFF} \u{FEFF}reps × \(roundDouble(load))\u{FEFF} \u{FEFF}lb"
+                return "\(set.reps)\u{FEFF} \u{FEFF}reps × \(formatLoad(load, unit: unit))\u{FEFF} \u{FEFF}\(unit.unitLabel)"
             } else {
                 return "\(set.reps)\u{FEFF} \u{FEFF}reps"
             }
         }
     }
 
-    var conciseSummaryString: String {
+    func conciseSummaryString(unit: WeightUnit) -> String {
         guard let sets = sets, !sets.isEmpty else { return "N/A" }
 
         if allSameReps && allSameLoad {
             if let load = sets[0].load {
-                return "\(sets.count) × \(sets[0].reps) × \(roundDouble(load))\u{FEFF} \u{FEFF}lb"
+                return "\(sets.count) × \(sets[0].reps) × \(formatLoad(load, unit: unit))\u{FEFF} \u{FEFF}\(unit.unitLabel)"
             } else {
                 return "\(sets.count) × \(sets[0].reps)"
             }
@@ -105,7 +106,7 @@ extension MovementLog {
 
         return sets.map { set in
             if let load = set.load {
-                return "\(set.reps) × \(roundDouble(load))\u{FEFF} \u{FEFF}lb"
+                return "\(set.reps) × \(formatLoad(load, unit: unit))\u{FEFF} \u{FEFF}\(unit.unitLabel)"
             } else {
                 return "\(set.reps)"
             }

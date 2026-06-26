@@ -197,6 +197,9 @@ struct LogListView: View {
 struct LogItem: View {
     let movementLog: MovementLog
     let onTap: (MovementLog) -> Void
+    @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lb.rawValue
+
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
 
     var body: some View {
         Button {
@@ -238,11 +241,12 @@ struct LogItem: View {
 
     private func chipLabel(_ set: LogSet) -> String {
         if let load = set.load {
-            let rounded = (load * 10).rounded() / 10
+            let displayValue = weightUnit.fromLb(load)
+            let rounded = (displayValue * 10).rounded() / 10
             let loadStr = rounded.truncatingRemainder(dividingBy: 1) == 0
                 ? String(Int(rounded))
                 : String(format: "%.1f", rounded)
-            return "\(set.reps) × \(loadStr)"
+            return "\(set.reps) × \(loadStr) \(weightUnit.unitLabel)"
         }
         return "\(set.reps)"
     }

@@ -13,6 +13,7 @@ struct SettingsView: View {
     @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "dark"
     @AppStorage("useLocalBackend") private var useLocalBackend: Bool = false
     @AppStorage("defaultRestTime") private var defaultRestTime: Int = 120
+    @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lb.rawValue
 
     @State private var showRestTimerPicker = false
     @State private var pickerMinutes: Int = 2
@@ -29,6 +30,12 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("Workouts") {
+                Picker("Weight Unit", selection: $weightUnitRaw) {
+                    Text("lbs").tag(WeightUnit.lb.rawValue)
+                    Text("kg").tag(WeightUnit.kg.rawValue)
+                }
+                .pickerStyle(.segmented)
+
                 HStack {
                     Text("Default Rest Time")
                     Spacer()

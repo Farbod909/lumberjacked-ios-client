@@ -10,6 +10,9 @@ import SwiftUI
 struct CurrentWorkoutMovementView: View {
     @State var movement: Movement
     @State var isExpanded = false
+    @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lb.rawValue
+
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
 
     var movementDone: Bool {
         if let for_current_workout = latestLog?.for_current_workout {
@@ -73,7 +76,7 @@ struct CurrentWorkoutMovementView: View {
                             .textCase(.uppercase)
                             Group {
                                 if let latestLog = movement.latest_log {
-                                    ForEach(latestLog.summary, id: \.self) { item in
+                                    ForEach(latestLog.summary(unit: weightUnit), id: \.self) { item in
                                         Text(item).textCase(.uppercase)
                                     }
                                 } else {
