@@ -19,12 +19,14 @@ struct InlineMovementLogView: View {
     var onEditTapped: (() -> Void)? = nil
     var onRemoveTapped: (() -> Void)? = nil
 
-    // showXField: user opened the field via menu on an otherwise-empty note
+    // showXField: user opened the field via menu on an otherwise-empty note, or focused it while it had content
     // hideX: user collapsed the field (even if it has content)
     @State private var showLogNotesField = false
     @State private var hideLogNotes = false
     @State private var showMovementNotesField = false
     @State private var hideMovementNotes = false
+    @FocusState private var logNotesFocused: Bool
+    @FocusState private var movementNotesFocused: Bool
 
     private var logNotesVisible: Bool {
         (!logNotes.isEmpty || showLogNotesField) && !hideLogNotes
@@ -115,6 +117,7 @@ struct InlineMovementLogView: View {
                     prompt: Text("Movement notes...").foregroundStyle(Color.accentColor.opacity(0.5)),
                     axis: .vertical
                 )
+                .focused($movementNotesFocused)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(.primary)
                 .tint(.accentColor)
@@ -125,6 +128,9 @@ struct InlineMovementLogView: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large))
                 .padding(.horizontal, 10)
                 .padding(.bottom, 4)
+                .onChange(of: movementNotesFocused) { _, focused in
+                    if focused { showMovementNotesField = true }
+                }
             } else if !movementNotesEditable && !movement.notes.isEmpty {
                 Text(movement.notes)
                     .font(.system(size: 16, weight: .medium))
@@ -149,8 +155,9 @@ struct InlineMovementLogView: View {
                     prompt: Text("Log notes...").foregroundStyle(Color.brandPlaceholderText),
                     axis: .vertical
                 )
+                .focused($logNotesFocused)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary)
                 .lineLimit(1...5)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 11)
@@ -158,6 +165,9 @@ struct InlineMovementLogView: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large))
                 .padding(.horizontal, 10)
                 .padding(.bottom, 4)
+                .onChange(of: logNotesFocused) { _, focused in
+                    if focused { showLogNotesField = true }
+                }
             }
 
             SetLogInputView(mode: mode, logSets: $logSets, templateSets: .constant(templateSets), isEmbedded: true, readOnly: readOnly)
