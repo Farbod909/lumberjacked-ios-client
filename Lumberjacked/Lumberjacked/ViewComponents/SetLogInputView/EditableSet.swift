@@ -119,16 +119,13 @@ extension EditableSet {
 // MARK: - Defaults
 
 extension EditableSet {
-    static func defaultWorkingSet(copyingFrom prior: EditableSet? = nil) -> EditableSet {
-        let workingDefault = defaultRestTime(for: .working)
-        // Don't inherit rest_time from pre-rest set types — their value represents
-        // time before themselves, not after, so it's not meaningful for a new working set.
-        let restTime = (prior?.setType.isPreRest == true) ? workingDefault : (prior?.rest_time ?? workingDefault)
+    static func defaultSet(copyingFrom prior: EditableSet? = nil) -> EditableSet {
+        let newType = prior?.setType ?? .working
         return EditableSet(
-            type: "working",
+            type: newType.rawValue,
             reps: prior?.reps ?? "",
             load: prior?.load,
-            rest_time: restTime
+            rest_time: prior?.rest_time ?? defaultRestTime(for: newType)
         )
     }
 }

@@ -132,21 +132,21 @@ final class EditableSetTests: XCTestCase {
         XCTAssertEqual(sets.workingSetIndex(for: sets[0].id), 1)
     }
 
-    // MARK: - Default working set
+    // MARK: - Default set
 
-    func testDefaultWorkingSetCopiesValuesFromPrior() {
-        let prior = EditableSet(type: "working", reps: "10", load: 135, rest_time: 90)
-        let newSet = EditableSet.defaultWorkingSet(copyingFrom: prior)
+    func testDefaultSetInheritsTypeAndValuesFromPrior() {
+        let prior = EditableSet(type: "dropset", reps: "10", load: 135, rest_time: 0)
+        let newSet = EditableSet.defaultSet(copyingFrom: prior)
 
-        XCTAssertEqual(newSet.type, "working")
-        XCTAssertEqual(newSet.rest_time, 90)
+        XCTAssertEqual(newSet.type, "dropset")
+        XCTAssertEqual(newSet.rest_time, 0)
         XCTAssertEqual(newSet.reps, "10")
         XCTAssertEqual(newSet.load, 135)
     }
 
-    func testDefaultWorkingSetWithNoPriorHasNilRestTime() {
-        let newSet = EditableSet.defaultWorkingSet(copyingFrom: nil)
-        XCTAssertNil(newSet.rest_time)
+    func testDefaultSetWithNoPriorDefaultsToWorking() {
+        let newSet = EditableSet.defaultSet(copyingFrom: nil)
+        XCTAssertEqual(newSet.type, "working")
     }
 
     // MARK: - Set type mutation

@@ -731,10 +731,13 @@ struct SetLogInputView: View {
             Spacer()
             Button {
                 withAnimation {
-                    let newSet = EditableSet.defaultWorkingSet(copyingFrom: editableSets.last)
+                    let newSet = EditableSet.defaultSet(copyingFrom: editableSets.last)
                     if editableSets.count >= 2 {
-                        editableSets[editableSets.count - 1].rest_time =
-                            editableSets[editableSets.count - 2].rest_time
+                        let last = editableSets[editableSets.count - 1]
+                        let prev = editableSets[editableSets.count - 2]
+                        if !last.setType.isPreRest && !prev.setType.isPreRest {
+                            editableSets[editableSets.count - 1].rest_time = prev.rest_time
+                        }
                     }
                     editableSets.append(newSet)
                     loadStrings[newSet.id] = displayLoadString(newSet.load)
