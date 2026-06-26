@@ -190,7 +190,7 @@ struct SetLogInputView: View {
                     // Negative vertical padding makes it reduce its layout footprint
                     // so it visually overlaps both neighbors. zIndex(10) ensures it
                     // paints on top of both adjacent content rows (which use zIndex(1)).
-                    restTimePill($editableSets[index - 1])
+                    restTimePill(above: $editableSets[index - 1], below: $editableSets[index])
                         .padding(.vertical, -pillHalfHeight)
                         .zIndex(10)
                 }
@@ -345,6 +345,26 @@ struct SetLogInputView: View {
                         Button {
                             if let idx = editableSets.firstIndex(where: { $0.id == s.id }) {
                                 editableSets[idx].setType = type
+                                editableSets[idx].rest_time = EditableSet.defaultRestTime(for: type)
+                                // Reset the running timer for the pill above this set if it is active.
+                                // The effective rest for that pill may have changed (e.g. switching to a
+                                // pre-rest type hands ownership of the pill to this set's new rest_time).
+                                if idx > 0 {
+                                    let aboveId = editableSets[idx - 1].id
+                                    if restTimer.activeSetId == aboveId {
+                                        let newRest: Int
+                                        if editableSets[idx].setType.isPreRest {
+                                            newRest = editableSets[idx].rest_time ?? 0
+                                        } else {
+                                            newRest = editableSets[idx - 1].rest_time ?? 0
+                                        }
+                                        if newRest > 0 {
+                                            restTimer.start(seconds: newRest, setId: aboveId)
+                                        } else {
+                                            restTimer.cancel()
+                                        }
+                                    }
+                                }
                                 syncToBinding()
                             }
                         } label: {
@@ -390,7 +410,12 @@ struct SetLogInputView: View {
                 }
 
                 if mode.showsCheckbox {
-                    checkboxButton(set)
+                    let nextSet: EditableSet? = {
+                        guard let idx = editableSets.firstIndex(where: { $0.id == s.id }),
+                              editableSets.indices.contains(idx + 1) else { return nil }
+                        return editableSets[idx + 1]
+                    }()
+                    checkboxButton(set, nextSet: nextSet)
                         .frame(width: Col.checkbox, alignment: .center)
                         .padding(.leading, 8)
                 }
@@ -543,10 +568,9 @@ struct SetLogInputView: View {
 
     // MARK: - Checkbox
 
-    private func checkboxButton(_ set: Binding<EditableSet>) -> some View {
+    private func checkboxButton(_ set: Binding<EditableSet>, nextSet: EditableSet?) -> some View {
         Button {
             let wasChecked = set.wrappedValue.isChecked
-            let restTime  = set.wrappedValue.rest_time
             let setId     = set.wrappedValue.id
             withAnimation { set.wrappedValue.isChecked = !wasChecked }
             if !wasChecked {
@@ -561,11 +585,23 @@ struct SetLogInputView: View {
             if wasChecked {
                 if missingRepsSetId == setId { missingRepsSetId = nil }
                 restTimer.cancel()
-            } else if let rt = restTime, rt > 0, editableSets.last?.id != setId {
-                restTimer.start(seconds: rt, setId: setId)
             } else if editableSets.last?.id == setId {
                 // Last set: no rest needed, cancel any timer left over from previous sets
                 restTimer.cancel()
+            } else {
+                // If the next set is a pre-rest type (dropset/myoreps), the pill above it
+                // belongs to that set's rest_time, not this set's post-rest.
+                let effectiveRest: Int
+                if let next = nextSet, next.setType.isPreRest {
+                    effectiveRest = next.rest_time ?? 0
+                } else {
+                    effectiveRest = set.wrappedValue.rest_time ?? 0
+                }
+                if effectiveRest > 0 {
+                    restTimer.start(seconds: effectiveRest, setId: setId)
+                } else {
+                    restTimer.cancel()
+                }
             }
         } label: {
             Image(systemName: set.wrappedValue.isChecked
@@ -578,18 +614,24 @@ struct SetLogInputView: View {
 
     // MARK: - Rest time pill
 
-    private func restTimePill(_ set: Binding<EditableSet>) -> some View {
-        let s = set.wrappedValue
-        let setId = s.id
+    private func restTimePill(above: Binding<EditableSet>, below: Binding<EditableSet>) -> some View {
+        let aboveSet = above.wrappedValue
+        let belowSet = below.wrappedValue
+        // Pre-rest types (dropset, myoreps) own the pill above them — their rest_time is
+        // the time to wait before starting that set, not after the set above.
+        let targetSet = belowSet.setType.isPreRest ? below : above
+        // Timer is always keyed to the above set's id (the one that was checked to start it).
+        let setId = aboveSet.id
         let isActive = restTimer.isRunning && restTimer.activeSetId == setId
+        let displaySeconds = targetSet.wrappedValue.rest_time ?? 0
         let displayText = isActive
             ? restTimer.formattedTimeRemaining
-            : restTimer.formattedTime(s.rest_time ?? 0)
+            : restTimer.formattedTime(displaySeconds)
 
         return HStack {
             Spacer()
             Button {
-                let currentSeconds = s.rest_time ?? 0
+                let currentSeconds = targetSet.wrappedValue.rest_time ?? 0
                 pickerMinutes = currentSeconds / 60
                 pickerSeconds = (currentSeconds % 60 / 10) * 10
                 pickerTargetSetId = setId
@@ -607,7 +649,7 @@ struct SetLogInputView: View {
                 get: { showRestTimePicker && pickerTargetSetId == setId },
                 set: { if !$0 { showRestTimePicker = false } }
             )) {
-                restTimePickerContent(set)
+                restTimePickerContent(targetSet)
             }
             Spacer()
         }

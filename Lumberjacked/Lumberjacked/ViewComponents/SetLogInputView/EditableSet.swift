@@ -7,7 +7,7 @@ import Foundation
 
 struct EditableSet: Identifiable {
     var id = UUID()
-    var type: String       // "warmup" | "working" | "failure" | "myoreps"
+    var type: String       // "warmup" | "working" | "failure" | "dropset" | "myoreps"
     var reps: String       // always String internally; Int for log sets, free text for templates
     var load: Double?
     var rest_time: Int?
@@ -18,27 +18,58 @@ struct EditableSet: Identifiable {
 
 extension EditableSet {
     enum SetType: String, CaseIterable {
-        case warmup  = "warmup"
-        case working = "working"
-        case failure = "failure"
-        case myoreps = "myoreps"
+        case warmup   = "warmup"
+        case working  = "working"
+        case dropset  = "dropset"
+        case failure  = "failure"
+        case myoreps  = "myoreps"
 
         var displayLabel: String {
             switch self {
-            case .warmup:  return "W"
-            case .working: return "#"  // replaced by number at render time
-            case .failure: return "F"
-            case .myoreps: return "M"
+            case .warmup:   return "W"
+            case .working:  return "#"  // replaced by number at render time
+            case .dropset:  return "D"
+            case .failure:  return "F"
+            case .myoreps:  return "M"
             }
         }
 
         var fullName: String {
             switch self {
-            case .warmup:  return "Warmup"
-            case .working: return "Working"
-            case .failure: return "Failure"
-            case .myoreps: return "Myorep"
+            case .warmup:   return "Warmup"
+            case .working:  return "Working"
+            case .dropset:  return "Dropset"
+            case .failure:  return "Failure"
+            case .myoreps:  return "Myorep"
             }
+        }
+
+        // Dropset and myoreps rest_time is the rest BEFORE the set (pre-rest),
+        // not after it. This flips which pill the value drives in the UI.
+        var isPreRest: Bool {
+            switch self {
+            case .dropset, .myoreps: return true
+            default: return false
+            }
+        }
+    }
+
+    // Returns the user's configured default rest time (in seconds) for the given type.
+    // Pre-rest types (dropset, myoreps) default to 0 and 20 respectively; post-rest
+    // types (warmup, working, failure) default to 0 and 120.
+    static func defaultRestTime(for type: SetType) -> Int {
+        let ud = UserDefaults.standard
+        switch type {
+        case .warmup:
+            // 0 is both valid and the default; integer(forKey:) returns 0 when unset, which is correct.
+            return ud.integer(forKey: "defaultWarmupRestTime")
+        case .working, .failure:
+            // Use object check so an explicitly saved 0 is honoured vs. "never written" → 120.
+            return ud.object(forKey: "defaultRestTime") != nil ? ud.integer(forKey: "defaultRestTime") : 120
+        case .dropset:
+            return ud.integer(forKey: "defaultDropsetRestTime")
+        case .myoreps:
+            return ud.object(forKey: "defaultMyorepsRestTime") != nil ? ud.integer(forKey: "defaultMyorepsRestTime") : 20
         }
     }
 
@@ -89,13 +120,15 @@ extension EditableSet {
 
 extension EditableSet {
     static func defaultWorkingSet(copyingFrom prior: EditableSet? = nil) -> EditableSet {
-        let stored = UserDefaults.standard.integer(forKey: "defaultRestTime")
-        let defaultRest = stored > 0 ? stored : 120
+        let workingDefault = defaultRestTime(for: .working)
+        // Don't inherit rest_time from pre-rest set types — their value represents
+        // time before themselves, not after, so it's not meaningful for a new working set.
+        let restTime = (prior?.setType.isPreRest == true) ? workingDefault : (prior?.rest_time ?? workingDefault)
         return EditableSet(
             type: "working",
             reps: prior?.reps ?? "",
             load: prior?.load,
-            rest_time: prior?.rest_time ?? defaultRest
+            rest_time: restTime
         )
     }
 }
