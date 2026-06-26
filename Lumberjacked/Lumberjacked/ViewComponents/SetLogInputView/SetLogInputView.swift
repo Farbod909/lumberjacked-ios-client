@@ -291,6 +291,10 @@ struct SetLogInputView: View {
         let s = set.wrappedValue
         let workingIdx = editableSets.workingSetIndex(for: s.id)
         let previousSet = previousSetFor(s)
+        let aboveSet: EditableSet? = {
+            guard let idx = editableSets.firstIndex(where: { $0.id == s.id }), idx > 0 else { return nil }
+            return editableSets[idx - 1]
+        }()
 
         ZStack(alignment: .trailing) {
             // Opaque base — prevents the red delete button from flashing through
@@ -359,7 +363,7 @@ struct SetLogInputView: View {
                 repsField(set).frame(width: mode.repsFieldWidth)
 
                 if mode.showsLoad {
-                    loadField(set, previousSet: previousSet)
+                    loadField(set, previousSet: previousSet, aboveSet: aboveSet)
                         .frame(width: Col.load)
                         .padding(.leading, 8)
                 }
@@ -417,6 +421,12 @@ struct SetLogInputView: View {
         let placeholder: String = {
             if case .editTemplate = mode { return idx == 0 ? "e.g. 8-12" : "–" }
             guard case .activeWorkout = mode else { return "–" }
+            if idx > 0 {
+                let above = editableSets[idx - 1]
+                if above.type == set.wrappedValue.type, !above.reps.isEmpty {
+                    return above.reps
+                }
+            }
             if idx < templateSets.count, let reps = templateSets[idx].reps, !reps.isEmpty {
                 return reps
             }
@@ -461,8 +471,13 @@ struct SetLogInputView: View {
 
     // MARK: - Load field
 
-    private func loadField(_ set: Binding<EditableSet>, previousSet: LogSet? = nil) -> some View {
+    private func loadField(_ set: Binding<EditableSet>, previousSet: LogSet? = nil, aboveSet: EditableSet? = nil) -> some View {
         let placeholder: String = {
+            if let above = aboveSet, above.type == set.wrappedValue.type, let load = above.load {
+                let rounded = (load * 10).rounded() / 10
+                return rounded.truncatingRemainder(dividingBy: 1) == 0
+                    ? String(Int(rounded)) : String(format: "%.1f", rounded)
+            }
             guard let load = previousSet?.load else { return "–" }
             let rounded = (load * 10).rounded() / 10
             return rounded.truncatingRemainder(dividingBy: 1) == 0
@@ -686,8 +701,13 @@ struct SetLogInputView: View {
         let s = set.wrappedValue
         let idx = editableSets.firstIndex(where: { $0.id == s.id }) ?? 0
 
+        let aboveSet: EditableSet? = idx > 0 ? editableSets[idx - 1] : nil
+
         if s.reps.isEmpty {
             let placeholder: String = {
+                if let above = aboveSet, above.type == s.type, !above.reps.isEmpty {
+                    return above.reps
+                }
                 if idx < templateSets.count, let reps = templateSets[idx].reps, !reps.isEmpty {
                     return reps
                 }
@@ -700,7 +720,11 @@ struct SetLogInputView: View {
         }
 
         if s.load == nil {
-            set.wrappedValue.load = previousSetFor(s)?.load
+            if let above = aboveSet, above.type == s.type, let load = above.load {
+                set.wrappedValue.load = load
+            } else {
+                set.wrappedValue.load = previousSetFor(s)?.load
+            }
         }
     }
 
