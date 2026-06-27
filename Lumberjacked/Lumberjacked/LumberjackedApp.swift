@@ -57,7 +57,8 @@ struct LumberjackedApp: App {
         center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
             guard granted else { return }
             let content = UNMutableNotificationContent()
-            content.title = "You forgot to save your changes!"
+            content.title = "Unsaved changes"
+            content.body = "You forgot to save your changes!"
             content.sound = .default
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
             let request = UNNotificationRequest(
