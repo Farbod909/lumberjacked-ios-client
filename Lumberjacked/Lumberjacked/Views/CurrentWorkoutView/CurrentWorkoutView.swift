@@ -41,6 +41,7 @@ struct CurrentWorkoutView: View {
     @State private var pickerMinutes: Int = 2
     @State private var pickerSeconds: Int = 0
     @State private var showUncheckedSetsAlert = false
+    @State private var missingRepsMovementNames: [String] = []
 
     init(viewModel: ViewModel = ViewModel()) {
         _viewModel = State(initialValue: viewModel)
@@ -76,6 +77,18 @@ struct CurrentWorkoutView: View {
 
     var endWorkoutButton: some View {
         Button {
+            let invalidEntries = viewModel.editableEntries.filter { entry in
+                entry.logSets.contains { $0.isChecked && $0.reps == 0 }
+            }
+            if !invalidEntries.isEmpty {
+                missingRepsMovementNames = invalidEntries.map { $0.movement.name }
+                viewModel.alert = AppAlert(
+                    title: "Missing reps",
+                    message: "The following movements have checked sets with no reps entered:\n\n\(missingRepsMovementNames.joined(separator: "\n"))\n\nPlease fill in the reps or uncheck those sets.",
+                    dismissLabel: "OK"
+                )
+                return
+            }
             let hasUnchecked = viewModel.editableEntries.contains { $0.logSets.contains { !$0.isChecked } }
             if hasUnchecked {
                 showUncheckedSetsAlert = true
