@@ -40,6 +40,9 @@ struct WorkoutHistoryView: View {
                         .padding(.horizontal)
                         .padding(.vertical, 8)
                     }
+                    .refreshable {
+                        await viewModel.attemptRefresh()
+                    }
                 }
             }
             .background(Color.brandBackground.ignoresSafeArea())

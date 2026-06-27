@@ -16,16 +16,12 @@ struct MovementCatalogView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.isLoading(.load) {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if viewModel.movements.isEmpty {
-                    emptyState
-                } else if viewModel.filteredMovements.isEmpty {
-                    noSearchResults
-                } else {
-                    List {
+            List {
+                if !viewModel.isLoading(.load) && !viewModel.movements.isEmpty {
+                    searchRow
+                    if viewModel.filteredMovements.isEmpty {
+                        noSearchResultsRow
+                    } else {
                         ForEach(viewModel.filteredMovements, id: \.self) { movement in
                             Button {
                                 viewModel.movementTapped(movement)
@@ -35,9 +31,21 @@ struct MovementCatalogView: View {
                             .listRowBackground(Color.clear)
                         }
                     }
-                    .listStyle(.inset)
-                    .scrollContentBackground(.hidden)
                 }
+            }
+            .overlay {
+                if viewModel.isLoading(.load) {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if viewModel.movements.isEmpty {
+                    emptyState
+                }
+            }
+            .listStyle(.inset)
+            .scrollContentBackground(.hidden)
+            .scrollDismissesKeyboard(.immediately)
+            .refreshable {
+                await viewModel.attemptRefresh()
             }
             .background(Color.brandBackground.ignoresSafeArea())
             .navigationTitle("Movement Catalog")
@@ -73,10 +81,33 @@ struct MovementCatalogView: View {
                     newlyAddedMovement: .constant(nil))
             }
         }
-        .searchable(text: $viewModel.searchText)
-        .autocorrectionDisabled()
-        .textInputAutocapitalization(.never)
     }
+
+    private var searchRow: some View {
+        SearchBar(placeholder: "Search movements", text: $viewModel.searchText)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 10, trailing: 16))
+    }
+
+    private var noSearchResultsRow: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 40))
+                .foregroundStyle(.secondary)
+            Text("No results for \"\(viewModel.searchText)\"")
+                .font(.headline)
+            Button("Clear Search") {
+                viewModel.searchText = ""
+            }
+            .font(.subheadline)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 60)
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+    }
+
     private var emptyState: some View {
         VStack(spacing: 16) {
             Spacer()
@@ -103,24 +134,6 @@ struct MovementCatalogView: View {
             Spacer()
         }
         .padding(.horizontal, 32)
-        .frame(maxWidth: .infinity)
-    }
-
-    private var noSearchResults: some View {
-        VStack(spacing: 12) {
-            Spacer()
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 40))
-                .foregroundStyle(.secondary)
-            Text("No results for \"\(viewModel.searchText)\"")
-                .font(.headline)
-            Button("Clear Search") {
-                viewModel.searchText = ""
-            }
-            .font(.subheadline)
-            Spacer()
-            Spacer()
-        }
         .frame(maxWidth: .infinity)
     }
 }

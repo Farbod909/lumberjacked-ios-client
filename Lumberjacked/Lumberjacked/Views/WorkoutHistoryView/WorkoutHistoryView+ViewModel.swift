@@ -40,6 +40,17 @@ extension WorkoutHistoryView {
             destination = .workoutDetail(workout)
         }
 
+        func attemptRefresh() async {
+            do {
+                let response = try await api.getWorkouts()
+                workouts = response.results
+            } catch let error as RemoteNetworkingError {
+                handleNetworkError(error)
+            } catch {
+                alert = AppAlert(title: "Error", message: error.localizedDescription)
+            }
+        }
+
         func attemptGetWorkouts() async {
             try? await withLoading(.load) {
                 do {

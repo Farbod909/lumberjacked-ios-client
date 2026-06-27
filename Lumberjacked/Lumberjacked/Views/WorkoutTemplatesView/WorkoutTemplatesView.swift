@@ -18,25 +18,7 @@ struct WorkoutTemplatesView: View {
 
     var searchBarRow: some View {
         HStack(spacing: 8) {
-            HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
-                TextField("Search templates", text: $viewModel.searchText)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-                if !viewModel.searchText.isEmpty {
-                    Button {
-                        viewModel.searchText = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .background(Color(.tertiarySystemFill))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            SearchBar(placeholder: "Search templates", text: $viewModel.searchText)
 
             Button {
                 showCreateSheet = true

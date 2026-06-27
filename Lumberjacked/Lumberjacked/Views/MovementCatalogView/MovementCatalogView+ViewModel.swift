@@ -38,6 +38,17 @@ extension MovementCatalogView {
             destination = .movementDetail(movement)
         }
 
+        func attemptRefresh() async {
+            do {
+                let response = try await api.getMovements()
+                movements = response.results
+            } catch let error as RemoteNetworkingError {
+                handleNetworkError(error)
+            } catch {
+                alert = AppAlert(title: "Error", message: error.localizedDescription)
+            }
+        }
+
         func attemptGetMovements() async {
             try? await withLoading(.load) {
                 do {
