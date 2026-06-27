@@ -36,6 +36,14 @@ struct WorkoutHistoryView: View {
                                 .foregroundStyle(.primary)
                                 .brandCard()
                             }
+                            if viewModel.nextURL != nil || viewModel.isLoadingMore {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .onAppear {
+                                        Task { await viewModel.attemptLoadMore() }
+                                    }
+                            }
                         }
                         .padding(.horizontal)
                         .padding(.vertical, 8)

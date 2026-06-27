@@ -12,4 +12,11 @@ struct APIResponseList<T: Codable>: Codable {
     var next: String?
     var previous: String?
     var results: [T]
+
+    var nextPageRelativeURL: String? {
+        guard let next, let url = URL(string: next) else { return nil }
+        var relative = url.path
+        if let query = url.query { relative += "?\(query)" }
+        return relative
+    }
 }

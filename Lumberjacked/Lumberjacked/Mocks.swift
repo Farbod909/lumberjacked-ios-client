@@ -26,7 +26,11 @@ final class MockWorkoutAPI: WorkoutAPIProtocol {
 
     func getWorkouts() async throws -> APIResponseList<Workout> {
         if let error = errorToThrow { throw error }
-        return APIResponseList(count: PreviewData.pastWorkouts.count, results: PreviewData.pastWorkouts)
+        return APIResponseList(count: PreviewData.pastWorkouts.count, next: nil, previous: nil, results: PreviewData.pastWorkouts)
+    }
+
+    func getWorkouts(pageURL: String) async throws -> APIResponseList<Workout> {
+        return try await getWorkouts()
     }
 
     func getWorkout(workoutId: UInt64) async throws -> Workout {
@@ -71,7 +75,7 @@ final class MockMovementAPI: MovementAPIProtocol {
 
     func getMovements() async throws -> APIResponseList<Movement> {
         if let error = errorToThrow { throw error }
-        return APIResponseList(count: PreviewData.movements.count, results: PreviewData.movements)
+        return APIResponseList(count: PreviewData.movements.count, next: nil, previous: nil, results: PreviewData.movements)
     }
 
     func getMovement(movementId: UInt64) async throws -> Movement {

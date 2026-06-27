@@ -10,6 +10,7 @@ import Foundation
 protocol WorkoutAPIProtocol {
     func getCurrentWorkout() async throws -> Workout
     func getWorkouts() async throws -> APIResponseList<Workout>
+    func getWorkouts(pageURL: String) async throws -> APIResponseList<Workout>
     func getWorkout(workoutId: UInt64) async throws -> Workout
     func endWorkout(id: UInt64) async throws
     func deleteWorkout(id: UInt64) async throws
@@ -79,7 +80,11 @@ struct LiveWorkoutAPI: WorkoutAPIProtocol {
     }
 
     func getWorkouts() async throws -> APIResponseList<Workout> {
-        let options = Networking.RequestOptions(url: "/api/workouts/", method: .GET)
+        return try await getWorkouts(pageURL: "/api/workouts/")
+    }
+
+    func getWorkouts(pageURL: String) async throws -> APIResponseList<Workout> {
+        let options = Networking.RequestOptions(url: pageURL, method: .GET)
         guard let result: APIResponseList<Workout> = try await Networking.shared.request(options: options) else {
             throw RemoteNetworkingError(statusCode: 0, messages: nil)
         }
