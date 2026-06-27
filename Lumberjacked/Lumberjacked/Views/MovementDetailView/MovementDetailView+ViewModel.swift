@@ -15,11 +15,9 @@ extension MovementDetailView {
 
         enum Destination: Identifiable, Hashable {
             case editLog(MovementLog)
-            case newLog
             var id: String {
                 switch self {
                 case .editLog(let log): return "editLog-\(log.id ?? 0)"
-                case .newLog: return "newLog"
                 }
             }
         }
@@ -27,7 +25,8 @@ extension MovementDetailView {
 
         var movement: Movement
         var movementLogs = [MovementLog]()
-        var workout: Workout?
+        var nextURL: String?
+        var isLoadingMore = false
         var showDeleteConfirmationAlert = false
         var showEditSheet = false
         var alert: AppAlert?
@@ -51,9 +50,7 @@ extension MovementDetailView {
             destination = .editLog(log)
         }
 
-        func newLogTapped() {
-            destination = .newLog
-        }
+        // MARK: - Fetch
 
         func attemptGetMovementLogs() async {
             guard let id = movement.id else { return }
@@ -61,6 +58,7 @@ extension MovementDetailView {
                 do {
                     let response = try await self.movementLogAPI.getMovementLogs(movementId: id)
                     self.movementLogs = response.results
+                    self.nextURL = response.nextPageRelativeURL
                 } catch let error as RemoteNetworkingError {
                     self.handleNetworkError(error)
                 } catch {
@@ -69,6 +67,36 @@ extension MovementDetailView {
             }
         }
 
+        func attemptLoadMore() async {
+            guard !isLoadingMore, let pageURL = nextURL else { return }
+            isLoadingMore = true
+            defer { isLoadingMore = false }
+            do {
+                let response = try await movementLogAPI.getMovementLogs(pageURL: pageURL)
+                movementLogs.append(contentsOf: response.results)
+                nextURL = response.nextPageRelativeURL
+            } catch let error as RemoteNetworkingError {
+                handleNetworkError(error)
+            } catch {
+                alert = AppAlert(title: "Error", message: error.localizedDescription)
+            }
+        }
+
+        // MARK: - Log callbacks
+
+        func logSaved(_ log: MovementLog) {
+            if let idx = movementLogs.firstIndex(where: { $0.id == log.id }) {
+                movementLogs[idx] = log
+            }
+        }
+
+        func logDeleted(_ log: MovementLog) {
+            movementLogs.removeAll { $0.id == log.id }
+        }
+
+        // MARK: - Delete movement
+
+        @MainActor
         func attemptDeleteMovement() async -> Bool {
             guard let id = movement.id else { return false }
             loadingKeys.insert(.delete)

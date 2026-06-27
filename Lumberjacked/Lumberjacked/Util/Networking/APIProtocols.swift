@@ -34,6 +34,7 @@ protocol MovementAPIProtocol {
 
 protocol MovementLogAPIProtocol {
     func getMovementLogs(movementId: UInt64) async throws -> APIResponseList<MovementLog>
+    func getMovementLogs(pageURL: String) async throws -> APIResponseList<MovementLog>
     func createLog(movementLog: MovementLog) async throws -> MovementLog
     func updateLog(movementLogId: UInt64, movementLog: MovementLog) async throws -> MovementLog
     func deleteLog(movementLogId: UInt64) async throws
@@ -212,6 +213,14 @@ struct LiveMovementAPI: MovementAPIProtocol {
 struct LiveMovementLogAPI: MovementLogAPIProtocol {
     func getMovementLogs(movementId: UInt64) async throws -> APIResponseList<MovementLog> {
         let options = Networking.RequestOptions(url: "/api/movement-logs/?movement=\(movementId)", method: .GET)
+        guard let result: APIResponseList<MovementLog> = try await Networking.shared.request(options: options) else {
+            throw RemoteNetworkingError(statusCode: 0, messages: nil)
+        }
+        return result
+    }
+
+    func getMovementLogs(pageURL: String) async throws -> APIResponseList<MovementLog> {
+        let options = Networking.RequestOptions(url: pageURL, method: .GET)
         guard let result: APIResponseList<MovementLog> = try await Networking.shared.request(options: options) else {
             throw RemoteNetworkingError(statusCode: 0, messages: nil)
         }

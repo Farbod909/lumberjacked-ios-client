@@ -17,6 +17,9 @@ extension MovementLogInputView {
         var toolbarActionLoading = false
         var alert: AppAlert?
 
+        var onSave: ((MovementLog) -> Void)?
+        var onDelete: ((MovementLog) -> Void)?
+
         private let originalSets: [LogSet]
         private let originalNotes: String
         private let workout: Workout?
@@ -57,14 +60,19 @@ extension MovementLogInputView {
         @MainActor
         func formSubmit(dismissAction: () -> Void) async {
             toolbarActionLoading = true
-            let success: Bool
             if movementLog.id == nil {
-                success = await attemptSaveNewLog()
+                let success = await attemptSaveNewLog()
+                toolbarActionLoading = false
+                if success { dismissAction() }
             } else {
-                success = await attemptUpdateLog()
+                if let updated = await attemptUpdateLog() {
+                    toolbarActionLoading = false
+                    onSave?(updated)
+                    dismissAction()
+                } else {
+                    toolbarActionLoading = false
+                }
             }
-            toolbarActionLoading = false
-            if success { dismissAction() }
         }
 
         @MainActor
@@ -74,6 +82,7 @@ extension MovementLogInputView {
             do {
                 try await api.deleteLog(movementLogId: id)
                 toolbarActionLoading = false
+                onDelete?(movementLog)
                 dismissAction()
             } catch let error as RemoteNetworkingError {
                 handleNetworkError(error)
@@ -107,17 +116,16 @@ extension MovementLogInputView {
             return false
         }
 
-        private func attemptUpdateLog() async -> Bool {
-            guard let id = movementLog.id else { return false }
+        private func attemptUpdateLog() async -> MovementLog? {
+            guard let id = movementLog.id else { return nil }
             do {
-                _ = try await api.updateLog(movementLogId: id, movementLog: buildLogForSubmission())
-                return true
+                return try await api.updateLog(movementLogId: id, movementLog: buildLogForSubmission())
             } catch let error as RemoteNetworkingError {
                 handleNetworkError(error)
             } catch {
                 await MainActor.run { alert = AppAlert(title: "Error", message: error.localizedDescription) }
             }
-            return false
+            return nil
         }
 
         private func handleNetworkError(_ error: RemoteNetworkingError) {

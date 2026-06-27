@@ -55,6 +55,15 @@ struct MovementDetailView: View {
 
                     if !viewModel.movementLogs.isEmpty {
                         LogListView(movementLogs: viewModel.movementLogs, onLogTap: viewModel.logTapped)
+
+                        if viewModel.nextURL != nil || viewModel.isLoadingMore {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .onAppear {
+                                    Task { await viewModel.attemptLoadMore() }
+                                }
+                        }
                     } else {
                         if viewModel.isLoading(.logs) {
                             ProgressView()
@@ -82,15 +91,6 @@ struct MovementDetailView: View {
                         ProgressView()
                     }
                 }
-                if viewModel.workout != nil {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button {
-                            viewModel.newLogTapped()
-                        } label: {
-                            Label("New log", systemImage: "plus.square.fill")
-                        }
-                    }
-                }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Menu {
                         Button {
@@ -112,16 +112,15 @@ struct MovementDetailView: View {
                 switch dest {
                 case .editLog(let log):
                     MovementLogInputView(
-                        viewModel: MovementLogInputView.ViewModel(
-                            movementLog: log,
-                            movement: viewModel.movement,
-                            workout: nil))
-                case .newLog:
-                    MovementLogInputView(
-                        viewModel: MovementLogInputView.ViewModel(
-                            movementLog: MovementLog(notes: ""),
-                            movement: viewModel.movement,
-                            workout: viewModel.workout))
+                        viewModel: {
+                            let vm = MovementLogInputView.ViewModel(
+                                movementLog: log,
+                                movement: viewModel.movement,
+                                workout: nil)
+                            vm.onSave = { viewModel.logSaved($0) }
+                            vm.onDelete = { viewModel.logDeleted($0) }
+                            return vm
+                        }())
                 }
             }
             .sheet(isPresented: $viewModel.showEditSheet, onDismiss: {
@@ -170,10 +169,6 @@ struct LogListView: View {
     var movementLogs: [MovementLog]
     var onLogTap: (MovementLog) -> Void
 
-    var sortedLogs: [MovementLog] {
-        movementLogs.sorted { $0.timestamp! > $1.timestamp! }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Log History")
@@ -182,9 +177,9 @@ struct LogListView: View {
                 .padding(.horizontal, 6)
 
             VStack(spacing: 0) {
-                ForEach(Array(sortedLogs.enumerated()), id: \.element) { index, log in
+                ForEach(Array(movementLogs.enumerated()), id: \.element) { index, log in
                     LogItem(movementLog: log, onTap: onLogTap)
-                    if index < sortedLogs.count - 1 {
+                    if index < movementLogs.count - 1 {
                         Divider().padding(.leading, 16)
                     }
                 }

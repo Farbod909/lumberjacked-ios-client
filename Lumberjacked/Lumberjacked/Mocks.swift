@@ -111,7 +111,12 @@ final class MockMovementLogAPI: MovementLogAPIProtocol {
     func getMovementLogs(movementId: UInt64) async throws -> APIResponseList<MovementLog> {
         if let error = errorToThrow { throw error }
         let logs = PreviewData.benchPressLogs
-        return APIResponseList(count: logs.count, results: logs)
+        return APIResponseList(count: logs.count, next: nil, previous: nil, results: logs)
+    }
+
+    func getMovementLogs(pageURL: String) async throws -> APIResponseList<MovementLog> {
+        if let error = errorToThrow { throw error }
+        return APIResponseList(count: 0, next: nil, previous: nil, results: [])
     }
 
     func createLog(movementLog: MovementLog) async throws -> MovementLog {
