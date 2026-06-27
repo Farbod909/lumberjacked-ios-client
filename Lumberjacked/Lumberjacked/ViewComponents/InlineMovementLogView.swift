@@ -55,13 +55,13 @@ struct InlineMovementLogView: View {
                     Menu {
                         // Add note options (shown when note is hidden or empty)
                         if !logNotesVisible {
-                            Button("Add note to log", systemImage: "plus.bubble") {
+                            Button("Add note for today", systemImage: "plus.bubble") {
                                 hideLogNotes = false
                                 showLogNotesField = true
                             }
                         }
                         if movementNotesEditable && !movementNotesVisible {
-                            Button("Add note to \(movement.name)", systemImage: "plus.bubble") {
+                            Button("Add \(movement.name) note", systemImage: "plus.bubble") {
                                 hideMovementNotes = false
                                 showMovementNotesField = true
                             }
@@ -69,7 +69,7 @@ struct InlineMovementLogView: View {
 
                         // Hide note options (only when the field is visible but empty)
                         if logNotesVisible && logNotes.isEmpty {
-                            Button("Hide log note", systemImage: "eye.slash") {
+                            Button("Hide note for today", systemImage: "eye.slash") {
                                 hideLogNotes = true
                                 showLogNotesField = false
                             }
@@ -114,7 +114,7 @@ struct InlineMovementLogView: View {
                 TextField(
                     "",
                     text: $movementNotes,
-                    prompt: Text("Movement notes...").foregroundStyle(Color.accentColor.opacity(0.5)),
+                    prompt: Text("\(movement.name) note...").foregroundStyle(Color.accentColor.opacity(0.5)),
                     axis: .vertical
                 )
                 .focused($movementNotesFocused)
@@ -152,7 +152,7 @@ struct InlineMovementLogView: View {
                 TextField(
                     "",
                     text: $logNotes,
-                    prompt: Text("Log notes...").foregroundStyle(Color.brandPlaceholderText),
+                    prompt: Text("\(movement.name) note for today...").foregroundStyle(Color.brandPlaceholderText),
                     axis: .vertical
                 )
                 .focused($logNotesFocused)
