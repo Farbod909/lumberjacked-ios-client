@@ -11,6 +11,7 @@ struct WorkoutTemplatesView: View {
     @State private var selectedTemplate: WorkoutTemplate? = nil
     @State private var editingTemplate: WorkoutTemplate? = nil
     @State private var showCreateSheet = false
+    @State private var showTemplateLimitAlert = false
     @State private var showReorderSheet = false
     @State private var showDeleteAlert = false
 
@@ -21,7 +22,7 @@ struct WorkoutTemplatesView: View {
             SearchBar(placeholder: "Search templates", text: $viewModel.searchText)
 
             Button {
-                showCreateSheet = true
+                requestCreateTemplate()
             } label: {
                 Image(systemName: "plus")
                     .font(.headline)
@@ -45,7 +46,7 @@ struct WorkoutTemplatesView: View {
             }
 
             ScrollView {
-                if viewModel.isLoading(.templates) {
+                if viewModel.isLoading(.templates) && viewModel.templates.isEmpty {
                     ProgressView()
                         .frame(maxWidth: .infinity)
                         .padding(.top, 40)
@@ -92,7 +93,7 @@ struct WorkoutTemplatesView: View {
                         }
 
                         if !viewModel.showSearchBar {
-                            Button { showCreateSheet = true } label: {
+                            Button { requestCreateTemplate() } label: {
                                 WorkoutTemplateCard(isAddCard: true)
                             }
                             .buttonStyle(.plain)
@@ -142,7 +143,20 @@ struct WorkoutTemplatesView: View {
                 onSave: { ids in viewModel.saveOrder(ids) }
             )
         }
+        .alert("Template Limit Reached", isPresented: $showTemplateLimitAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("You can have a maximum of 100 templates.")
+        }
         .alert(item: $viewModel.alert)
+    }
+
+    private func requestCreateTemplate() {
+        if viewModel.templates.count >= 100 {
+            showTemplateLimitAlert = true
+        } else {
+            showCreateSheet = true
+        }
     }
 }
 
