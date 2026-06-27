@@ -586,8 +586,10 @@ struct CurrentWorkoutView: View {
             ZStack {
                 Color.brandBackground.ignoresSafeArea()
 
-                currentWorkoutView
-                    .opacity(viewModel.currentWorkout != nil ? 1 : 0)
+                if viewModel.currentWorkout != nil {
+                    currentWorkoutView
+                        .transition(.opacity)
+                }
                 ProgressView()
                     .opacity(
                         viewModel.currentWorkout == nil && viewModel.isLoading(.currentWorkout)
@@ -596,12 +598,7 @@ struct CurrentWorkoutView: View {
 
                 if viewModel.currentWorkout == nil && !viewModel.isLoading(.currentWorkout) {
                     newWorkoutOptionsView
-                        .transition(
-                            .asymmetric(
-                                insertion: .opacity.animation(.easeIn(duration: 0.2)),
-                                removal: .opacity.animation(.easeOut(duration: 0))
-                            )
-                        )
+                        .transition(.opacity)
                 }
 
                 if viewModel.showAddMovementOverlay {
@@ -613,7 +610,7 @@ struct CurrentWorkoutView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .animation(.default, value: viewModel.currentWorkout)
+            .animation(.easeInOut(duration: 0.3), value: viewModel.currentWorkout != nil)
             .animation(
                 .spring(duration: 0.3, bounce: 0.05),
                 value: viewModel.showAddMovementOverlay

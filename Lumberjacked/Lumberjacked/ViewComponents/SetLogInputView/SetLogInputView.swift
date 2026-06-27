@@ -429,7 +429,7 @@ struct SetLogInputView: View {
             .background {
                 ZStack {
                     Color.brandSecondary
-                    if s.isChecked { Color.green.opacity(0.25) }
+                    Color.green.opacity(s.isChecked ? 0.25 : 0)
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: s.isChecked)
@@ -492,10 +492,11 @@ struct SetLogInputView: View {
             .background {
                 ZStack {
                     if set.wrappedValue.isChecked { Color.brandSecondary } else { Color.brandSecondaryLight }
-                    if set.wrappedValue.isChecked { Color.green.opacity(0.25) }
+                    Color.green.opacity(set.wrappedValue.isChecked ? 0.25 : 0)
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+            .animation(.easeInOut(duration: 0.2), value: set.wrappedValue.isChecked)
             .focused($focusedField, equals: .reps(set.wrappedValue.id))
             .selectAllTextOnFocus()
             .onChange(of: set.wrappedValue.reps) { _, new in
@@ -558,10 +559,11 @@ struct SetLogInputView: View {
             .background {
                 ZStack {
                     if set.wrappedValue.isChecked { Color.brandSecondary } else { Color.brandSecondaryLight }
-                    if set.wrappedValue.isChecked { Color.green.opacity(0.25) }
+                    Color.green.opacity(set.wrappedValue.isChecked ? 0.25 : 0)
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+            .animation(.easeInOut(duration: 0.2), value: set.wrappedValue.isChecked)
             .focused($focusedField, equals: .load(setId))
             .selectAllTextOnFocus()
     }
