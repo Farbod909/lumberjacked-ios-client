@@ -45,6 +45,19 @@ extension WorkoutTemplatesView {
             }
         }
 
+        // MARK: - Search
+
+        var searchText: String = ""
+
+        var showSearchBar: Bool {
+            orderedTemplates.count >= 5
+        }
+
+        var filteredTemplates: [WorkoutTemplate] {
+            guard !searchText.isEmpty else { return orderedTemplates }
+            return orderedTemplates.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        }
+
         // MARK: - Ordering
 
         var orderedTemplates: [WorkoutTemplate] {

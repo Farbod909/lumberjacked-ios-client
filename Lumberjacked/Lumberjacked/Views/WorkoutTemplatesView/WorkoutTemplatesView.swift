@@ -16,56 +16,110 @@ struct WorkoutTemplatesView: View {
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible())]
 
-    var body: some View {
-        ScrollView {
-            if viewModel.isLoading(.templates) {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 40)
-            } else {
-                LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(viewModel.orderedTemplates, id: \.self) { template in
-                        Menu {
-                            Button {
-                                Task { await viewModel.startWorkout(from: template) }
-                            } label: {
-                                Label("Start Workout", systemImage: "play.fill")
-                            }
-                            Button {
-                                editingTemplate = template
-                            } label: {
-                                Label("Edit", systemImage: "pencil")
-                            }
-                            Button {
-                                Task { await viewModel.duplicateTemplate(template) }
-                            } label: {
-                                Label("Duplicate", systemImage: "plus.square.on.square")
-                            }
-                            Button {
-                                showReorderSheet = true
-                            } label: {
-                                Label("Reorder Templates", systemImage: "arrow.up.arrow.down")
-                            }
-                            Divider()
-                            Button(role: .destructive) {
-                                selectedTemplate = template
-                                showDeleteAlert = true
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        } label: {
-                            WorkoutTemplateCard(template: template)
-                        }
-                        .buttonStyle(.plain)
+    var searchBarRow: some View {
+        HStack(spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("Search templates", text: $viewModel.searchText)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                if !viewModel.searchText.isEmpty {
+                    Button {
+                        viewModel.searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
                     }
-
-                    Button { showCreateSheet = true } label: {
-                        WorkoutTemplateCard(isAddCard: true)
-                    }
-                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Color(.tertiarySystemFill))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+
+            Button {
+                showCreateSheet = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxHeight: .infinity)
+                    .padding(.horizontal, 14)
+                    .background(Color.red)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+        }
+        .frame(height: 36)
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 10)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if viewModel.showSearchBar {
+                searchBarRow
+            }
+
+            ScrollView {
+                if viewModel.isLoading(.templates) {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                } else if viewModel.filteredTemplates.isEmpty && !viewModel.searchText.isEmpty {
+                    Text("No templates match \"\(viewModel.searchText)\"")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                } else {
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(viewModel.filteredTemplates, id: \.self) { template in
+                            Menu {
+                                Button {
+                                    Task { await viewModel.startWorkout(from: template) }
+                                } label: {
+                                    Label("Start Workout", systemImage: "play.fill")
+                                }
+                                Button {
+                                    editingTemplate = template
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                Button {
+                                    Task { await viewModel.duplicateTemplate(template) }
+                                } label: {
+                                    Label("Duplicate", systemImage: "plus.square.on.square")
+                                }
+                                Button {
+                                    showReorderSheet = true
+                                } label: {
+                                    Label("Reorder Templates", systemImage: "arrow.up.arrow.down")
+                                }
+                                Divider()
+                                Button(role: .destructive) {
+                                    selectedTemplate = template
+                                    showDeleteAlert = true
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            } label: {
+                                WorkoutTemplateCard(template: template)
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        if !viewModel.showSearchBar {
+                            Button { showCreateSheet = true } label: {
+                                WorkoutTemplateCard(isAddCard: true)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, viewModel.showSearchBar ? 4 : 12)
+                    .padding(.bottom, 12)
+                }
             }
         }
         .alert(
