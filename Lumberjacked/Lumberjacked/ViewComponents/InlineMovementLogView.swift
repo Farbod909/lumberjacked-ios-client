@@ -111,26 +111,11 @@ struct InlineMovementLogView: View {
 
             // Movement notes
             if movementNotesEditable && movementNotesVisible {
-                TextField(
-                    "",
-                    text: $movementNotes,
-                    prompt: Text("\(movement.name) note...").foregroundStyle(Color.accentColor.opacity(0.5)),
-                    axis: .vertical
-                )
-                .focused($movementNotesFocused)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.primary)
-                .tint(.accentColor)
-                .lineLimit(1...5)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 11)
-                .background(Color.accentColor.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large))
-                .padding(.horizontal, 10)
-                .padding(.bottom, 4)
-                .onChange(of: movementNotesFocused) { _, focused in
-                    if focused { showMovementNotesField = true }
-                }
+                NotesTextField(text: $movementNotes, prompt: "\(movement.name) note...", style: .accent)
+                    .focused($movementNotesFocused)
+                    .onChange(of: movementNotesFocused) { _, focused in
+                        if focused { showMovementNotesField = true }
+                    }
             } else if !movementNotesEditable && !movement.notes.isEmpty {
                 Text(movement.notes)
                     .font(.system(size: 16, weight: .medium))
@@ -149,25 +134,11 @@ struct InlineMovementLogView: View {
                         .padding(.bottom, 8)
                 }
             } else if logNotesVisible {
-                TextField(
-                    "",
-                    text: $logNotes,
-                    prompt: Text("\(movement.name) note for today...").foregroundStyle(Color.brandPlaceholderText),
-                    axis: .vertical
-                )
-                .focused($logNotesFocused)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.primary)
-                .lineLimit(1...5)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 11)
-                .background(Color.brandSecondary)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large))
-                .padding(.horizontal, 10)
-                .padding(.bottom, 4)
-                .onChange(of: logNotesFocused) { _, focused in
-                    if focused { showLogNotesField = true }
-                }
+                NotesTextField(text: $logNotes, prompt: "\(movement.name) note for today...")
+                    .focused($logNotesFocused)
+                    .onChange(of: logNotesFocused) { _, focused in
+                        if focused { showLogNotesField = true }
+                    }
             }
 
             SetLogInputView(mode: mode, logSets: $logSets, templateSets: .constant(templateSets), isEmbedded: true, readOnly: readOnly)

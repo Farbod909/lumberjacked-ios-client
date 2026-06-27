@@ -35,18 +35,7 @@ struct MovementLogInputView: View {
                 .padding(.bottom, 12)
 
                 // Notes field
-                TextField(
-                    "",
-                    text: $viewModel.movementLog.notes,
-                    prompt: Text("Notes...").foregroundStyle(Color.brandPlaceholderText)
-                )
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color.brandSecondary)
-                .padding(.bottom, 4)
+                NotesTextField(text: $viewModel.movementLog.notes, prompt: "Notes...")
 
                 SetLogInputView(
                     mode: viewModel.inputMode,
