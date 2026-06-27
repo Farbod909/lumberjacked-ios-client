@@ -6,10 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		8E9598502FE8F07C00DA7246 /* timer.caf in Resources */ = {isa = PBXBuildFile; fileRef = 8E95984F2FE8F07C00DA7246 /* timer.caf */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		8E7A97342FCCDE2E00BE4778 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -30,7 +26,6 @@
 /* Begin PBXFileReference section */
 		8E7A97302FCCDE2E00BE4778 /* LumberjackedTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LumberjackedTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E7A97592FCCF04000BE4778 /* LumberjackedUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LumberjackedUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		8E95984F2FE8F07C00DA7246 /* timer.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = timer.caf; sourceTree = "<group>"; };
 		8EF984C12D40B879003082E6 /* Lumberjacked.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lumberjacked.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -84,7 +79,6 @@
 				8E7A97312FCCDE2E00BE4778 /* LumberjackedTests */,
 				8E7A975A2FCCF04000BE4778 /* LumberjackedUITests */,
 				8EF984C22D40B879003082E6 /* Products */,
-				8E95984F2FE8F07C00DA7246 /* timer.caf */,
 			);
 			sourceTree = "<group>";
 		};
@@ -232,7 +226,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8E9598502FE8F07C00DA7246 /* timer.caf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -10,7 +10,56 @@ import SwiftUI
 import UserNotifications
 
 private let notificationId = "lumberjacked-rest-timer"
-private let soundName = "timer.caf"
+
+// Kill-switch: set to false to revert to notification-only behavior if needed.
+private let backgroundAudioEnabled = true
+
+enum TimerSound: String, CaseIterable {
+    case drum = "drum.wav"
+    case glassDing = "glassding.wav"
+    case metalDing = "metalding.wav"
+    case metallaphone = "metallaphone.wav"
+    case musicalDing = "musicalding.wav"
+    case cinematicDing = "cinematicding.wav"
+    case twoTone = "twotone.wav"
+    case xylophone = "xylophone.wav"
+    case microwave = "microwave.caf"
+    case none = "none"
+
+    var displayName: String {
+        switch self {
+        case .none: return "None"
+        case .microwave: return "Microwave"
+        case .cinematicDing: return "Cinematic Ding"
+        case .drum: return "Drum"
+        case .glassDing: return "Glass Ding"
+        case .metalDing: return "Metal Ding"
+        case .metallaphone: return "Metallaphone"
+        case .musicalDing: return "Musical Ding"
+        case .twoTone: return "Two Tone"
+        case .xylophone: return "Xylophone"
+        }
+    }
+
+    var fileName: String { String(rawValue.split(separator: ".").first ?? "") }
+    var fileExtension: String { String(rawValue.split(separator: ".").last ?? "") }
+
+    @discardableResult
+    func play() -> AVAudioPlayer? {
+        guard self != .none,
+              let url = Bundle.main.url(forResource: fileName, withExtension: fileExtension),
+              let player = try? AVAudioPlayer(contentsOf: url) else { return nil }
+        let headphonePorts: [AVAudioSession.Port] = [.headphones, .bluetoothA2DP, .bluetoothHFP, .bluetoothLE]
+        let hasHeadphones = AVAudioSession.sharedInstance().currentRoute.outputs
+            .contains { headphonePorts.contains($0.portType) }
+        if hasHeadphones {
+            try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
+            try? AVAudioSession.sharedInstance().setActive(true)
+        }
+        player.play()
+        return player
+    }
+}
 
 @Observable
 class RestTimerEnvironment {
@@ -23,6 +72,7 @@ class RestTimerEnvironment {
 
     private var timerCancellable: AnyCancellable?
     private var audioPlayer: AVAudioPlayer?
+    private var silentLoopPlayer: AVAudioPlayer?
     // Absolute wall-clock expiry time — keeps the countdown accurate across
     // backgrounding, sleep, or any gap in Timer delivery.
     private var endDate: Date?
@@ -64,6 +114,7 @@ class RestTimerEnvironment {
         let end = Date().addingTimeInterval(TimeInterval(seconds))
         endDate = end
 
+        if backgroundAudioEnabled { startSilentLoop() }
         scheduleNotification(at: end)
 
         timerCancellable = Timer.publish(every: 1, on: .main, in: .common)
@@ -73,7 +124,7 @@ class RestTimerEnvironment {
                 let remaining = Int(end.timeIntervalSinceNow.rounded(.up))
                 if remaining > 0 {
                     self.timeRemaining = remaining
-                } else if self.isInForeground {
+                } else if self.isInForeground || backgroundAudioEnabled {
                     self.handleExpiry(playSound: true)
                 }
             }
@@ -87,8 +138,26 @@ class RestTimerEnvironment {
         timeRemaining = 0
         totalTime = 0
         endDate = nil
+        if backgroundAudioEnabled { stopSilentLoop() }
         UNUserNotificationCenter.current()
             .removePendingNotificationRequests(withIdentifiers: [notificationId])
+    }
+
+    private func startSilentLoop() {
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
+        try? AVAudioSession.sharedInstance().setActive(true)
+        guard let url = Bundle.main.url(forResource: "silent", withExtension: "wav") else { return }
+        silentLoopPlayer = try? AVAudioPlayer(contentsOf: url)
+        silentLoopPlayer?.numberOfLoops = -1
+        silentLoopPlayer?.volume = 0
+        silentLoopPlayer?.play()
+    }
+
+    private func stopSilentLoop() {
+        silentLoopPlayer?.stop()
+        silentLoopPlayer = nil
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        try? AVAudioSession.sharedInstance().setCategory(.soloAmbient, mode: .default)
     }
 
     private func syncToWallClock() {
@@ -107,10 +176,12 @@ class RestTimerEnvironment {
         activeSetId = nil
         timerCancellable?.cancel()
         endDate = nil
+        if backgroundAudioEnabled { stopSilentLoop() }
         UNUserNotificationCenter.current()
             .removePendingNotificationRequests(withIdentifiers: [notificationId])
         UNUserNotificationCenter.current()
             .removeDeliveredNotifications(withIdentifiers: [notificationId])
+        if !isInForeground { showBackgroundBanner() }
         if playSound { playTimerSound() }
         showTimerAlert = true
         showingZero = true
@@ -119,11 +190,22 @@ class RestTimerEnvironment {
         }
     }
 
+    private func showBackgroundBanner() {
+        let content = UNMutableNotificationContent()
+        content.title = "Rest complete"
+        content.body = "Time to get back to work."
+        content.sound = nil
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+        let request = UNNotificationRequest(identifier: notificationId, content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request)
+    }
+
     private func playTimerSound() {
         AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-        guard let url = Bundle.main.url(forResource: "timer", withExtension: "caf") else { return }
-        audioPlayer = try? AVAudioPlayer(contentsOf: url)
-        audioPlayer?.play()
+        let soundRaw = UserDefaults.standard.string(forKey: "timerSound") ?? TimerSound.drum.rawValue
+        let sound = TimerSound(rawValue: soundRaw) ?? .drum
+
+        audioPlayer = sound.play()
     }
 
     private func scheduleNotification(at end: Date) {
@@ -146,7 +228,9 @@ class RestTimerEnvironment {
         let content = UNMutableNotificationContent()
         content.title = "Rest complete"
         content.body = "Time to get back to work."
-        content.sound = UNNotificationSound(named: UNNotificationSoundName(soundName))
+        let soundRaw = UserDefaults.standard.string(forKey: "timerSound") ?? TimerSound.drum.rawValue
+        let sound = TimerSound(rawValue: soundRaw) ?? .drum
+        content.sound = sound == .none ? nil : UNNotificationSound(named: UNNotificationSoundName(sound.rawValue))
         // 2-second buffer gives the foreground Timer tick time to cancel this
         // notification before it fires when the app is active.
         let trigger = UNTimeIntervalNotificationTrigger(

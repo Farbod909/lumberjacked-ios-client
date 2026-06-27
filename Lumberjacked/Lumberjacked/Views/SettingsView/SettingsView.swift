@@ -5,6 +5,7 @@
 //  Created by Farbod Rafezy on 1/21/25.
 //
 
+import AVFoundation
 import SwiftUI
 
 struct SettingsView: View {
@@ -17,6 +18,8 @@ struct SettingsView: View {
     @AppStorage("defaultDropsetRestTime") private var defaultDropsetRestTime: Int = 0
     @AppStorage("defaultMyorepsRestTime") private var defaultMyorepsRestTime: Int = 20
     @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lb.rawValue
+    @AppStorage("timerSound") private var timerSoundRaw: String = TimerSound.drum.rawValue
+    @State private var previewPlayer: AVAudioPlayer?
 
     private enum RestTimePickerTarget { case working, warmup, dropset, myoreps }
     @State private var pickerTarget: RestTimePickerTarget? = nil
@@ -43,6 +46,15 @@ struct SettingsView: View {
             .listRowBackground(Color.brandSecondary)
 
             Section("Post-Set Rest") {
+                Picker("Timer Sound", selection: $timerSoundRaw) {
+                    ForEach(TimerSound.allCases, id: \.rawValue) { sound in
+                        Text(sound.displayName).tag(sound.rawValue)
+                    }
+                }
+                .onChange(of: timerSoundRaw) { _, newValue in
+                    previewPlayer = TimerSound(rawValue: newValue)?.play()
+                }
+
                 restTimeRow("Working / Failure", seconds: defaultRestTime, target: .working)
                 restTimeRow("Warmup", seconds: defaultWarmupRestTime, target: .warmup)
             }
