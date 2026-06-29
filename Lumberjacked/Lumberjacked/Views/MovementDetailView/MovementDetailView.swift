@@ -7,28 +7,10 @@
 
 import SwiftUI
 
-// MARK: - Adding unsaved-changes protection to this view
-//
-// When inline editing is added here, wire it up in three steps:
-//
-// 1. Add `isDirty: Bool` and `resetChanges()` to MovementDetailView.ViewModel
-//    (see WorkoutDetailView.ViewModel for the pattern).
-//
-// 2. Apply the modifier once on the body's root view:
-//       .unsavedChangesGuard(
-//           isDirty: viewModel.isDirty,
-//           save:    { await viewModel.attemptSaveChanges() },
-//           discard: { viewModel.resetChanges() }
-//       )
-//
-// 3. Add `.environment(UnsavedChangesState())` to any #Previews for this view.
-//
-// That's all — the custom back button, swipe-back interception, tab-switch alert,
-// and the "you forgot to save" background notification are all handled automatically.
-
 struct MovementDetailView: View {
     @State var viewModel: ViewModel
     @Environment(\.dismiss) var dismiss
+    @State private var isKeyboardVisible = false
 
     var body: some View {
         ZStack {
@@ -36,23 +18,34 @@ struct MovementDetailView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text(viewModel.movement.name)
+                    // Name
+                    TextField("Movement name", text: $viewModel.editableMovement.name)
                         .font(DesignSystem.Font.screenTitle)
+                        .textFieldStyle(.plain)
+                        .textInputAutocapitalization(.words)
                         .padding(.horizontal, 6)
 
-                    if !viewModel.movement.hasNotes {
-                        HStack {
-                            Text("\(Image(systemName: "info.circle")) Edit this movement to add notes to help you during your workouts.")
-                            Spacer()
-                        }
-                        .padding()
-                        .brandCard()
-                    }
+                    // Body part and resistance type chips
+                    classificationRow
 
-                    if viewModel.movement.hasNotes {
-                        NotesView(notes: viewModel.movement.notes)
+                    // Notes
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Notes")
+                            .sectionLabel()
+                        TextField(
+                            "",
+                            text: $viewModel.editableMovement.notes,
+                            prompt: Text("Add notes…").foregroundStyle(Color.secondary),
+                            axis: .vertical
+                        )
+                        .lineLimit(1...)
+                        .textFieldStyle(.plain)
+                        .foregroundStyle(.primary)
                     }
+                    .padding()
+                    .brandCard()
 
+                    // Log history
                     if !viewModel.movementLogs.isEmpty {
                         LogListView(movementLogs: viewModel.movementLogs, onLogTap: viewModel.logTapped)
 
@@ -85,26 +78,40 @@ struct MovementDetailView: View {
             .task {
                 await viewModel.attemptGetMovementLogs()
             }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+                isKeyboardVisible = true
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+                isKeyboardVisible = false
+            }
             .toolbar {
-                if viewModel.isLoading(.delete) {
+                if viewModel.isLoading(.save) || viewModel.isLoading(.delete) {
                     ToolbarItem(placement: .topBarTrailing) {
                         ProgressView()
                     }
-                }
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            viewModel.showEditSheet = true
-                        } label: {
-                            Label("Edit movement", systemImage: "pencil.circle")
+                } else if viewModel.isDirty {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Save") {
+                            Task { await viewModel.attemptSaveChanges() }
                         }
-                        Button(role: .destructive) {
-                            viewModel.showDeleteConfirmationAlert = true
-                        } label: {
-                            Label("Delete movement", systemImage: "trash")
+                        .fontWeight(.semibold)
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Discard") {
+                            viewModel.resetChanges()
                         }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
+                    }
+                } else {
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        Menu {
+                            Button(role: .destructive) {
+                                viewModel.showDeleteConfirmationAlert = true
+                            } label: {
+                                Label("Delete movement", systemImage: "trash")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                        }
                     }
                 }
             }
@@ -123,29 +130,101 @@ struct MovementDetailView: View {
                         }())
                 }
             }
-            .sheet(isPresented: $viewModel.showEditSheet, onDismiss: {
-                Task {
-                    if let movementId = viewModel.movement.id {
-                        await viewModel.attemptGetMovementDetail(id: movementId)
-                    }
-                }
-            }) {
-                MovementInputView(
-                    viewModel: MovementInputView.ViewModel(movement: viewModel.movement),
-                    newlyAddedMovement: .constant(nil))
+            .navigationDestination(isPresented: $viewModel.showBodyPartPicker) {
+                BodyPartPickerSheet(selectedBodyPart: $viewModel.editableMovement.body_part)
             }
             .alert("Delete", isPresented: $viewModel.showDeleteConfirmationAlert) {
                 Button("Delete", role: .destructive) {
                     Task {
-                        guard await viewModel.attemptDeleteMovement() else {
-                            return
-                        }
+                        guard await viewModel.attemptDeleteMovement() else { return }
                         dismiss()
                     }
                 }
                 Button("Cancel", role: .cancel) {}
             }
+            .alert(item: $viewModel.alert)
+
+            if isKeyboardVisible {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button {
+                            UIApplication.shared.sendAction(
+                                #selector(UIResponder.resignFirstResponder),
+                                to: nil, from: nil, for: nil)
+                        } label: {
+                            Image(systemName: "keyboard.chevron.compact.down")
+                                .font(.title2)
+                                .padding(12)
+                                .background(.ultraThinMaterial)
+                                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium))
+                        }
+                        .foregroundStyle(Color.brandPrimaryText)
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 12)
+                    }
+                }
+            }
         }
+        .unsavedChangesGuard(
+            isDirty: viewModel.isDirty,
+            save: { await viewModel.attemptSaveChanges() },
+            discard: { viewModel.resetChanges() }
+        )
+    }
+
+    private var classificationRow: some View {
+        HStack(spacing: 12) {
+            let bpLabel = viewModel.editableMovement.body_part.flatMap { BodyPart(rawValue: $0) }?.displayName
+            Button {
+                viewModel.showBodyPartPicker = true
+            } label: {
+                chip(label: bpLabel ?? "Body Part", hasValue: bpLabel != nil)
+            }
+            .buttonStyle(.plain)
+
+            let rtLabel = viewModel.editableMovement.resistance_type.flatMap { ResistanceType(rawValue: $0) }?.displayName
+            Menu {
+                Button {
+                    viewModel.editableMovement.resistance_type = nil
+                } label: {
+                    if viewModel.editableMovement.resistance_type == nil {
+                        Label("None", systemImage: "checkmark")
+                    } else {
+                        Text("None")
+                    }
+                }
+                ForEach(ResistanceType.allCases, id: \.self) { type in
+                    Button {
+                        viewModel.editableMovement.resistance_type = type.rawValue
+                    } label: {
+                        if viewModel.editableMovement.resistance_type == type.rawValue {
+                            Label(type.displayName, systemImage: "checkmark")
+                        } else {
+                            Text(type.displayName)
+                        }
+                    }
+                }
+            } label: {
+                chip(label: rtLabel ?? "Resistance Type", hasValue: rtLabel != nil)
+            }
+            .foregroundStyle(.primary)
+            // Rebuild the Menu when the selection changes so it discards the
+            // stale label snapshot that briefly clips a longer label.
+            .id(rtLabel ?? "")
+        }
+        .padding(.horizontal, 6)
+        .animation(.none, value: viewModel.editableMovement.resistance_type)
+    }
+
+    private func chip(label: String, hasValue: Bool) -> some View {
+        Text(label)
+            .font(DesignSystem.Font.body)
+            .foregroundStyle(hasValue ? Color.primary : Color.secondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(Capsule().fill(Color.brandSecondaryLight))
     }
 }
 
@@ -303,6 +382,7 @@ private struct FlowLayout: Layout {
             movement: PreviewData.benchPress,
             movementLogAPI: MockMovementLogAPI()))
     }
+    .environment(UnsavedChangesState())
 }
 
 #Preview("Minimal Details, No Logs") {
@@ -313,6 +393,7 @@ private struct FlowLayout: Layout {
             movementAPI: MockMovementAPI(),
             movementLogAPI: MockMovementLogAPI()))
     }
+    .environment(UnsavedChangesState())
 }
 
 #Preview("Full Details, No Logs") {
@@ -321,5 +402,6 @@ private struct FlowLayout: Layout {
             movement: PreviewData.deadlift,
             movementLogAPI: MockMovementLogAPI()))
     }
+    .environment(UnsavedChangesState())
 }
 #endif

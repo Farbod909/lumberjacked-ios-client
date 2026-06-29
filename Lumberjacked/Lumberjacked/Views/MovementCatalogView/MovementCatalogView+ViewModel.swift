@@ -26,7 +26,24 @@ extension MovementCatalogView {
         var movements = [Movement]()
         var searchText = ""
         var showCreateMovementSheet = false
+        var showBodyPartFilterSheet = false
+        var showResistanceTypeFilterSheet = false
         var alert: AppAlert?
+
+        // Filter state
+        var selectedBodyParts: Set<BodyPart> = []
+        var selectedResistanceTypes: Set<ResistanceType> = []
+        var sortOrder: SortOrder = .name
+
+        enum SortOrder: String, CaseIterable {
+            case name           = "Name"
+            case bodyPart       = "Body Part"
+            case resistanceType = "Resistance Type"
+        }
+
+        var isFiltered: Bool {
+            !selectedBodyParts.isEmpty || !selectedResistanceTypes.isEmpty || sortOrder != .name
+        }
 
         private let api: MovementAPIProtocol
 
@@ -36,6 +53,12 @@ extension MovementCatalogView {
 
         func movementTapped(_ movement: Movement) {
             destination = .movementDetail(movement)
+        }
+
+        func resetFilters() {
+            selectedBodyParts = []
+            selectedResistanceTypes = []
+            sortOrder = .name
         }
 
         func attemptRefresh() async {
@@ -63,11 +86,44 @@ extension MovementCatalogView {
         }
 
         var filteredMovements: [Movement] {
-            if searchText.isEmpty {
-                return movements
-            } else {
-                return movements.filter { $0.name.lowercased().contains(searchText.lowercased()) }
+            var result = movements
+
+            if !searchText.isEmpty {
+                result = result.filter { $0.name.lowercased().contains(searchText.lowercased()) }
             }
+
+            if !selectedBodyParts.isEmpty {
+                result = result.filter { movement in
+                    guard let raw = movement.body_part, let bp = BodyPart(rawValue: raw) else { return false }
+                    return selectedBodyParts.contains(bp)
+                }
+            }
+
+            if !selectedResistanceTypes.isEmpty {
+                result = result.filter { movement in
+                    guard let raw = movement.resistance_type, let rt = ResistanceType(rawValue: raw) else { return false }
+                    return selectedResistanceTypes.contains(rt)
+                }
+            }
+
+            switch sortOrder {
+            case .name:
+                result.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            case .bodyPart:
+                result.sort { lhs, rhs in
+                    let a = lhs.body_part.flatMap { BodyPart(rawValue: $0) }?.displayName ?? ""
+                    let b = rhs.body_part.flatMap { BodyPart(rawValue: $0) }?.displayName ?? ""
+                    return a.localizedCaseInsensitiveCompare(b) == .orderedAscending
+                }
+            case .resistanceType:
+                result.sort { lhs, rhs in
+                    let a = lhs.resistance_type.flatMap { ResistanceType(rawValue: $0) }?.displayName ?? ""
+                    let b = rhs.resistance_type.flatMap { ResistanceType(rawValue: $0) }?.displayName ?? ""
+                    return a.localizedCaseInsensitiveCompare(b) == .orderedAscending
+                }
+            }
+
+            return result
         }
 
         private func handleNetworkError(_ error: RemoteNetworkingError) {

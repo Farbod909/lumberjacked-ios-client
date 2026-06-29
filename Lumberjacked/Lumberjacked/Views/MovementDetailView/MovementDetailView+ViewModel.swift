@@ -10,7 +10,7 @@ import SwiftUI
 extension MovementDetailView {
     @Observable
     class ViewModel: LoadingTrackable {
-        enum LoadingKey { case logs, delete }
+        enum LoadingKey { case logs, delete, save }
         var loadingKeys: Set<LoadingKey> = [.logs]
 
         enum Destination: Identifiable, Hashable {
@@ -24,11 +24,12 @@ extension MovementDetailView {
         var destination: Destination?
 
         var movement: Movement
+        var editableMovement: Movement
         var movementLogs = [MovementLog]()
         var nextURL: String?
         var isLoadingMore = false
         var showDeleteConfirmationAlert = false
-        var showEditSheet = false
+        var showBodyPartPicker = false
         var alert: AppAlert?
 
         private let movementAPI: MovementAPIProtocol
@@ -41,9 +42,21 @@ extension MovementDetailView {
             movementLogAPI: MovementLogAPIProtocol = LiveMovementLogAPI()
         ) {
             self.movement = movement
+            self.editableMovement = movement
             self.movementLogs = movementLogs
             self.movementAPI = movementAPI
             self.movementLogAPI = movementLogAPI
+        }
+
+        var isDirty: Bool {
+            editableMovement.name != movement.name ||
+            editableMovement.notes != movement.notes ||
+            editableMovement.resistance_type != movement.resistance_type ||
+            editableMovement.body_part != movement.body_part
+        }
+
+        func resetChanges() {
+            editableMovement = movement
         }
 
         func logTapped(_ log: MovementLog) {
@@ -94,6 +107,31 @@ extension MovementDetailView {
             movementLogs.removeAll { $0.id == log.id }
         }
 
+        // MARK: - Save changes
+
+        @MainActor
+        func attemptSaveChanges() async -> Bool {
+            guard isDirty else { return true }
+            guard let movementId = movement.id else { return false }
+            guard !editableMovement.name.trimmingCharacters(in: .whitespaces).isEmpty else {
+                alert = AppAlert(title: "Error", message: "Movement name cannot be empty.")
+                return false
+            }
+            loadingKeys.insert(.save)
+            defer { loadingKeys.remove(.save) }
+            do {
+                let updated = try await movementAPI.updateMovement(movementId: movementId, movement: editableMovement)
+                movement = updated
+                editableMovement = updated
+                return true
+            } catch let error as RemoteNetworkingError {
+                handleNetworkError(error)
+            } catch {
+                alert = AppAlert(title: "Error", message: error.localizedDescription)
+            }
+            return false
+        }
+
         // MARK: - Delete movement
 
         @MainActor
@@ -110,16 +148,6 @@ extension MovementDetailView {
                 alert = AppAlert(title: "Error", message: error.localizedDescription)
             }
             return false
-        }
-
-        func attemptGetMovementDetail(id: UInt64) async {
-            do {
-                movement = try await movementAPI.getMovement(movementId: id)
-            } catch let error as RemoteNetworkingError {
-                handleNetworkError(error)
-            } catch {
-                alert = AppAlert(title: "Error", message: error.localizedDescription)
-            }
         }
 
         private func handleNetworkError(_ error: RemoteNetworkingError) {

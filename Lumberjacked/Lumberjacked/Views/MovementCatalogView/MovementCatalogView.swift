@@ -26,7 +26,7 @@ struct MovementCatalogView: View {
                             Button {
                                 viewModel.movementTapped(movement)
                             } label: {
-                                Text(movement.name)
+                                movementRow(movement)
                             }
                             .listRowBackground(Color.clear)
                         }
@@ -67,6 +67,41 @@ struct MovementCatalogView: View {
                         Label("New movement", systemImage: "plus")
                     }
                 }
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        Menu("Sort By") {
+                            ForEach(MovementCatalogView.ViewModel.SortOrder.allCases, id: \.self) { order in
+                                Button {
+                                    viewModel.sortOrder = order
+                                } label: {
+                                    if viewModel.sortOrder == order {
+                                        Label(order.rawValue, systemImage: "checkmark")
+                                    } else {
+                                        Text(order.rawValue)
+                                    }
+                                }
+                            }
+                        }
+                        Menu("Filter") {
+                            Button("Body Part") {
+                                viewModel.showBodyPartFilterSheet = true
+                            }
+                            Button("Resistance Type") {
+                                viewModel.showResistanceTypeFilterSheet = true
+                            }
+                        }
+                        if viewModel.isFiltered {
+                            Divider()
+                            Button(role: .destructive) {
+                                viewModel.resetFilters()
+                            } label: {
+                                Label("Reset Filters", systemImage: "xmark.circle")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: viewModel.isFiltered ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                    }
+                }
             }
             .sheet(
                 isPresented: $viewModel.showCreateMovementSheet,
@@ -79,6 +114,35 @@ struct MovementCatalogView: View {
                 MovementInputView(
                     viewModel: MovementInputView.ViewModel(movement: Movement(name: "", notes: "")),
                     newlyAddedMovement: .constant(nil))
+            }
+            .navigationDestination(isPresented: $viewModel.showBodyPartFilterSheet) {
+                BodyPartFilterSheet(selectedBodyParts: $viewModel.selectedBodyParts)
+            }
+            .navigationDestination(isPresented: $viewModel.showResistanceTypeFilterSheet) {
+                ResistanceTypeFilterSheet(selectedResistanceTypes: $viewModel.selectedResistanceTypes)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func movementRow(_ movement: Movement) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(movement.name)
+                .fontWeight(.medium)
+            let bp = movement.body_part.flatMap { BodyPart(rawValue: $0) }
+            let rt = movement.resistance_type.flatMap { ResistanceType(rawValue: $0) }
+            if bp != nil || rt != nil {
+                HStack {
+                    if let bp {
+                        Text(bp.displayName)
+                    }
+                    Spacer()
+                    if let rt {
+                        Text(rt.displayName)
+                    }
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
         }
     }

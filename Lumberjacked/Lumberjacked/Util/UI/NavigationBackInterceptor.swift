@@ -38,10 +38,10 @@ struct NavigationBackInterceptor: UIViewControllerRepresentable {
 
         override func viewDidDisappear(_ animated: Bool) {
             super.viewDidDisappear(animated)
-            // Only restore if this VC was actually popped (not covered by a push)
-            if isMovingFromParent || isBeingDismissed {
-                navigationController?.interactivePopGestureRecognizer?.delegate = originalGestureDelegate
-            }
+            // Always restore — viewDidAppear reinstalls when we come back.
+            // This prevents the interceptor from firing for swipe-back on any
+            // child view pushed on top of this one.
+            navigationController?.interactivePopGestureRecognizer?.delegate = originalGestureDelegate
         }
 
         func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {

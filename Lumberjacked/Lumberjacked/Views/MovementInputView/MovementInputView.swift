@@ -11,27 +11,87 @@ struct MovementInputView: View {
     @State var viewModel: ViewModel
     @Binding var newlyAddedMovement: Movement?
     @Environment(\.dismiss) var dismiss
+    @State private var showBodyPartPicker = false
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    MovementInputTextFieldView(
-                        placeholderText: "Movement name",
-                        stickyText: "Name",
-                        text: $viewModel.movement.name,
-                        capitalizeWords: true)
-                    .fieldError(viewModel.fieldErrors["name"])
-                    MovementInputTextFieldView(
-                        placeholderText: "Notes",
-                        stickyText: "Notes",
-                        text: $viewModel.movement.notes)
-                    .fieldError(viewModel.fieldErrors["notes"])
+            ScrollView {
+                VStack(spacing: 12) {
+                    // Group 1: Name
+                    VStack(spacing: 0) {
+                        MovementInputTextFieldView(
+                            placeholderText: "Name",
+                            stickyText: "Name",
+                            text: $viewModel.movement.name,
+                            capitalizeWords: true)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .fieldError(viewModel.fieldErrors["name"])
+                    }
+                    .brandCard()
+
+                    // Group 2: Body Part + Resistance Type
+                    VStack(spacing: 0) {
+                        selectionRow(
+                            label: "Body Part",
+                            displayValue: viewModel.movement.body_part
+                                .flatMap { BodyPart(rawValue: $0) }?.displayName)
+                        .contentShape(Rectangle())
+                        .onTapGesture { showBodyPartPicker = true }
+
+                        Divider().padding(.leading, 16)
+
+                        Menu {
+                            Button {
+                                viewModel.movement.resistance_type = nil
+                            } label: {
+                                if viewModel.movement.resistance_type == nil {
+                                    Label("None", systemImage: "checkmark")
+                                } else {
+                                    Text("None")
+                                }
+                            }
+                            ForEach(ResistanceType.allCases, id: \.self) { type in
+                                Button {
+                                    viewModel.movement.resistance_type = type.rawValue
+                                } label: {
+                                    if viewModel.movement.resistance_type == type.rawValue {
+                                        Label(type.displayName, systemImage: "checkmark")
+                                    } else {
+                                        Text(type.displayName)
+                                    }
+                                }
+                            }
+                        } label: {
+                            selectionRow(
+                                label: "Resistance Type",
+                                displayValue: viewModel.movement.resistance_type
+                                    .flatMap { ResistanceType(rawValue: $0) }?.displayName)
+                        }
+                        .foregroundStyle(.primary)
+                    }
+                    .brandCard()
+
+                    // Group 3: Notes
+                    VStack(spacing: 0) {
+                        TextField("Notes", text: $viewModel.movement.notes, axis: .vertical)
+                            .textFieldStyle(.plain)
+                            .textInputAutocapitalization(.sentences)
+                            .lineLimit(1...)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .fieldError(viewModel.fieldErrors["notes"])
+                    }
+                    .brandCard()
                 }
+                .padding()
             }
-            .listRowSpacing(10)
-            .navigationTitle(viewModel.movement.name == "" ?
-                             "New Movement" : viewModel.movement.name)
+            .scrollDismissesKeyboard(.interactively)
+            .background(Color.brandBackground.ignoresSafeArea())
+            .navigationDestination(isPresented: $showBodyPartPicker) {
+                BodyPartPickerSheet(selectedBodyPart: $viewModel.movement.body_part)
+            }
+            .navigationTitle(viewModel.movement.name == "" ? "New Movement" : viewModel.movement.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -56,17 +116,31 @@ struct MovementInputView: View {
                     }
                 }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                    Button("Cancel") { dismiss() }
                 }
             }
-            .onDisappear() {
+            .onDisappear {
+                guard !showBodyPartPicker else { return }
                 viewModel.movement = Movement(name: "", notes: "")
             }
             .interactiveDismissDisabled()
             .alert(item: $viewModel.alert)
         }
+    }
+
+    private func selectionRow(label: String, displayValue: String?) -> some View {
+        HStack {
+            Text(label)
+            Spacer()
+            Text(displayValue ?? "None")
+                .foregroundStyle(displayValue != nil ? Color.accentColor : Color.secondary)
+            Image(systemName: "chevron.up.chevron.down")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .foregroundStyle(.primary)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 }
 

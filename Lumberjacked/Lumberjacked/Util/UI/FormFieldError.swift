@@ -9,16 +9,14 @@ struct FieldErrorModifier: ViewModifier {
     let message: String?
 
     func body(content: Content) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             content
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                        .stroke(message != nil ? Color.red : Color.clear, lineWidth: 1)
-                )
             if let message {
                 Text(message)
                     .font(.caption)
                     .foregroundColor(.red)
+                    .padding(.leading, 16)
+                    .padding(.bottom, 8)
             }
         }
     }
