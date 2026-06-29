@@ -54,8 +54,8 @@ enum TimerSound: String, CaseIterable {
             .contains { headphonePorts.contains($0.portType) }
         if hasHeadphones {
             try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
-            try? AVAudioSession.sharedInstance().setActive(true)
         }
+        try? AVAudioSession.sharedInstance().setActive(true)
         player.play()
         return player
     }
