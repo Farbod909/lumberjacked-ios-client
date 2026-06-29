@@ -88,7 +88,7 @@ struct MovementInputView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .background(Color.brandBackground.ignoresSafeArea())
-            .navigationDestination(isPresented: $showBodyPartPicker) {
+            .sheet(isPresented: $showBodyPartPicker) {
                 BodyPartPickerSheet(selectedBodyPart: $viewModel.movement.body_part)
             }
             .navigationTitle(viewModel.movement.name == "" ? "New Movement" : viewModel.movement.name)
@@ -120,7 +120,6 @@ struct MovementInputView: View {
                 }
             }
             .onDisappear {
-                guard !showBodyPartPicker else { return }
                 viewModel.movement = Movement(name: "", notes: "")
             }
             .interactiveDismissDisabled()

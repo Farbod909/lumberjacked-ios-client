@@ -115,10 +115,10 @@ struct MovementCatalogView: View {
                     viewModel: MovementInputView.ViewModel(movement: Movement(name: "", notes: "")),
                     newlyAddedMovement: .constant(nil))
             }
-            .navigationDestination(isPresented: $viewModel.showBodyPartFilterSheet) {
+            .sheet(isPresented: $viewModel.showBodyPartFilterSheet) {
                 BodyPartFilterSheet(selectedBodyParts: $viewModel.selectedBodyParts)
             }
-            .navigationDestination(isPresented: $viewModel.showResistanceTypeFilterSheet) {
+            .sheet(isPresented: $viewModel.showResistanceTypeFilterSheet) {
                 ResistanceTypeFilterSheet(selectedResistanceTypes: $viewModel.selectedResistanceTypes)
             }
         }

@@ -130,7 +130,7 @@ struct MovementDetailView: View {
                         }())
                 }
             }
-            .navigationDestination(isPresented: $viewModel.showBodyPartPicker) {
+            .sheet(isPresented: $viewModel.showBodyPartPicker) {
                 BodyPartPickerSheet(selectedBodyPart: $viewModel.editableMovement.body_part)
             }
             .alert("Delete", isPresented: $viewModel.showDeleteConfirmationAlert) {

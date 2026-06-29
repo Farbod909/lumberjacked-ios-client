@@ -11,6 +11,7 @@ struct BodyPartPickerSheet: View {
     @State private var searchText = ""
 
     var body: some View {
+        NavigationStack {
         List {
             row(label: "None", selected: selectedBodyPart == nil || selectedBodyPart == "") {
                 selectedBodyPart = nil
@@ -35,6 +36,7 @@ struct BodyPartPickerSheet: View {
         .contentMargins(.top, 6, for: .scrollContent)
         .navigationTitle("Body Part")
         .navigationBarTitleDisplayMode(.inline)
+        }
     }
 
     private func row(label: String, selected: Bool, onTap: @escaping () -> Void) -> some View {
