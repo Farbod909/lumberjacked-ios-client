@@ -159,12 +159,20 @@ struct MovementCatalogView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 40))
                 .foregroundStyle(.secondary)
-            Text("No results for \"\(viewModel.searchText)\"")
+            Text(viewModel.searchText.isEmpty ? "No results" : "No results for \"\(viewModel.searchText)\"")
                 .font(.headline)
-            Button("Clear Search") {
-                viewModel.searchText = ""
+            if !viewModel.searchText.isEmpty {
+                Button("Clear Search") {
+                    viewModel.searchText = ""
+                }
+                .font(.subheadline)
             }
-            .font(.subheadline)
+            if viewModel.isFiltered {
+                Button("Clear Filters") {
+                    viewModel.resetFilters()
+                }
+                .font(.subheadline)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 60)
