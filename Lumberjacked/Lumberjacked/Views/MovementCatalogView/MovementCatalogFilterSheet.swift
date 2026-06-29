@@ -7,6 +7,7 @@ import SwiftUI
 
 struct BodyPartFilterSheet: View {
     @Binding var selectedBodyParts: Set<BodyPart>
+    @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
 
     var body: some View {
@@ -46,6 +47,11 @@ struct BodyPartFilterSheet: View {
             .navigationTitle("Body Part")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Clear") { selectedBodyParts = [] }
                         .disabled(selectedBodyParts.isEmpty)
@@ -57,6 +63,7 @@ struct BodyPartFilterSheet: View {
 
 struct ResistanceTypeFilterSheet: View {
     @Binding var selectedResistanceTypes: Set<ResistanceType>
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
@@ -84,6 +91,11 @@ struct ResistanceTypeFilterSheet: View {
             .navigationTitle("Resistance Type")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Clear") { selectedResistanceTypes = [] }
                         .disabled(selectedResistanceTypes.isEmpty)
